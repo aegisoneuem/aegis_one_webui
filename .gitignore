@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.local
+storybook-static/
+playwright-report/
+test-results/
+mock-server/data/*.db

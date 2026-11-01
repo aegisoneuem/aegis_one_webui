@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+dist
+node_modules
+apps/aegis-one/src/api/schema.d.ts
+apps/aegis-one/docs/screenshots
+contracts/aegis-one.openapi.yaml

@@ -1,0 +1,22 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font: 400 var(--ui-text-md) / 1.45 var(--ui-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+code,
+pre,
+kbd {
+  font-family: var(--ui-font-mono);
+}

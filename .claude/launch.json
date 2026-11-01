@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aegis-one-console",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@aegis/console", "dev"],
+      "port": 5173
+    }
+  ]
+}

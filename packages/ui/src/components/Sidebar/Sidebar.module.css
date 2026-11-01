@@ -1,0 +1,156 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--ui-nav-width);
+  flex: none;
+  background: var(--ui-nav-bg);
+  color: var(--ui-nav-text);
+  border-right: 1px solid var(--ui-nav-border);
+  transition: width 140ms ease;
+  min-height: 0;
+  height: 100%;
+}
+.sidebar[data-collapsed='true'] {
+  width: var(--ui-nav-width-collapsed);
+}
+.header {
+  display: flex;
+  align-items: center;
+  min-height: var(--ui-topbar-height);
+  padding: 0 14px;
+  border-bottom: 1px solid var(--ui-nav-border);
+}
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 8px 12px;
+}
+.footer {
+  padding: 8px;
+  border-top: 1px solid var(--ui-nav-border);
+}
+.group + .group {
+  margin-top: 6px;
+}
+.groupToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 8px 4px;
+  background: none;
+  border: 0;
+  color: var(--ui-nav-text-muted);
+  font: 600 var(--ui-text-xs) / 1 var(--ui-font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.groupToggle:hover {
+  color: var(--ui-nav-text);
+}
+.groupToggle:focus-visible,
+.item:focus-visible {
+  outline: 2px solid var(--ui-highlight);
+  outline-offset: -2px;
+}
+.chevron {
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  transform: rotate(45deg);
+  transition: transform 120ms ease;
+}
+.groupToggle[aria-expanded='false'] .chevron {
+  transform: rotate(-45deg);
+}
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.items[hidden] {
+  display: none;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--ui-radius-md);
+  color: var(--ui-nav-text);
+  font: 500 var(--ui-text-md) / 1 var(--ui-font-sans);
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+}
+.item:hover {
+  background: var(--ui-nav-hover-bg);
+}
+.active,
+.active:hover {
+  background: var(--ui-nav-active-bg);
+}
+.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--ui-highlight);
+}
+.icon {
+  display: inline-flex;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--ui-nav-text-muted);
+}
+.active .icon {
+  color: var(--ui-highlight);
+}
+.itemLabel {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tag {
+  padding: 2px 5px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-nav-hover-bg);
+  color: var(--ui-nav-text-muted);
+  font: 600 10px / 1 var(--ui-font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Collapsed: icons only, groups reduced to a divider and always open so every icon stays reachable */
+.sidebar[data-collapsed='true'] .itemLabel,
+.sidebar[data-collapsed='true'] .tag,
+.sidebar[data-collapsed='true'] .chevron {
+  display: none;
+}
+.sidebar[data-collapsed='true'] .item {
+  justify-content: center;
+  padding: 0;
+}
+.sidebar[data-collapsed='true'] .groupToggle {
+  justify-content: center;
+  padding: 6px 0 2px;
+}
+.sidebar[data-collapsed='true'] .groupLabel {
+  display: block;
+  width: 20px;
+  height: 1px;
+  background: var(--ui-nav-border);
+  overflow: hidden;
+  text-indent: -999px;
+}
+.sidebar[data-collapsed='true'] .items[hidden] {
+  display: block;
+}

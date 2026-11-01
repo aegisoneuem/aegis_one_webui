@@ -1,0 +1,79 @@
+/* Layout helpers for stories only. Not part of the library. */
+.sb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.sb-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 420px;
+}
+
+.sb-frame {
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+  min-height: 0;
+}
+
+.sb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.sb-shell {
+  display: flex;
+  height: 460px;
+}
+
+.sb-shell-main {
+  flex: 1;
+  padding: 16px;
+  color: var(--ui-text-muted);
+}
+
+.sb-wordmark {
+  color: var(--ui-nav-text);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.sb-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-bg);
+}
+
+.sb-page-body {
+  padding: 16px;
+}
+
+.sb-skeleton-wide {
+  width: 280px;
+  height: 48px;
+}
+
+.sb-skeleton-line {
+  width: 200px;
+}
+
+.sb-skeleton-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.sb-flush-body {
+  padding: 16px;
+  margin: 0;
+}
+
+.sb-dark {
+  padding: 12px;
+  background: var(--ui-nav-bg);
+}

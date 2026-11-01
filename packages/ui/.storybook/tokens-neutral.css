@@ -1,0 +1,100 @@
+/*
+ * Neutral token set for Storybook only.
+ *
+ * The library has no palette of its own: a console supplies the --ui-* values
+ * from its own tokens.css. These greys are deliberately unbranded, so a story
+ * that only looks right in Aegis One's gold will look wrong here — which is
+ * the point. Nothing in this file may be copied into src/.
+ */
+:root {
+  --ui-accent: #64748b;
+  --ui-accent-strong: #475569;
+  --ui-accent-soft: #eef2f6;
+  --ui-highlight: #94a3b8;
+  --ui-bg: #f6f7f8;
+  --ui-surface: #ffffff;
+  --ui-surface-sunken: #fafbfc;
+  --ui-surface-hover: #f3f5f7;
+  --ui-border: #e3e7ea;
+  --ui-text: #1b2430;
+  --ui-text-muted: #5b6b7c;
+  --ui-success: #19845b;
+  --ui-warning: #b7791f;
+  --ui-danger: #c0262d;
+  --ui-overlay: rgb(16 24 40 / 38%);
+
+  --ui-nav-bg: #22262c;
+  --ui-nav-text: #e6e9ee;
+  --ui-nav-text-muted: #8e97a4;
+  --ui-nav-hover-bg: #2b2f37;
+  --ui-nav-active-bg: #323741;
+  --ui-nav-border: #2f343d;
+
+  --ui-pill-good-fg: #15803d;
+  --ui-pill-good-bg: #e8f6ef;
+  --ui-pill-bad-fg: #c0262d;
+  --ui-pill-bad-bg: #fcebec;
+  --ui-pill-warn-fg: #b7791f;
+  --ui-pill-warn-bg: #fff4de;
+  --ui-pill-info-fg: #1d4ed8;
+  --ui-pill-info-bg: #eaf1fd;
+  --ui-pill-neutral-fg: #64748b;
+  --ui-pill-neutral-bg: #f1f4f8;
+
+  --ui-font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-font-mono: ui-monospace, Menlo, Consolas, 'SFMono-Regular', monospace;
+  --ui-text-xs: 11px;
+  --ui-text-sm: 12.5px;
+  --ui-text-md: 13.5px;
+  --ui-text-lg: 16px;
+  --ui-text-xl: 20px;
+
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-radius-lg: 10px;
+  --ui-shadow-sm: 0 1px 2px rgb(16 24 40 / 6%);
+  --ui-shadow-md: 0 4px 12px rgb(16 24 40 / 10%);
+  --ui-focus-ring: 0 0 0 2px var(--ui-surface), 0 0 0 4px var(--ui-accent-strong);
+
+  --ui-nav-width: 232px;
+  --ui-nav-width-collapsed: 56px;
+  --ui-topbar-height: 44px;
+  --ui-row-height: 34px;
+
+  --ui-space-1: 2px;
+  --ui-space-2: 4px;
+  --ui-space-3: 6px;
+  --ui-space-4: 8px;
+  --ui-space-5: 12px;
+  --ui-space-6: 16px;
+  --ui-space-7: 20px;
+  --ui-space-8: 24px;
+  --ui-space-9: 32px;
+
+  --ui-control-height: 30px;
+  --ui-control-height-sm: 24px;
+  --ui-control-height-lg: 36px;
+
+  --ui-z-dropdown: 100;
+  --ui-z-drawer: 200;
+  --ui-z-modal: 300;
+  --ui-z-toast: 400;
+
+  --ui-series-1: #475569;
+  --ui-series-2: #2f6f9f;
+  --ui-series-3: #19845b;
+  --ui-series-4: #b7791f;
+  --ui-series-5: #8a5fa8;
+  --ui-series-6: #c0262d;
+  --ui-series-7: #4d7c6f;
+  --ui-series-8: #94a3b8;
+  --ui-grid-line: #eef1f4;
+}
+
+body {
+  margin: 0;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-sm);
+}

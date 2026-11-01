@@ -83,4 +83,40 @@
   --ui-nav-width-collapsed: 56px;
   --ui-topbar-height: 44px;
   --ui-row-height: 34px;
+
+  /* Spacing scale. Dense by design: enterprise tables, not marketing pages. */
+  --ui-space-1: 2px;
+  --ui-space-2: 4px;
+  --ui-space-3: 6px;
+  --ui-space-4: 8px;
+  --ui-space-5: 12px;
+  --ui-space-6: 16px;
+  --ui-space-7: 20px;
+  --ui-space-8: 24px;
+  --ui-space-9: 32px;
+
+  /* Control sizing, shared by Button, Input, Select and friends */
+  --ui-control-height: 30px;
+  --ui-control-height-sm: 24px;
+  --ui-control-height-lg: 36px;
+
+  /* Surfaces layered above the page background */
+  --ui-surface-sunken: #fafbfc;
+  --ui-surface-hover: #f3f5f7;
+  --ui-overlay: rgb(16 24 40 / 38%);
+  --ui-z-dropdown: 100;
+  --ui-z-drawer: 200;
+  --ui-z-modal: 300;
+  --ui-z-toast: 400;
+
+  /* Categorical series for charts, derived from the brand rather than a default palette */
+  --ui-series-1: #7f6038;
+  --ui-series-2: #2f6f9f;
+  --ui-series-3: #19845b;
+  --ui-series-4: #b7791f;
+  --ui-series-5: #8a5fa8;
+  --ui-series-6: #c0262d;
+  --ui-series-7: #4d7c6f;
+  --ui-series-8: #94a3b8;
+  --ui-grid-line: #eef1f4;
 }

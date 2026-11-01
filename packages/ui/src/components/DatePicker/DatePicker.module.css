@@ -1,0 +1,77 @@
+.input {
+  composes: box from '../../styles/control.module.css';
+}
+
+.sm {
+  composes: sm from '../../styles/control.module.css';
+}
+
+.rangeTrigger {
+  composes: box from '../../styles/control.module.css';
+
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+  cursor: pointer;
+  text-align: left;
+}
+
+.caret {
+  flex: none;
+  color: var(--ui-text-muted);
+  font-size: 10px;
+}
+
+.panel {
+  display: flex;
+  min-width: 300px;
+}
+
+.presets {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  padding: var(--ui-space-3);
+  border-right: 1px solid var(--ui-border);
+}
+
+.preset {
+  padding: var(--ui-space-3) var(--ui-space-5);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--ui-text);
+  font: inherit;
+  font-size: var(--ui-text-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.preset:hover {
+  background: var(--ui-surface-hover);
+}
+
+.preset[aria-pressed='true'] {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-strong);
+  font-weight: 500;
+}
+
+.custom {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-5);
+}
+
+.customLabel {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+}
+
+.customRow {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+}

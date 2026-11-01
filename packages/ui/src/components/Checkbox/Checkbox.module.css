@@ -1,0 +1,41 @@
+.row {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--ui-space-4);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-sm);
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.row:has(.input:disabled) {
+  color: var(--ui-text-muted);
+  cursor: not-allowed;
+}
+
+.input {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin: 1px 0 0;
+  accent-color: var(--ui-accent-strong);
+  cursor: inherit;
+}
+
+.input:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+  min-width: 0;
+}
+
+.hint {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+  line-height: 1.4;
+}

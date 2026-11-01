@@ -106,26 +106,52 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   });
 }
 
-/** Refreshes once per 401 and retries, so an expired token is invisible to the caller. */
-let refreshInFlight: Promise<boolean> | null = null;
+export interface SessionResponse {
+  accessToken: string;
+  expiresIn: number;
+  csrfToken: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    permissions: string[];
+    zoneIds: string[];
+  };
+}
 
-async function refreshSession(): Promise<boolean> {
-  // Several requests failing at once must not fire several refreshes: the
-  // server rotates the token on each, and the second would look like a replay.
+/**
+ * Exchanges the refresh cookie for a new access token.
+ *
+ * Every caller shares one in-flight request. The server rotates the refresh
+ * token on each use and treats a superseded one as theft, so two refreshes
+ * racing would revoke the session rather than renew it — and React's
+ * StrictMode double mount makes that race the common case, not a rare one.
+ */
+let refreshInFlight: Promise<SessionResponse | null> | null = null;
+
+export function refreshSession(): Promise<SessionResponse | null> {
   refreshInFlight ??= (async () => {
     try {
+      const headers: Record<string, string> = {};
+      const csrf = csrfToken();
+      if (csrf) headers['x-csrf-token'] = csrf;
+
       const res = await fetch(`${BASE_URL}/auth/refresh`, {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
-      if (!res.ok) return false;
-      const data = (await res.json()) as { accessToken: string };
+      if (!res.ok) return null;
+
+      const data = (await res.json()) as SessionResponse;
       accessToken = data.accessToken;
-      return true;
+      return data;
     } catch {
-      return false;
+      return null;
     } finally {
-      // Cleared on the next tick so concurrent callers all see this attempt.
+      // Cleared on the next tick, so callers that arrived during this attempt
+      // all receive its result rather than starting another.
       setTimeout(() => {
         refreshInFlight = null;
       }, 0);

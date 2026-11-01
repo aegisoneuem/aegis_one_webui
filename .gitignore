@@ -8,3 +8,4 @@ test-results/
 mock-server/data/*.db
 apps/*/mock-server/data/
 storybook-static/
+test-results/

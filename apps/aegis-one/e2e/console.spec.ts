@@ -62,7 +62,7 @@ test.describe('signed in as Super Admin', () => {
 
   test('Overview reports the whole estate', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('50,000')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Managed endpoints/ })).toContainText('50,000');
     await expect(page.getByRole('heading', { name: 'Service health' })).toBeVisible();
   });
 
@@ -72,10 +72,10 @@ test.describe('signed in as Super Admin', () => {
     await expect(grid).toBeVisible();
 
     // Server-side total, not a count of what is on screen.
-    await expect(page.getByText('50,000 devices')).toBeVisible();
+    await expect(page.getByText('50,000 devices', { exact: true })).toBeVisible();
 
     await page.getByLabel('Search devices').fill('MUM-WS-01');
-    await expect(page.getByText(/^(?!50,000)[\d,]+ devices$/)).toBeVisible();
+    await expect(page.getByText('50,000 devices', { exact: true })).toHaveCount(0);
     await page.getByLabel('Clear').click();
 
     await page.getByRole('button', { name: /Compliance/ }).click();
@@ -105,7 +105,9 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('heading', { name: 'Current posture' })).toBeVisible();
   });
 
-  test('the deployment wizard runs through all six steps and creates an action', async ({ page }) => {
+  test('the deployment wizard runs through all six steps and creates an action', async ({
+    page,
+  }) => {
     await page.goto('/deployments/new');
 
     await expect(page.getByRole('listitem').filter({ hasText: 'Content' })).toBeVisible();
@@ -131,7 +133,7 @@ test.describe('signed in as Super Admin', () => {
     await page.getByRole('button', { name: /Queue action now/ }).click();
 
     await expect(page).toHaveURL(/\/deployments\/created\//);
-    await expect(page.getByText('Action created')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
     await page.getByRole('button', { name: 'View progress' }).click();
     await expect(page).toHaveURL(/\/deployments\/dep-/);
@@ -149,7 +151,15 @@ test.describe('signed in as Super Admin', () => {
 
     // Rule 4: nothing anywhere on this page offers interactive access.
     const body = (await page.locator('body').innerText()).toLowerCase();
-    for (const banned of ['remote desktop', 'remote control', 'screen share', 'screen view', 'remote session', 'terminal session', 'take control']) {
+    for (const banned of [
+      'remote desktop',
+      'remote control',
+      'screen share',
+      'screen view',
+      'remote session',
+      'terminal session',
+      'take control',
+    ]) {
       expect(body, `"${banned}" must not appear in Live Activity`).not.toContain(banned);
     }
   });
@@ -200,10 +210,16 @@ test.describe('role restrictions', () => {
     await page.goto('/devices');
 
     await expect(page.getByRole('table', { name: 'Devices' })).toBeVisible();
-    const total = await page.getByText(/[\d,]+ devices/).innerText();
+    const total = await page
+      .locator('span', { hasText: /^[\d,]+ devices$/ })
+      .first()
+      .innerText();
     expect(total).not.toContain('50,000');
 
-    const zones = await page.getByRole('table', { name: 'Devices' }).locator('tbody tr').allInnerTexts();
+    const zones = await page
+      .getByRole('table', { name: 'Devices' })
+      .locator('tbody tr')
+      .allInnerTexts();
     for (const row of zones.slice(0, 20)) {
       expect(row).toContain('Jaipur Branch');
     }

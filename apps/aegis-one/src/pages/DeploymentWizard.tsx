@@ -56,6 +56,13 @@ interface WizardState {
   notes: string;
 }
 
+/** Readable names for the pre-check keys the contract uses. */
+const PRE_CHECK_LABELS: Record<string, string> = {
+  freeDiskAtLeast10Pct: 'At least 10% free disk',
+  onAcPower: 'On AC power',
+  noPendingRestart: 'No restart already pending',
+};
+
 const PRE_POST_STEPS = [
   { value: 'none', label: 'None' },
   { value: 'create-restore-point', label: 'Create a restore point' },
@@ -73,7 +80,7 @@ export default function DeploymentWizard() {
   const toast = useToast();
 
   const [state, setState] = useState<WizardState>(() => ({
-    type: 'software-install',
+    type: 'install-software',
     name: '',
     packageId: '',
     groupId: '',
@@ -220,12 +227,21 @@ export default function DeploymentWizard() {
                 {(field) => (
                   <Select
                     {...field}
+                    // Exactly the contract's DeploymentType. Offering a type
+                    // the API does not define would fail validation only after
+                    // the user had filled in the whole wizard.
                     options={[
-                      { value: 'software-install', label: 'Install software' },
-                      { value: 'software-uninstall', label: 'Uninstall software' },
-                      { value: 'patch', label: 'Deploy patches' },
-                      { value: 'os-update', label: 'OS update' },
-                      { value: 'script', label: 'Run a script' },
+                      { value: 'install-software', label: 'Install software' },
+                      { value: 'update-software', label: 'Update software' },
+                      { value: 'uninstall-software', label: 'Uninstall software' },
+                      { value: 'repair-software', label: 'Repair software' },
+                      { value: 'deploy-patches', label: 'Deploy patches' },
+                      { value: 'roll-back-patches', label: 'Roll back patches' },
+                      { value: 'remediate-configuration', label: 'Remediate configuration' },
+                      { value: 'restart-devices', label: 'Restart devices' },
+                      { value: 'vulnerability-scan', label: 'Run a vulnerability scan' },
+                      { value: 'refresh-details', label: 'Refresh inventory' },
+                      { value: 'collect-logs', label: 'Collect logs' },
                     ]}
                     value={state.type}
                     onChange={(e) => set('type', e.target.value)}
@@ -461,7 +477,7 @@ export default function DeploymentWizard() {
                 value={
                   Object.entries(state.preChecks)
                     .filter(([, on]) => on)
-                    .map(([key]) => humanise(key.replace(/([A-Z])/g, ' $1').toLowerCase()))
+                    .map(([key]) => PRE_CHECK_LABELS[key] ?? key)
                     .join(', ') || 'None'
                 }
               />

@@ -180,12 +180,10 @@ const SUB_ROUTES: PageRoute[] = [
     handle: { pageId: 'devices', crumbs: ['Device'] },
   },
   {
-    path: 'deployments/new',
-    component: DeploymentWizard,
-    handle: { pageId: 'deployments', crumbs: ['New action'], permission: 'deployments:create' },
-  },
-  {
-    path: 'deployments/new/:step',
+    // One route for every step, with the step optional. Separate routes per
+    // step would unmount the wizard on each Continue and lose what the user
+    // had filled in.
+    path: 'deployments/new/:step?',
     component: DeploymentWizard,
     handle: { pageId: 'deployments', crumbs: ['New action'], permission: 'deployments:create' },
   },

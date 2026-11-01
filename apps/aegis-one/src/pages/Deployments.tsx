@@ -143,12 +143,14 @@ export default function Deployments() {
             size="sm"
             aria-label="Status"
             placeholder="Any status"
+            // The contract's DeploymentStatus, in the order a reader expects.
             options={[
-              'running',
+              'queued',
               'scheduled',
+              'running',
               'completed',
-              'completed-with-errors',
               'failed',
+              'paused',
               'cancelled',
             ].map((v) => ({
               value: v,
@@ -161,12 +163,23 @@ export default function Deployments() {
             size="sm"
             aria-label="Type"
             placeholder="Any type"
-            options={['software-install', 'software-uninstall', 'patch', 'script', 'os-update'].map(
-              (v) => ({
-                value: v,
-                label: humanise(v),
-              }),
-            )}
+            // The contract's DeploymentType.
+            options={[
+              'install-software',
+              'update-software',
+              'uninstall-software',
+              'repair-software',
+              'deploy-patches',
+              'roll-back-patches',
+              'remediate-configuration',
+              'restart-devices',
+              'vulnerability-scan',
+              'refresh-details',
+              'collect-logs',
+            ].map((v) => ({
+              value: v,
+              label: humanise(v),
+            }))}
             value={controller.filters['type'] ?? ''}
             onChange={(e) => controller.setFilter('type', e.target.value || undefined)}
           />

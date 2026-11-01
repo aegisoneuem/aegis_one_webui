@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, ErrorState } from '@aegis/ui';
 import { useAuth } from '../app/auth';
@@ -99,23 +99,32 @@ export function AuthCallback() {
   const state = params.get('state');
   const incomplete = !code || !state;
 
-  useEffect(() => {
-    if (!code || !state) return;
+  /**
+   * The exchange must happen exactly once, and its result must be applied even
+   * if the effect that started it has already been cleaned up.
+   *
+   * The PKCE verifier is single-use and is cleared the moment it is read.
+   * StrictMode runs an effect, cleans it up, and runs it again: a second run
+   * would find the verifier spent and report a good sign-in as expired, and a
+   * per-run `cancelled` flag would discard the result of the run that actually
+   * worked. A ref outlives both runs, so it is the only thing that can guard
+   * this correctly.
+   */
+  const started = useRef(false);
 
-    let cancelled = false;
+  useEffect(() => {
+    if (!code || !state || started.current) return;
+    started.current = true;
+
     void (async () => {
       try {
         await completeSignIn(code, state);
         // replace: true so Back does not re-run a spent authorization code.
-        if (!cancelled) await navigate('/', { replace: true });
+        await navigate('/', { replace: true });
       } catch (err) {
-        if (!cancelled)
-          setError(err instanceof Error ? err.message : 'Sign-in could not be completed.');
+        setError(err instanceof Error ? err.message : 'Sign-in could not be completed.');
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [code, state, completeSignIn, navigate]);
 
   const message = incomplete

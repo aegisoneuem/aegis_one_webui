@@ -568,21 +568,21 @@ function seedDeployments(db: Db, rng: Rng): void {
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
   const plans: readonly (readonly [string, string, string])[] = [
-    ['Google Chrome 142.0 — broad ring', 'software-install', 'Google Chrome 142.0.7204.92'],
-    ['October security rollup — pilot', 'patch', 'KB5041585'],
-    ['October security rollup — broad', 'patch', 'KB5041585'],
-    ['CrowdStrike sensor 7.20 upgrade', 'software-install', 'CrowdStrike Falcon Sensor 7.20.19507'],
-    ['Remove TeamViewer from Finance', 'software-uninstall', 'TeamViewer 15.58.4'],
-    ['Disk cleanup script — low disk group', 'script', 'cleanup-temp.ps1'],
-    ['RHEL 9 kernel update', 'patch', 'RHSA-2026:7741'],
-    ['macOS Sequoia 15.1', 'os-update', 'macOS Sequoia 15.1'],
-    ['Adobe Acrobat Reader 24.4', 'software-install', 'Adobe Acrobat Reader 24.4.20272'],
-    ['BIOS 1.28.0 — Latitude 5450', 'patch', 'DELL-BIOS-1.28.0'],
-    ['Netskope client rollout — Bengaluru', 'software-install', 'Netskope Client 120.0.1'],
-    ['Java 21.0.5 upgrade', 'software-install', 'Oracle Java SE Runtime 21.0.5'],
-    ['Zoom Workplace 6.2.11', 'software-install', 'Zoom Workplace 6.2.11'],
-    ['Collect firewall state — all servers', 'script', 'get-firewall-state.ps1'],
-    ['SAP GUI 8.00 PL12', 'software-install', 'SAP GUI for Windows 8.00 PL12'],
+    ['Google Chrome 142.0 — broad ring', 'install-software', 'Google Chrome 142.0.7204.92'],
+    ['October security rollup — pilot', 'deploy-patches', 'KB5041585'],
+    ['October security rollup — broad', 'deploy-patches', 'KB5041585'],
+    ['CrowdStrike sensor 7.20 upgrade', 'update-software', 'CrowdStrike Falcon Sensor 7.20.19507'],
+    ['Remove TeamViewer from Finance', 'uninstall-software', 'TeamViewer 15.58.4'],
+    ['Disk cleanup script — low disk group', 'collect-logs', 'cleanup-temp.ps1'],
+    ['RHEL 9 kernel update', 'deploy-patches', 'RHSA-2026:7741'],
+    ['macOS Sequoia 15.1', 'update-software', 'macOS Sequoia 15.1'],
+    ['Adobe Acrobat Reader 24.4', 'install-software', 'Adobe Acrobat Reader 24.4.20272'],
+    ['BIOS 1.28.0 — Latitude 5450', 'deploy-patches', 'DELL-BIOS-1.28.0'],
+    ['Netskope client rollout — Bengaluru', 'install-software', 'Netskope Client 120.0.1'],
+    ['Java 21.0.5 upgrade', 'update-software', 'Oracle Java SE Runtime 21.0.5'],
+    ['Zoom Workplace 6.2.11', 'install-software', 'Zoom Workplace 6.2.11'],
+    ['Collect firewall state — all servers', 'collect-logs', 'get-firewall-state.ps1'],
+    ['SAP GUI 8.00 PL12', 'install-software', 'SAP GUI for Windows 8.00 PL12'],
   ];
 
   db.transaction(() => {
@@ -594,7 +594,7 @@ function seedDeployments(db: Db, rng: Rng): void {
         ['scheduled', 16],
         ['failed', 8],
         ['cancelled', 4],
-        ['completed-with-errors', 6],
+        ['paused', 6],
       ] as const);
 
       const done =
@@ -622,7 +622,7 @@ function seedDeployments(db: Db, rng: Rng): void {
         iso(created),
         rng.pick(['r.deshpande', 'a.iyer', 's.kulkarni', 'n.banerjee']),
         status === 'scheduled' ? iso(NOW + rng.int(1, 72) * 3_600_000) : null,
-        status === 'completed' || status === 'completed-with-errors'
+        status === 'completed' || status === 'paused'
           ? iso(created + rng.int(1, 9) * 3_600_000)
           : null,
         rng.chance(0.4) ? 1 : 0,

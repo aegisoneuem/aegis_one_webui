@@ -7,7 +7,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { api, setAccessToken, setSessionLostHandler } from '../api/client';
+import {
+  api,
+  refreshSession,
+  setAccessToken,
+  setSessionLostHandler,
+  type SessionResponse,
+} from '../api/client';
 
 /**
  * Who is signed in, and what they are allowed to do.
@@ -25,13 +31,6 @@ export interface CurrentUser {
   permissions: string[];
   /** Empty means every zone. */
   zoneIds: string[];
-}
-
-interface TokenResponse {
-  accessToken: string;
-  expiresIn: number;
-  csrfToken: string;
-  user: CurrentUser;
 }
 
 export type AuthStatus = 'checking' | 'signed-in' | 'signed-out';
@@ -77,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('checking');
   const [user, setUser] = useState<CurrentUser | null>(null);
 
-  const apply = useCallback((data: TokenResponse) => {
+  const apply = useCallback((data: SessionResponse) => {
     setAccessToken(data.accessToken);
     setUser(data.user);
     setStatus('signed-in');
@@ -89,21 +88,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('signed-out');
   }, []);
 
-  // A reload loses the in-memory access token but not the refresh cookie, so
-  // the session survives without ever putting a token in web storage.
+  /**
+   * A reload loses the in-memory access token but not the refresh cookie, so
+   * the session survives without ever putting a token in web storage.
+   *
+   * This goes through the shared `refreshSession`, which collapses concurrent
+   * attempts into one. The server rotates the refresh token on use and treats
+   * a superseded one as theft, so two attempts racing would revoke the session
+   * instead of restoring it — and StrictMode's double mount makes that race
+   * the common case rather than a rare one.
+   */
   useEffect(() => {
-    let cancelled = false;
     void (async () => {
-      try {
-        const data = await api.post<TokenResponse>('/auth/refresh');
-        if (!cancelled) apply(data);
-      } catch {
-        if (!cancelled) clear();
-      }
+      const data = await refreshSession();
+      if (data) apply(data);
+      else clear();
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [apply, clear]);
 
   useEffect(() => setSessionLostHandler(clear), [clear]);
@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // user never started.
       if (state !== returnedState) throw new Error('Sign-in could not be verified. Start again.');
 
-      const data = await api.post<TokenResponse>('/auth/token', {
+      const data = await api.post<SessionResponse>('/auth/token', {
         code,
         codeVerifier: verifier,
         redirectUri: REDIRECT_URI,

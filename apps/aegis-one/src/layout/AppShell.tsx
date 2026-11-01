@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
+import { Outlet, useMatches, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   CaretLineLeft,
@@ -30,7 +30,6 @@ function isRouteHandle(h: unknown): h is RouteHandle {
 
 export function AppShell(): JSX.Element {
   const navigate = useNavigate();
-  const location = useLocation();
   const matches = useMatches();
   const { collapsed, expanded, toggleCollapsed, toggleGroup, expandGroup } = useUiStore();
   const { user, can, signOut } = useAuth();
@@ -161,7 +160,7 @@ export function AppShell(): JSX.Element {
             ) : null
           }
         />
-        <main className={styles.content} key={location.pathname} id="content">
+        <main className={styles.content} id="content">
           <Outlet />
         </main>
       </div>

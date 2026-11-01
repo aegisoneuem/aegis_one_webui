@@ -30,7 +30,12 @@ export async function registerSecurityHeaders(
         fontSrc: ["'self'"],
         imgSrc: ["'self'", 'data:'],
         connectSrc: ["'self'", ...appOrigins],
-        formAction: ["'self'"],
+        // The console's own origin, because the identity provider's sign-in
+        // form redirects there on success. Chrome enforces form-action across
+        // redirects, so 'self' alone silently breaks the OIDC callback — and
+        // it breaks it after the password and the second factor have been
+        // accepted, which is the hardest place to notice.
+        formAction: ["'self'", ...appOrigins],
         baseUri: ["'none'"],
         objectSrc: ["'none'"],
         // Defence in depth beside X-Frame-Options, for the clickjacking case.

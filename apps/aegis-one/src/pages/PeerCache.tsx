@@ -1,4 +1,4 @@
-import { KpiTile, Select, StatusPill, type DataTableColumn } from '@aegis/ui';
+import { KpiTile, PageHeader, Select, StatusPill, type DataTableColumn } from '@aegis/ui';
 import { useListController, useResource } from '../app/useListController';
 import { humanise, num, pct, relative, toneFor } from '../app/format';
 import { ResourceList } from './shared/ResourceList';
@@ -95,6 +95,11 @@ export default function PeerCache() {
 
   return (
     <div className={styles.page}>
+      <PageHeader
+        title="Peer cache"
+        description="Content served endpoint to endpoint, so only one copy crosses the link to each site."
+      />
+
       <div className={styles.kpis}>
         <KpiTile
           label="Cache nodes"

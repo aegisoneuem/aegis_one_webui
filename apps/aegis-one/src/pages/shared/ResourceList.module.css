@@ -1,0 +1,12 @@
+.list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+  min-height: 0;
+}
+
+.table {
+  flex: 1;
+  min-height: 240px;
+}

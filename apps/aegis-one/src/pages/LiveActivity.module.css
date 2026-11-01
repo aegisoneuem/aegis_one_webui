@@ -1,0 +1,113 @@
+.page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ui-space-6);
+  min-height: 0;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ui-space-6);
+  min-height: 0;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ui-space-6);
+  align-items: start;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.script {
+  width: 100%;
+  min-height: 190px;
+  padding: var(--ui-space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-sunken);
+  color: var(--text);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-sm);
+  line-height: 1.55;
+  resize: vertical;
+  tab-size: 2;
+}
+
+.script:focus {
+  outline: none;
+  border-color: var(--brand-deep);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--ui-space-5);
+}
+
+.note {
+  padding: var(--ui-space-4) var(--ui-space-5);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-sunken);
+  color: var(--text-muted);
+  font-size: var(--ui-text-xs);
+  line-height: 1.6;
+}
+
+.submitRow {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: var(--ui-space-5);
+  border-top: 1px solid var(--border);
+}
+
+.output {
+  max-height: 320px;
+  padding: var(--ui-space-5);
+  overflow: auto;
+  border-radius: var(--ui-radius-md);
+  background: #1b2430;
+  color: #e6e9ee;
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-xs);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.stderr {
+  color: #ff9a9f;
+}
+
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+}
+
+.resultHead {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resultHost {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-sm);
+}
+
+.resultMeta {
+  color: var(--text-muted);
+  font-size: var(--ui-text-xs);
+  font-variant-numeric: tabular-nums;
+}

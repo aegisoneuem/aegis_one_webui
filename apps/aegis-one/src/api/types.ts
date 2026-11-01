@@ -1,0 +1,325 @@
+/**
+ * Row shapes the console reads.
+ *
+ * These are type aliases rather than interfaces on purpose: TanStack Table's
+ * `RowData` constraint is `Record<string, any> | any[]`, and an interface has
+ * no implicit index signature, so an interface would not satisfy it.
+ */
+
+export type Device = {
+  id: string;
+  hostname: string;
+  status: string;
+  osFamily: string;
+  osName: string;
+  osVersion: string;
+  osBuild: string;
+  kind: string;
+  zoneId: string;
+  zoneName: string;
+  primaryUser: string;
+  primaryUserName: string;
+  department: string;
+  ip: string;
+  mac: string;
+  serial: string;
+  model: string;
+  cpu: string;
+  ramGb: number;
+  diskTotalGb: number;
+  diskFreePct: number;
+  agentVersion: string;
+  lastSeenAt: string;
+  enrolledAt: string;
+  compliancePct: number;
+  pendingPatches: number;
+  criticalVulns: number;
+  dexScore: number;
+  encrypted: boolean;
+  rebootPending: boolean;
+  configPassPct: number;
+};
+
+export type SoftwareTitle = {
+  id: string;
+  title: string;
+  publisher: string;
+  category: string;
+  latestVersion: string;
+  sizeMb: number;
+  installCount: number;
+  outdatedCount: number;
+};
+
+export type Patch = {
+  id: string;
+  title: string;
+  kb: string | null;
+  platform: string;
+  severity: string;
+  category: string;
+  releasedAt: string;
+  applicableCount: number;
+  installedCount: number;
+  failedCount: number;
+  rebootRequired: boolean;
+};
+
+export type Vulnerability = {
+  id: string;
+  title: string;
+  severity: string;
+  cvss: number;
+  exploited: boolean;
+  publishedAt: string;
+  affects: string;
+  fixedBy: string;
+  affectedCount: number;
+  remediatedCount: number;
+};
+
+export type Deployment = {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  content: string;
+  targetCount: number;
+  succeeded: number;
+  failed: number;
+  pending: number;
+  createdAt: string;
+  createdBy: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  wakeOfflineFirst: boolean;
+  notes: string | null;
+};
+
+export type LiveJob = {
+  id: string;
+  name: string;
+  kind: string;
+  language: string | null;
+  reason: string | null;
+  status: string;
+  targetCount: number;
+  completed: number;
+  failed: number;
+  createdAt: string;
+  createdBy: string;
+  finishedAt: string | null;
+  outputLimitKb: number;
+};
+
+export type LiveJobResult = {
+  deviceId: string;
+  hostname: string;
+  state: string;
+  exitCode: number | null;
+  stdout: string | null;
+  stderr: string | null;
+  durationMs: number | null;
+  finishedAt: string | null;
+};
+
+export type DeviceGroup = {
+  id: string;
+  name: string;
+  kind: string;
+  rule: string | null;
+  memberCount: number;
+  createdAt: string;
+  createdBy: string;
+};
+
+export type ConfigCheck = {
+  id: string;
+  title: string;
+  benchmark: string;
+  severity: string;
+  platform: string;
+  passCount: number;
+  failCount: number;
+  exceptionCount: number;
+};
+
+export type Zone = {
+  id: string;
+  name: string;
+  city: string;
+  deviceCount: number;
+  peerCache: boolean;
+  bandwidthMbps: number;
+  relayStatus: string;
+  lastSyncAt: string;
+};
+
+export type Peer = {
+  id: string;
+  hostname: string;
+  zoneId: string;
+  zoneName: string;
+  cacheSizeGb: number;
+  cacheUsedGb: number;
+  servedGb: number;
+  peersServed: number;
+  status: string;
+  lastSeenAt: string;
+};
+
+export type AuditEntry = {
+  id: string;
+  at: string;
+  actor: string;
+  actorRole: string;
+  action: string;
+  objectType: string;
+  objectId: string;
+  outcome: string;
+  ip: string;
+  detail: string | null;
+};
+
+export type LogBundle = {
+  id: string;
+  deviceId: string;
+  hostname: string;
+  fileTypes: string;
+  status: string;
+  sizeBytes: number;
+  collectedAt: string;
+  emailed: boolean;
+};
+
+export type Report = {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  schedule: string | null;
+  lastRunAt: string | null;
+  owner: string;
+  custom: boolean;
+};
+
+export type Integration = {
+  id: string;
+  name: string;
+  kind: string;
+  status: string;
+  lastEventAt: string | null;
+  events24h: number;
+};
+
+export type ConsoleUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  zoneIds: string[];
+  status: string;
+  lastSignInAt: string | null;
+  createdAt: string;
+};
+
+export type ApiToken = {
+  id: string;
+  name: string;
+  prefix: string;
+  scopes: string[];
+  createdAt: string;
+  createdBy: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+};
+
+export type EnrollmentToken = {
+  id: string;
+  name: string;
+  platform: string;
+  zoneId: string;
+  prefix: string;
+  uses: number;
+  maxUses: number | null;
+  expiresAt: string;
+  createdAt: string;
+  createdBy: string;
+  revokedAt: string | null;
+};
+
+export type RoleDefinition = {
+  id: string;
+  name: string;
+  permissions: string[];
+  system: boolean;
+  zoneIds: string[];
+  userCount: number;
+};
+
+export type License = {
+  id: string;
+  product: string;
+  entitled: number;
+  consumed: number;
+  expiresAt: string;
+  supportTier: string;
+};
+
+export type ServiceHealth = {
+  id: string;
+  component: string;
+  status: string;
+  latencyMs: number;
+  message: string | null;
+  checkedAt: string;
+};
+
+export type Overview = {
+  endpoints: {
+    total: number;
+    online: number;
+    offline: number;
+    pendingRestart: number;
+    notSeen7Days: number;
+  };
+  posture: {
+    compliancePct: number;
+    encryptedPct: number;
+    dexScore: number;
+    criticalVulnerabilities: number;
+    pendingPatches: number;
+  };
+  byZone: {
+    zoneId: string;
+    zoneName: string;
+    devices: number;
+    compliancePct: number;
+    offline: number;
+  }[];
+  byOs: { osFamily: string; osName: string; devices: number }[];
+  patchState: { state: string; n: number }[];
+  topVulnerabilities: Vulnerability[];
+  recentDeployments: Deployment[];
+  serviceHealth: ServiceHealth[];
+};
+
+export type DexSummary = {
+  overall: { score: number };
+  byDepartment: { department: string; score: number; devices: number }[];
+  byZone: { zoneName: string; score: number; devices: number }[];
+  distribution: { band: string; devices: number }[];
+  lowestScoring: Pick<
+    Device,
+    'id' | 'hostname' | 'zoneName' | 'department' | 'dexScore' | 'diskFreePct' | 'ramGb'
+  >[];
+};
+
+export type InsightFinding = {
+  id: string;
+  severity: string;
+  title: string;
+  detail: string;
+  action?: { label: string; page: string; filter?: Record<string, string> };
+};

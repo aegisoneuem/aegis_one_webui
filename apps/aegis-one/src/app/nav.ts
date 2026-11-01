@@ -238,3 +238,32 @@ export const ALL_PAGES: PageDef[] = NAV_GROUPS.flatMap((g) => g.pages);
 export const PAGE_BY_ID: Record<PageId, PageDef> = Object.fromEntries(
   ALL_PAGES.map((p) => [p.id, p]),
 ) as Record<PageId, PageDef>;
+
+/**
+ * Permission each page needs to be worth showing.
+ *
+ * The sidebar hides what a user cannot open, and the router refuses it. Both
+ * are conveniences: the server checks the same permission on every request,
+ * and that check is the one that matters.
+ */
+export const PAGE_PERMISSIONS: Record<PageId, string | undefined> = {
+  home: undefined,
+  devices: 'devices:read',
+  groups: 'groups:read',
+  enrollment: 'enrollment:read',
+  patches: 'patches:read',
+  software: 'software:read',
+  liveops: 'liveops:read',
+  deployments: 'deployments:read',
+  vulns: 'vulns:read',
+  profiles: 'profiles:read',
+  dex: 'dex:read',
+  insight: 'insight:read',
+  sites: 'sites:read',
+  peercache: 'peercache:read',
+  reports: 'reports:read',
+  integrations: 'integrations:read',
+  admin: 'admin:users',
+  licensing: 'licensing:read',
+  diagnostics: 'diagnostics:read',
+};

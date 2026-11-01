@@ -1,9 +1,25 @@
 import { useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CaretLineLeft, CaretLineRight, House } from '@phosphor-icons/react';
-import { Breadcrumb, NavGroup, NavItem, Sidebar, type BreadcrumbItem } from '@aegis/ui';
+import {
+  ArrowLeft,
+  CaretLineLeft,
+  CaretLineRight,
+  House,
+  SignOut,
+  User,
+} from '@phosphor-icons/react';
+import {
+  Breadcrumb,
+  Button,
+  Menu,
+  NavGroup,
+  NavItem,
+  Sidebar,
+  type BreadcrumbItem,
+} from '@aegis/ui';
 import markUrl from '../assets/brand/aegis-mark.png';
-import { NAV_GROUPS, PAGE_BY_ID } from '../app/nav';
+import { NAV_GROUPS, PAGE_BY_ID, PAGE_PERMISSIONS } from '../app/nav';
+import { useAuth } from '../app/auth';
 import type { RouteHandle } from '../app/routes';
 import { useUiStore } from '../app/uiStore';
 import styles from './AppShell.module.css';
@@ -17,6 +33,7 @@ export function AppShell(): JSX.Element {
   const location = useLocation();
   const matches = useMatches();
   const { collapsed, expanded, toggleCollapsed, toggleGroup, expandGroup } = useUiStore();
+  const { user, can, signOut } = useAuth();
 
   const handle = useMemo(() => {
     const last = [...matches].reverse().find((m) => isRouteHandle(m.handle));
@@ -86,26 +103,33 @@ export function AppShell(): JSX.Element {
           </button>
         }
       >
-        {NAV_GROUPS.map((group) => (
-          <NavGroup
-            key={group.id}
-            label={group.label}
-            expanded={expanded[group.id] ?? true}
-            onToggle={() => toggleGroup(group.id)}
-          >
-            {group.pages.map((p) => (
-              <NavItem
-                key={p.id}
-                href={p.path}
-                icon={<p.icon size={18} weight={activeId === p.id ? 'fill' : 'regular'} />}
-                label={p.label}
-                tag={p.tag}
-                active={activeId === p.id}
-                onNavigate={() => navigate(p.path)}
-              />
-            ))}
-          </NavGroup>
-        ))}
+        {NAV_GROUPS.map((group) => {
+          const pages = group.pages.filter((p) => {
+            const permission = PAGE_PERMISSIONS[p.id];
+            return !permission || can(permission);
+          });
+          if (pages.length === 0) return null;
+          return (
+            <NavGroup
+              key={group.id}
+              label={group.label}
+              expanded={expanded[group.id] ?? true}
+              onToggle={() => toggleGroup(group.id)}
+            >
+              {pages.map((p) => (
+                <NavItem
+                  key={p.id}
+                  href={p.path}
+                  icon={<p.icon size={18} weight={activeId === p.id ? 'fill' : 'regular'} />}
+                  label={p.label}
+                  tag={p.tag}
+                  active={activeId === p.id}
+                  onNavigate={() => navigate(p.path)}
+                />
+              ))}
+            </NavGroup>
+          );
+        })}
       </Sidebar>
       <div className={styles.main}>
         <Breadcrumb
@@ -114,6 +138,28 @@ export function AppShell(): JSX.Element {
           onHome={() => navigate('/')}
           backIcon={<ArrowLeft size={14} />}
           homeIcon={<House size={14} />}
+          trailing={
+            user ? (
+              <Menu
+                label="Account"
+                items={[
+                  { separator: true, label: `${user.name} — ${user.role}` },
+                  {
+                    id: 'sign-out',
+                    label: 'Sign out',
+                    icon: <SignOut size={15} />,
+                    onSelect: () => void signOut(),
+                  },
+                ]}
+              >
+                {(trigger) => (
+                  <Button size="sm" variant="ghost" icon={<User size={15} />} {...trigger}>
+                    {user.name}
+                  </Button>
+                )}
+              </Menu>
+            ) : null
+          }
         />
         <main className={styles.content} key={location.pathname} id="content">
           <Outlet />

@@ -34,7 +34,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: var(--ui-space-6);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--ao-border);
 }
 
 .footerRight {
@@ -55,7 +55,7 @@
 }
 
 .reviewLabel {
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-xs);
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -72,8 +72,8 @@
   align-items: baseline;
   padding: var(--ui-space-5);
   border-radius: var(--ui-radius-md);
-  background: var(--gold-soft);
-  color: var(--brand-deep);
+  background: var(--accent-soft);
+  color: var(--ao-brand-deep);
 }
 
 .targetCount {
@@ -85,8 +85,8 @@
 .warning {
   padding: var(--ui-space-4) var(--ui-space-5);
   border-radius: var(--ui-radius-md);
-  background: var(--pill-warn-bg);
-  color: var(--pill-warn-fg);
+  background: var(--st-warn-bg);
+  color: var(--st-warn);
   font-size: var(--ui-text-sm);
   line-height: 1.5;
 }
@@ -98,9 +98,9 @@
   align-items: flex-start;
   max-width: 620px;
   padding: var(--ui-space-9);
-  border: 1px solid var(--border);
+  border: 1px solid var(--ao-border);
   border-radius: var(--ui-radius-lg);
-  background: var(--surface);
+  background: var(--ao-surface);
 }
 
 .createdTitle {
@@ -111,7 +111,7 @@
 
 .createdBody {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-md);
   line-height: 1.6;
 }

@@ -34,12 +34,12 @@
 .primary {
   background: var(--ui-accent-strong);
   border-color: var(--ui-accent-strong);
-  color: #fff;
+  color: var(--ui-surface);
 }
 
 .primary:hover:not(:disabled) {
-  background: #6b5030;
-  border-color: #6b5030;
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
 }
 
 .secondary {
@@ -64,12 +64,12 @@
 .danger {
   background: var(--ui-danger);
   border-color: var(--ui-danger);
-  color: #fff;
+  color: var(--ui-surface);
 }
 
 .danger:hover:not(:disabled) {
-  background: #b8383e;
-  border-color: #b8383e;
+  background: var(--ui-danger-hover);
+  border-color: var(--ui-danger-hover);
 }
 
 .link {

@@ -203,3 +203,46 @@ the next reader can tell which kind of clean it was.
 
 The same trap exists for anyone scanning the Go service. Check the traffic, not
 just the findings.
+
+## D-019 — The approved palette is restored, and enforced in CI
+
+The console had drifted off the approved v129 palette. Not obviously: of the
+nineteen colours that were in neither the approved list nor the reference
+build, **sixteen were within dRGB 30 of an approved token**. `#E5E8EB` where
+the design says `#E5E9ED`; `#47607A` where it says `#47617C`; `#1B2430` where
+it says `#20262E`. Each is invisible in review and unmistakable in a diff,
+which is why it read as a generic console rather than as a broken one.
+
+Twenty-four of the forty-two approved tokens were missing entirely — including
+the two most-used colours in the whole design, `#69717D` (436 uses in v129) and
+`#E5E9ED` (340). The whole navy palette was absent, and the chart series had
+been invented, one of them purple.
+
+Three things changed:
+
+1. `tokens.css` now carries the approved list verbatim under its v129 names,
+   mapped onto the `--ui-*` contract the library reads.
+2. State colours the approved list does not spell out — hovers, pressed, tints
+   — are `color-mix` of approved tokens rather than picked values, so no new
+   hex enters the codebase at all.
+3. `scripts/check-colors.mjs` fails the build on any colour that is neither on
+   the approved list nor present in v129, and runs as part of `pnpm lint`. When
+   it fails it names the nearest approved token and the distance, because
+   near-misses are the failure mode that actually happens.
+
+The reference build is committed at `design-reference/Aegis-One-Console-v129.html`
+and the check refuses to run without it. A colour check that cannot see the
+specification would pass on anything, which is worse than no check.
+
+### Open, and deliberately not guessed
+
+- **Sidebar values.** The approved list gives `#202329`; v129's final cascade
+  renders `#1b1f24` with active `#343027` / `#f1d39d`. The list was followed,
+  as instructed, but the two disagree.
+- **Fonts.** Still the `@fontsource` variable build, not the static woff2 files
+  embedded in v129.
+- **Logo.** `aegis-mark.svg` is a potrace trace — redrawn, which was explicitly
+  not wanted. The byte-exact PNG extracted in Phase 1 is still there.
+- **Chart assignment.** Series now use the approved navy palette everywhere.
+  Some charts probably want the severity or compliance palette instead; which
+  chart uses which is a v129 question, not a token question.

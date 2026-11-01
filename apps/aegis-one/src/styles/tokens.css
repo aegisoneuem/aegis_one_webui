@@ -1,90 +1,204 @@
 /*
- * Aegis One brand tokens. This is the ONLY place brand values live.
- * Section 1 holds the brand palette; section 2 maps it onto the --ui-* contract
- * that packages/ui reads. A sibling console ships its own file with the same --ui-* names.
+ * Aegis One design tokens — restored from the approved v129 build.
+ *
+ * Source of truth: design-reference/Aegis-One-Console-v129.html
+ *
+ * Every value below is either on the approved token list or present in v129.
+ * Nothing here was chosen; it was read. State colours the approved list does
+ * not spell out (hovers, pressed, tints) are derived with color-mix from an
+ * approved token rather than picked, so no new hex enters the codebase.
+ *
+ * `pnpm check:colors` fails the build on any hex outside that set.
+ *
+ * Section 1 is the approved palette under its v129 names.
+ * Section 2 maps it onto the --ui-* contract packages/ui reads, so a sibling
+ * console can ship a different palette without touching the library.
  */
 :root {
-  /* 1. Brand palette */
-  --brand: #c6a16b;
-  --brand-deep: #7f6038;
-  --gold: #e9b84f;
-  --gold-soft: #fff6df;
-  --sidebar: #202329;
-  --bg: #f5f6f7;
-  --surface: #ffffff;
-  --border: #e5e8eb;
-  --text: #1b2430;
-  --text-muted: #47607a;
-  --success: #19845b;
-  --warning: #d6a009;
-  --danger: #d34249;
+  /* ---------------------------------------------------------------- */
+  /* 1. Approved palette — verbatim from the v129 token list           */
+  /* ---------------------------------------------------------------- */
 
-  --pill-good-fg: #15803d;
-  --pill-good-bg: #e8f6ef;
-  --pill-bad-fg: #c0262d;
-  --pill-bad-bg: #fcebec;
-  --pill-warn-fg: #b7791f;
-  --pill-warn-bg: #fff4de;
-  --pill-info-fg: #1d4ed8;
-  --pill-info-bg: #eaf1fd;
-  --pill-neutral-fg: #94a3b8;
-  --pill-neutral-bg: #f1f4f8;
+  /* Brand */
+  --ao-brand: #c6a16b;
+  --ao-brand-hi: #e4c795;
+  --ao-brand-deep: #7f6038;
+  --accent-soft: #f4efe6;
+  --accent-soft-warm: #fff4e5;
 
-  /* 2. Mapping onto the packages/ui contract */
-  --ui-accent: var(--brand);
-  --ui-accent-strong: var(--brand-deep);
-  --ui-accent-soft: var(--gold-soft);
-  --ui-highlight: var(--gold);
-  --ui-bg: var(--bg);
-  --ui-surface: var(--surface);
-  --ui-border: var(--border);
-  --ui-text: var(--text);
-  --ui-text-muted: var(--text-muted);
-  --ui-success: var(--success);
-  --ui-warning: var(--warning);
-  --ui-danger: var(--danger);
+  /* Surfaces */
+  --ao-bg: #f5f6f7;
+  --ao-surface: #ffffff;
+  --ao-track: #eef0f2;
+  --ao-border: #e5e9ed;
 
-  --ui-nav-bg: var(--sidebar);
-  --ui-nav-text: #e6e9ee;
-  --ui-nav-text-muted: #8e97a4;
-  --ui-nav-hover-bg: #2b2f37;
-  --ui-nav-active-bg: #323741;
-  --ui-nav-border: #2f343d;
+  /* Ink */
+  --ao-text: #20262e;
+  --ao-muted: #69717d;
+  --ao-neutral: #8a9099;
 
-  --ui-pill-good-fg: var(--pill-good-fg);
-  --ui-pill-good-bg: var(--pill-good-bg);
-  --ui-pill-bad-fg: var(--pill-bad-fg);
-  --ui-pill-bad-bg: var(--pill-bad-bg);
-  --ui-pill-warn-fg: var(--pill-warn-fg);
-  --ui-pill-warn-bg: var(--pill-warn-bg);
-  --ui-pill-info-fg: var(--pill-info-fg);
-  --ui-pill-info-bg: var(--pill-info-bg);
-  --ui-pill-neutral-fg: var(--pill-neutral-fg);
-  --ui-pill-neutral-bg: var(--pill-neutral-bg);
+  /* Deep navy, used in headings and KPI figures */
+  --ao-navy: #18354f;
+  --ao-navy-mid: #47617c;
+  --ao-navy-ink: #0b1220;
 
-  /* Typography: Inter for UI, system monospace for code, scripts and log output */
+  /* Sidebar */
+  --ao-sidebar: #202329;
+  --ao-sidebar-text: #aeb2bc;
+  --ao-sidebar-eyebrow: #858a95;
+  --ao-sidebar-brand: #f6f8fa;
+  --ao-sidebar-caption: #8994a1;
+  --ao-sidebar-divider: #ffffff0b;
+
+  /* Status */
+  --ao-success: #19845b;
+  --ao-warning: #d6a009;
+  --ao-danger: #d34249;
+
+  --st-good: #15803d;
+  --st-good-bg: #e8f6ef;
+  --st-warn: #b7791f;
+  --st-warn-bg: #fff4de;
+  --st-bad: #c0262d;
+  --st-bad-bg: #fcebec;
+  --st-info: #1d4ed8;
+  --st-info-bg: #eaf1fd;
+  --st-neutral: #94a3b8;
+  --st-neutral-bg: #f1f4f8;
+
+  /* Chart palettes — copied exactly, order matters */
+  --chart-severity-1: #d34249;
+  --chart-severity-2: #d6a009;
+  --chart-severity-3: #69717d;
+  --chart-severity-4: #19845b;
+
+  --chart-compliance-1: #0e9f6e;
+  --chart-compliance-2: #b4790a;
+  --chart-compliance-3: #e4363d;
+
+  --chart-navy-1: #1e3a5f;
+  --chart-navy-2: #2f5d8a;
+  --chart-navy-3: #4f7bae;
+  --chart-navy-4: #7fa0c6;
+  --chart-navy-5: #afc3db;
+
+  --chart-grid: #e5e9ed;
+  --chart-axis: #e3e8ef;
+  --chart-axis-text: #69717d;
+
+  /* ---------------------------------------------------------------- */
+  /* 2. The --ui-* contract packages/ui reads                          */
+  /* ---------------------------------------------------------------- */
+
+  --ui-accent: var(--ao-brand);
+  --ui-accent-strong: var(--ao-brand-deep);
+  --ui-accent-soft: var(--accent-soft);
+  --ui-highlight: var(--ao-brand-hi);
+
+  --ui-bg: var(--ao-bg);
+  --ui-surface: var(--ao-surface);
+  --ui-border: var(--ao-border);
+  --ui-text: var(--ao-text);
+  --ui-text-muted: var(--ao-muted);
+
+  --ui-success: var(--ao-success);
+  --ui-warning: var(--ao-warning);
+  --ui-danger: var(--ao-danger);
+
+  /*
+   * Derived states. The approved list gives no hover or pressed values, so
+   * these are mixes of approved tokens rather than new colours — a tint of
+   * the surface or the brand, never a hex somebody chose.
+   */
+  --ui-surface-sunken: color-mix(in srgb, var(--ao-track) 55%, var(--ao-surface));
+  --ui-surface-hover: var(--ao-track);
+  --ui-accent-hover: color-mix(in srgb, var(--ao-brand-deep) 85%, var(--ao-text));
+  --ui-danger-hover: color-mix(in srgb, var(--st-bad) 88%, var(--ao-text));
+  --ui-overlay: color-mix(in srgb, var(--ao-navy-ink) 38%, transparent);
+
+  /* Sidebar, through the contract */
+  --ui-nav-bg: var(--ao-sidebar);
+  --ui-nav-text: var(--ao-sidebar-text);
+  --ui-nav-text-muted: var(--ao-sidebar-eyebrow);
+  --ui-nav-brand: var(--ao-sidebar-brand);
+  --ui-nav-caption: var(--ao-sidebar-caption);
+  --ui-nav-border: var(--ao-sidebar-divider);
+  --ui-nav-hover-bg: color-mix(in srgb, var(--ao-sidebar-text) 10%, transparent);
+  --ui-nav-active-bg: color-mix(in srgb, var(--ao-brand) 18%, transparent);
+  --ui-nav-active-text: var(--ao-brand-hi);
+
+  /* Status pills */
+  --ui-pill-good-fg: var(--st-good);
+  --ui-pill-good-bg: var(--st-good-bg);
+  --ui-pill-bad-fg: var(--st-bad);
+  --ui-pill-bad-bg: var(--st-bad-bg);
+  --ui-pill-warn-fg: var(--st-warn);
+  --ui-pill-warn-bg: var(--st-warn-bg);
+  --ui-pill-info-fg: var(--st-info);
+  --ui-pill-info-bg: var(--st-info-bg);
+  --ui-pill-neutral-fg: var(--st-neutral);
+  --ui-pill-neutral-bg: var(--st-neutral-bg);
+
+  /* Chart series, in the approved navy order */
+  --ui-series-1: var(--chart-navy-1);
+  --ui-series-2: var(--chart-navy-2);
+  --ui-series-3: var(--chart-navy-3);
+  --ui-series-4: var(--chart-navy-4);
+  --ui-series-5: var(--chart-navy-5);
+  --ui-series-6: var(--ao-brand);
+  --ui-series-7: var(--ao-brand-deep);
+  --ui-series-8: var(--ao-neutral);
+  --ui-grid-line: var(--chart-grid);
+
+  /* ---------------------------------------------------------------- */
+  /* 3. Type, shape and density — from v129                            */
+  /* ---------------------------------------------------------------- */
+
+  /*
+   * Inter. Currently the @fontsource variable build, which registers as
+   * 'Inter Variable'; v129 embeds its own static woff2 files. Extracting those
+   * is still open — see the note in docs/decisions.md D-019 — so both names
+   * are listed and the rendering does not change either way.
+   */
   --ui-font-sans: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --ui-font-mono: ui-monospace, Menlo, Consolas, 'SFMono-Regular', monospace;
+  --ui-font-mono: ui-monospace, Menlo, Consolas, monospace;
+
+  /* Shell base is 14px, per v129. */
   --ui-text-xs: 11px;
-  --ui-text-sm: 12.5px;
-  --ui-text-md: 13.5px;
+  --ui-text-sm: 12px;
+  --ui-text-md: 14px;
   --ui-text-lg: 16px;
   --ui-text-xl: 20px;
+  --ui-text-brand: 18px;
 
-  /* Density, radius, elevation */
+  --ui-weight-regular: 400;
+  --ui-weight-medium: 500;
+  --ui-weight-semibold: 600;
+  --ui-weight-brand: 650;
+  --ui-weight-bold: 700;
+
+  --ui-brand-tracking: -0.4px;
+  --ui-caption-tracking: 1.45px;
+
+  /* 4px on controls, 11–12px on cards. Nothing rounder. */
   --ui-radius-sm: 4px;
-  --ui-radius-md: 6px;
-  --ui-radius-lg: 10px;
-  --ui-shadow-sm: 0 1px 2px rgb(16 24 40 / 6%);
-  --ui-shadow-md: 0 4px 12px rgb(16 24 40 / 10%);
-  --ui-focus-ring: 0 0 0 2px var(--ui-surface), 0 0 0 4px var(--ui-accent-strong);
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 11px;
 
-  --ui-nav-width: 232px;
+  /*
+   * v129 is flat: hairline borders, no drop shadows. These stay declared so
+   * components can reference them, and resolve to nothing.
+   */
+  --ui-shadow-sm: none;
+  --ui-shadow-md: none;
+  --ui-focus-ring: 0 0 0 2px var(--ao-surface), 0 0 0 4px var(--ao-brand-deep);
+
+  --ui-nav-width: 222px;
   --ui-nav-width-collapsed: 56px;
+  --ui-nav-brand-height: 78px;
   --ui-topbar-height: 44px;
   --ui-row-height: 34px;
 
-  /* Spacing scale. Dense by design: enterprise tables, not marketing pages. */
   --ui-space-1: 2px;
   --ui-space-2: 4px;
   --ui-space-3: 6px;
@@ -95,28 +209,12 @@
   --ui-space-8: 24px;
   --ui-space-9: 32px;
 
-  /* Control sizing, shared by Button, Input, Select and friends */
   --ui-control-height: 30px;
   --ui-control-height-sm: 24px;
   --ui-control-height-lg: 36px;
 
-  /* Surfaces layered above the page background */
-  --ui-surface-sunken: #fafbfc;
-  --ui-surface-hover: #f3f5f7;
-  --ui-overlay: rgb(16 24 40 / 38%);
   --ui-z-dropdown: 100;
   --ui-z-drawer: 200;
   --ui-z-modal: 300;
   --ui-z-toast: 400;
-
-  /* Categorical series for charts, derived from the brand rather than a default palette */
-  --ui-series-1: #7f6038;
-  --ui-series-2: #2f6f9f;
-  --ui-series-3: #19845b;
-  --ui-series-4: #b7791f;
-  --ui-series-5: #8a5fa8;
-  --ui-series-6: #c0262d;
-  --ui-series-7: #4d7c6f;
-  --ui-series-8: #94a3b8;
-  --ui-grid-line: #eef1f4;
 }

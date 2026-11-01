@@ -10,7 +10,7 @@
     "dev": "pnpm --filter @aegis/console dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . && prettier --check . && node scripts/check-colors.mjs",
     "format": "prettier --write .",
     "contract:lint": "redocly lint contracts/aegis-one.openapi.yaml",
     "contract:types": "openapi-typescript contracts/aegis-one.openapi.yaml -o apps/aegis-one/src/api/schema.d.ts",
@@ -26,7 +26,8 @@
     "load:smoke": "k6 run -e PROFILE=smoke loadtest/scenarios.js",
     "load:load": "k6 run -e PROFILE=load loadtest/scenarios.js",
     "load:stress": "k6 run -e PROFILE=stress loadtest/scenarios.js",
-    "load:soak": "k6 run -e PROFILE=soak loadtest/scenarios.js"
+    "load:soak": "k6 run -e PROFILE=soak loadtest/scenarios.js",
+    "check:colors": "node scripts/check-colors.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

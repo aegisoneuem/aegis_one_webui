@@ -45,13 +45,13 @@
 .table th,
 .table td {
   padding: var(--ui-space-3) var(--ui-space-5);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ao-border);
   text-align: left;
   white-space: nowrap;
 }
 
 .table th {
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -104,13 +104,13 @@
 }
 
 .healthMessage {
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-xs);
   line-height: 1.4;
 }
 
 .healthLatency {
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-xs);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

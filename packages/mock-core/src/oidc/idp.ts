@@ -365,17 +365,26 @@ export function redeemAuthCode(
   return entry.userId;
 }
 
+/*
+ * The identity provider's sign-in pages.
+ *
+ * These are served by the mock IdP, not by the console, so they cannot read
+ * the console's tokens.css — the values are written out. Every one is from
+ * the approved v129 palette, and `pnpm check:colors` covers this file.
+ *
+ * Shape follows v129: 4px on controls, 11px on the card, hairline borders,
+ * no drop shadow.
+ */
 const IDP_CSS = `:root{color-scheme:light}
 body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-background:#f5f6f7;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#1b2430}
-.card{width:min(380px,calc(100vw - 32px));padding:28px;background:#fff;border:1px solid #e5e8eb;border-radius:10px;
-box-shadow:0 4px 12px rgb(16 24 40 / 10%)}
-h1{margin:0 0 6px;font-size:19px}
-.muted{margin:0 0 20px;color:#47607a;font-size:13px;line-height:1.5}
-.error{margin:0 0 16px;padding:8px 10px;background:#fcebec;color:#c0262d;border-radius:6px;font-size:13px}
-label{display:block;margin:14px 0 5px;font-size:12.5px;font-weight:500}
-input{width:100%;box-sizing:border-box;height:34px;padding:0 10px;border:1px solid #e5e8eb;border-radius:6px;font:inherit;font-size:13.5px}
-input:focus{outline:none;border-color:#7f6038;box-shadow:0 0 0 3px rgb(127 96 56 / 18%)}
-button{width:100%;height:36px;margin-top:20px;border:0;border-radius:6px;background:#7f6038;color:#fff;
-font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
-button:hover{background:#6b5030}`;
+background:#F5F6F7;font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;color:#20262E}
+.card{width:min(380px,calc(100vw - 32px));padding:28px;background:#FFFFFF;border:1px solid #E5E9ED;border-radius:11px}
+h1{margin:0 0 6px;font-size:18px;font-weight:650;letter-spacing:-0.4px}
+.muted{margin:0 0 20px;color:#69717D;font-size:13px;line-height:1.5}
+.error{margin:0 0 16px;padding:8px 10px;background:#FCEBEC;color:#C0262D;border-radius:4px;font-size:13px}
+label{display:block;margin:14px 0 5px;font-size:12px;font-weight:500}
+input{width:100%;box-sizing:border-box;height:34px;padding:0 10px;border:1px solid #E5E9ED;border-radius:4px;font:inherit;font-size:14px;color:#20262E}
+input:focus{outline:none;border-color:#7F6038;box-shadow:0 0 0 2px #FFFFFF,0 0 0 4px #7F6038}
+button{width:100%;height:36px;margin-top:20px;border:0;border-radius:4px;background:#7F6038;color:#FFFFFF;
+font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+button:hover{background:#18354F}`;

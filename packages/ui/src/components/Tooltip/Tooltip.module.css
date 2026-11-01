@@ -6,8 +6,8 @@
   max-width: 280px;
   padding: var(--ui-space-3) var(--ui-space-4);
   border: 0;
-  background: #1b2430;
-  color: #fff;
+  background: var(--ui-text);
+  color: var(--ui-surface);
   font-size: var(--ui-text-xs);
   line-height: 1.45;
 }

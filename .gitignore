@@ -11,3 +11,7 @@ storybook-static/
 test-results/
 tools/
 security/.zap-*.generated.yaml
+
+# The reference build is the specification for every colour and layout.
+# scripts/check-colors.mjs refuses to run without it.
+!design-reference/

@@ -86,7 +86,7 @@
 .complete .marker {
   border-color: var(--ui-success);
   background: var(--ui-success);
-  color: #fff;
+  color: var(--ui-surface);
 }
 
 .complete .button {
@@ -102,7 +102,7 @@
 .current .marker {
   border-color: var(--ui-accent-strong);
   background: var(--ui-accent-strong);
-  color: #fff;
+  color: var(--ui-surface);
 }
 
 .current .label {
@@ -112,5 +112,5 @@
 .invalid .marker {
   border-color: var(--ui-danger);
   background: var(--ui-danger);
-  color: #fff;
+  color: var(--ui-surface);
 }

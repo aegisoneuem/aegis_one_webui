@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   min-height: 100vh;
-  background: var(--surface);
+  background: var(--ao-surface);
 }
 
 @media (width <= 900px) {
@@ -35,7 +35,7 @@
 }
 
 .wordmark {
-  color: var(--text);
+  color: var(--ao-text);
   font-size: 17px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -51,7 +51,7 @@
 .lede {
   max-width: 44ch;
   margin: 0 0 var(--ui-space-8);
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-md);
   line-height: 1.6;
 }
@@ -67,8 +67,8 @@
 .note {
   padding-top: var(--ui-space-6);
   margin-top: var(--ui-space-8);
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
+  border-top: 1px solid var(--ao-border);
+  color: var(--ao-muted);
   font-size: var(--ui-text-xs);
   line-height: 1.6;
   max-width: 46ch;
@@ -79,8 +79,8 @@
   max-width: 340px;
   padding: var(--ui-space-4) var(--ui-space-5);
   border-radius: var(--ui-radius-md);
-  background: var(--pill-bad-bg);
-  color: var(--pill-bad-fg);
+  background: var(--st-bad-bg);
+  color: var(--st-bad);
   font-size: var(--ui-text-sm);
   line-height: 1.5;
 }
@@ -91,8 +91,8 @@
   flex-direction: column;
   justify-content: center;
   padding: var(--ui-space-9) clamp(32px, 5vw, 72px);
-  background: var(--sidebar);
-  color: #e6e9ee;
+  background: var(--ao-sidebar);
+  color: var(--ao-sidebar-text);
 }
 
 .asideTitle {
@@ -101,7 +101,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--brand);
+  color: var(--ao-brand);
 }
 
 .stats {
@@ -125,7 +125,7 @@
 }
 
 .statLabel {
-  color: #8e97a4;
+  color: var(--ao-sidebar-caption);
   font-size: var(--ui-text-xs);
   line-height: 1.5;
 }
@@ -133,8 +133,8 @@
 .statusLine {
   margin-top: var(--ui-space-9);
   padding-top: var(--ui-space-6);
-  border-top: 1px solid #2f343d;
-  color: #8e97a4;
+  border-top: 1px solid var(--ao-sidebar-divider);
+  color: var(--ao-sidebar-caption);
   font-size: var(--ui-text-xs);
   line-height: 1.6;
 }
@@ -146,6 +146,6 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  color: var(--text-muted);
+  color: var(--ao-muted);
   font-size: var(--ui-text-sm);
 }

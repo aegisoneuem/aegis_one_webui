@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, ErrorState, PageHeader, Skeleton, StatusPill } from '@aegis/ui';
 import { useResource } from '../app/useListController';
 import { humanise, toneFor } from '../app/format';
-import { buildQuery } from '../api/client';
+import { pagePath, query } from '../app/safeNavigate';
 import type { InsightFinding } from '../api/types';
 import styles from './Overview.module.css';
 
@@ -44,9 +44,9 @@ export default function Insight() {
             {finding.action ? (
               <Button
                 onClick={() =>
-                  void navigate(
-                    `/${finding.action?.page ?? ''}${buildQuery(finding.action?.filter ?? {})}`,
-                  )
+                  // The page name comes from the API, so it is checked against
+                  // the nineteen real pages before it becomes a path.
+                  void navigate(`${pagePath(finding.action?.page ?? '')}${query(finding.action?.filter)}`)
                 }
               >
                 {finding.action.label}

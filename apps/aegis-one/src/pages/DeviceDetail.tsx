@@ -3,6 +3,7 @@ import { Button, Card, ErrorState, PageHeader, Skeleton, StatusPill, Tabs } from
 import { useResource } from '../app/useListController';
 import { useCan } from '../app/auth';
 import { bytes, dateTime, duration, humanise, num, pct, relative, toneFor } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import type { Device } from '../api/types';
 import styles from './DeviceDetail.module.css';
 
@@ -112,7 +113,7 @@ export default function DeviceDetail() {
               {humanise(d.status)}
             </StatusPill>
             {canRunScripts ? (
-              <Button size="sm" onClick={() => void navigate(`/liveops?deviceIds=${d.id}`)}>
+              <Button size="sm" onClick={() => void navigate(`/liveops?deviceIds=${segment(d.id)}`)}>
                 Run script
               </Button>
             ) : null}
@@ -120,7 +121,7 @@ export default function DeviceDetail() {
               <Button
                 size="sm"
                 variant="primary"
-                onClick={() => void navigate(`/deployments/new?deviceIds=${d.id}`)}
+                onClick={() => void navigate(`/deployments/new?deviceIds=${segment(d.id)}`)}
               >
                 New action
               </Button>
@@ -143,7 +144,7 @@ export default function DeviceDetail() {
       <Tabs
         label="Device sections"
         value={tab}
-        onChange={(next) => void navigate(`/devices/${deviceId}/${next}`)}
+        onChange={(next) => void navigate(`/devices/${segment(deviceId)}/${segment(next)}`)}
         tabs={TABS}
       />
 

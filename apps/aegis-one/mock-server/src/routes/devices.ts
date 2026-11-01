@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { notFound, zoneScope, type Db } from '@aegis/mock-core';
+import { TtlCache, notFound, zoneScope, type Db } from '@aegis/mock-core';
 import { shapeRow } from './resources';
 
 /**
@@ -10,6 +10,9 @@ import { shapeRow } from './resources';
  * IDOR: `/devices/dev-1/software` is reachable without ever calling
  * `/devices/dev-1`.
  */
+/** Same reasoning as the aggregates: six full scans, shared for a few seconds. */
+const facetCache = new TtlCache<unknown>({ ttlMs: Number(process.env['MOCK_AGGREGATE_TTL_MS'] ?? 5000) });
+
 export function registerDeviceRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   const assertVisible = (
     deviceId: string,
@@ -112,7 +115,8 @@ export function registerDeviceRoutes(app: FastifyInstance, db: Db, basePath: str
   });
 
   /** Facet counts for the Devices filter bar, over the same filters as the list. */
-  app.get(`${basePath}/devices/facets`, async (request) => {
+  app.get(`${basePath}/devices/facets`, async (request) =>
+    facetCache.get((request.auth?.zoneIds ?? []).join(',') || 'all', () => {
     const scope = request.auth ? zoneScope(request.auth) : undefined;
     const where = scope ? `WHERE ${scope.sql}` : '';
     const params = scope?.params ?? [];
@@ -135,5 +139,6 @@ export function registerDeviceRoutes(app: FastifyInstance, db: Db, basePath: str
       agentVersion: facet('agent_version'),
       kind: facet('kind'),
     };
-  });
+    }),
+  );
 }

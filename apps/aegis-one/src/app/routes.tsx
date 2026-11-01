@@ -83,7 +83,12 @@ interface PageRoute {
 }
 
 const PAGES: PageRoute[] = [
-  { path: undefined, index: true, component: Overview, handle: { pageId: 'home' } },
+  {
+    path: undefined,
+    index: true,
+    component: Overview,
+    handle: { pageId: 'home', permission: 'overview:read' },
+  },
   {
     path: 'devices',
     component: Devices,
@@ -127,15 +132,15 @@ const PAGES: PageRoute[] = [
   {
     path: 'profiles',
     component: Configuration,
-    handle: { pageId: 'profiles', permission: 'profiles:read' },
+    handle: { pageId: 'profiles', permission: 'config:read' },
   },
   { path: 'dex', component: Dex, handle: { pageId: 'dex', permission: 'dex:read' } },
   {
     path: 'insight',
     component: Insight,
-    handle: { pageId: 'insight', permission: 'insight:read' },
+    handle: { pageId: 'insight', permission: 'insight:run' },
   },
-  { path: 'sites', component: Zones, handle: { pageId: 'sites', permission: 'sites:read' } },
+  { path: 'sites', component: Zones, handle: { pageId: 'sites', permission: 'zones:read' } },
   {
     path: 'peercache',
     component: PeerCache,
@@ -205,7 +210,7 @@ const SUB_ROUTES: PageRoute[] = [
   {
     path: 'reports/custom',
     component: CustomReportBuilder,
-    handle: { pageId: 'reports', crumbs: ['Custom report'], permission: 'reports:create' },
+    handle: { pageId: 'reports', crumbs: ['Custom report'], permission: 'reports:build' },
   },
 ];
 

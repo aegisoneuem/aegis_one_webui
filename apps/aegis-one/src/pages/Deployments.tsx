@@ -3,6 +3,7 @@ import { Button, Select, StatusPill, type DataTableColumn } from '@aegis/ui';
 import { useListController } from '../app/useListController';
 import { useCan } from '../app/auth';
 import { humanise, num, relative, toneFor } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import { ResourceList } from './shared/ResourceList';
 import type { Deployment } from '../api/types';
 
@@ -115,7 +116,7 @@ export default function Deployments() {
       controller={controller}
       getRowId={(d) => d.id}
       searchPlaceholder="Search action name or content"
-      onRowClick={(d) => void navigate(`/deployments/${d.id}`)}
+      onRowClick={(d) => void navigate(`/deployments/${segment(d.id)}`)}
       emptyTitle="No deployments match these filters"
       emptyDescription="Start one from Software, Patches, or with New action."
       chips={

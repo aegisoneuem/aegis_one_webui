@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { parse } from 'yaml';
 import { createHash, randomUUID } from 'node:crypto';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRng, openDb, type Db, type Rng } from '@aegis/mock-core';
 import {
@@ -907,121 +908,47 @@ function seedIntegrations(db: Db, rng: Rng): void {
   })();
 }
 
-/** The five built-in roles from the contract's x-roles matrix. */
-const ROLES: readonly (readonly [string, string, string[], boolean])[] = [
-  ['role-super-admin', 'Super Admin', ['*'], true],
-  [
-    'role-admin',
-    'Admin',
-    [
-      'devices:*',
-      'groups:*',
-      'enrollment:*',
-      'patches:*',
-      'software:*',
-      'liveops:*',
-      'deployments:*',
-      'vulns:*',
-      'profiles:*',
-      'dex:read',
-      'insight:read',
-      'sites:*',
-      'peercache:*',
-      'reports:*',
-      'integrations:*',
-      'admin:users',
-      'admin:roles',
-      'admin:tokens',
-      'licensing:read',
-      'diagnostics:read',
-    ],
-    true,
+/**
+ * The built-in roles, read straight out of the contract's `x-roles` table.
+ *
+ * This used to be a second copy maintained by hand, and it drifted: the seeded
+ * Auditor was missing `overview:read` and used names the API never checks, so
+ * a perfectly valid auditor got 403 on the landing page. One table, one
+ * source.
+ */
+function contractRoles(): { id: string; name: string; permissions: string[]; system: boolean }[] {
+  const contractPath = resolve(here, '../../../../../contracts/aegis-one.openapi.yaml');
+  const doc = parse(readFileSync(contractPath, 'utf8')) as {
+    'x-roles'?: Record<string, string[] | string>;
+  };
+  const table = doc['x-roles'] ?? {};
+
+  return Object.entries(table)
+    .filter(([name, permissions]) => name !== 'description' && Array.isArray(permissions))
+    .map(([name, permissions]) => ({
+      id: `role-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name,
+      permissions: permissions as string[],
+      system: true,
+    }));
+}
+
+/** One scoped role beyond the built-ins, to exercise zone restriction. */
+const SCOPED_ROLE = {
+  id: 'role-zone-jaipur',
+  name: 'Jaipur Branch Operator',
+  permissions: [
+    'overview:read',
+    'devices:read',
+    'devices:action',
+    'patches:read',
+    'patches:deploy',
+    'liveops:read',
+    'liveops:run',
+    'deployments:read',
   ],
-  [
-    'role-operator',
-    'Operator',
-    [
-      'devices:read',
-      'devices:action',
-      'groups:read',
-      'patches:read',
-      'patches:deploy',
-      'software:read',
-      'software:deploy',
-      'liveops:read',
-      'liveops:run',
-      'deployments:read',
-      'deployments:create',
-      'vulns:read',
-      'profiles:read',
-      'dex:read',
-      'insight:read',
-      'sites:read',
-      'peercache:read',
-      'reports:read',
-      'diagnostics:read',
-    ],
-    true,
-  ],
-  [
-    'role-auditor',
-    'Auditor',
-    [
-      'devices:read',
-      'groups:read',
-      'enrollment:read',
-      'patches:read',
-      'software:read',
-      'liveops:read',
-      'deployments:read',
-      'vulns:read',
-      'profiles:read',
-      'dex:read',
-      'insight:read',
-      'sites:read',
-      'peercache:read',
-      'reports:read',
-      'reports:export',
-      'integrations:read',
-      'admin:audit',
-      'licensing:read',
-      'diagnostics:read',
-    ],
-    true,
-  ],
-  [
-    'role-readonly',
-    'Read-only',
-    [
-      'devices:read',
-      'groups:read',
-      'patches:read',
-      'software:read',
-      'deployments:read',
-      'vulns:read',
-      'profiles:read',
-      'dex:read',
-      'sites:read',
-      'peercache:read',
-      'reports:read',
-    ],
-    true,
-  ],
-  [
-    'role-zone-jaipur',
-    'Jaipur Branch Operator',
-    [
-      'devices:read',
-      'devices:action',
-      'patches:read',
-      'patches:deploy',
-      'liveops:read',
-      'liveops:run',
-      'deployments:read',
-    ],
-    false,
-  ],
-];
+  system: false,
+};
 
 function seedUsersAndRoles(db: Db, rng: Rng): void {
   const insertRole = db.prepare(
@@ -1042,15 +969,17 @@ function seedUsersAndRoles(db: Db, rng: Rng): void {
     ['usr-008', 'vikram.rao@example.co.in', 'Vikram Rao', 'Admin', []],
   ];
 
+  const roles = [...contractRoles(), SCOPED_ROLE];
+
   db.transaction(() => {
-    for (const [id, name, permissions, system] of ROLES) {
+    for (const role of roles) {
       insertRole.run(
-        id,
-        name,
-        JSON.stringify(permissions),
-        system ? 1 : 0,
-        JSON.stringify(name === 'Jaipur Branch Operator' ? ['zn-jai-br'] : []),
-        users.filter((u) => u[3] === name).length,
+        role.id,
+        role.name,
+        JSON.stringify(role.permissions),
+        role.system ? 1 : 0,
+        JSON.stringify(role.name === 'Jaipur Branch Operator' ? ['zn-jai-br'] : []),
+        users.filter((u) => u[3] === role.name).length,
       );
     }
     for (const [id, email, name, role, zoneIds] of users) {

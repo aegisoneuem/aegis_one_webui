@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { zoneScope, type Db } from '@aegis/mock-core';
+import { TtlCache, zoneScope, type Db } from '@aegis/mock-core';
 import { shapeRow } from './resources';
 
 /**
@@ -8,6 +8,18 @@ import { shapeRow } from './resources';
  * All of them are computed in SQL. Sending the client 50,000 rows so it can
  * count them itself is the thing the performance budget exists to prevent.
  */
+/**
+ * Estate-wide figures change on the scale of minutes, so they are computed at
+ * most once every few seconds and shared. Keyed by the caller's zone scope,
+ * never by user: two users with the same scope see the same estate, and one
+ * with a narrower scope must not read the wider cache entry.
+ */
+const AGGREGATE_TTL_MS = Number(process.env['MOCK_AGGREGATE_TTL_MS'] ?? 5000);
+const aggregates = new TtlCache<unknown>({ ttlMs: AGGREGATE_TTL_MS });
+
+const scopeKey = (zoneIds: readonly string[]): string =>
+  zoneIds.length === 0 ? 'all' : [...zoneIds].sort().join(',');
+
 export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   const scoped = (zoneIds: readonly string[]) => {
     const scope = zoneScope({ zoneIds: [...zoneIds] });
@@ -18,7 +30,8 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
   const many = <T>(sql: string, params: unknown[] = []): T[] =>
     db.prepare(sql).all(...params) as T[];
 
-  app.get(`${basePath}/overview`, async (request) => {
+  app.get(`${basePath}/overview`, async (request) =>
+    aggregates.get(`overview:${scopeKey(request.auth?.zoneIds ?? [])}`, () => {
     const { where, params } = scoped(request.auth?.zoneIds ?? []);
 
     const totals = one<{
@@ -93,9 +106,11 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
         `SELECT component, status, latency_ms AS latencyMs, message, checked_at AS checkedAt FROM service_health ORDER BY status DESC, component`,
       ),
     };
-  });
+    }),
+  );
 
-  app.get(`${basePath}/dex`, async (request) => {
+  app.get(`${basePath}/dex`, async (request) =>
+    aggregates.get(`dex:${scopeKey(request.auth?.zoneIds ?? [])}`, () => {
     const { where, params } = scoped(request.auth?.zoneIds ?? []);
     return {
       overall: one(`SELECT ROUND(AVG(dex_score), 1) AS score FROM devices ${where}`, params),
@@ -126,7 +141,8 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
         params,
       ),
     };
-  });
+    }),
+  );
 
   /**
    * AEGIS Insight: the same aggregates, framed as findings with a suggested

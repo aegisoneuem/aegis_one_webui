@@ -16,6 +16,7 @@ import {
 } from '@aegis/ui';
 import { api, ApiError, type Page } from '../api/client';
 import { humanise, num } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import type { Deployment, DeviceGroup, SoftwareTitle, Zone } from '../api/types';
 import styles from './DeploymentWizard.module.css';
 
@@ -149,7 +150,7 @@ export default function DeploymentWizard() {
     step === 'network' ||
     step === 'options';
 
-  const goTo = (id: string) => void navigate(`/deployments/new/${id}`);
+  const goTo = (id: string) => void navigate(`/deployments/new/${segment(id)}`);
 
   const create = useMutation({
     mutationFn: () =>
@@ -177,7 +178,7 @@ export default function DeploymentWizard() {
         },
       }),
     onSuccess: (deployment) =>
-      void navigate(`/deployments/created/${deployment.id}`, { replace: true }),
+      void navigate(`/deployments/created/${segment(deployment.id)}`, { replace: true }),
     onError: (err) =>
       toast.show({
         tone: 'error',

@@ -76,3 +76,82 @@ for how this differs from the reference build.
   matrix is a first proposal for review; it contains no remote-control permission.
 - Remote script execution is `liveops/script-jobs`: submit, poll, list per-endpoint results. No
   stream, socket or session resource exists.
+
+## D-011 — The software catalogue drops three remote-access titles
+
+Product rule 4 removes remote control from the console. It says nothing about
+which third-party software an estate happens to have installed, and a UEM
+console that could not report AnyDesk or TeamViewer would be worse at its job.
+
+So the Remote Access category stays, with one exception: the three titles whose
+names literally contain "Remote Desktop" or "Remote Control" are not seeded —
+Microsoft Remote Desktop, Remote Desktop Connection Manager and Chrome Remote
+Desktop Host. A row reading "Microsoft Remote Desktop" in a console that
+deliberately has no remote control reads like a feature, and the point of the
+rule is that nobody should be able to think the console offers one.
+
+AnyDesk, TeamViewer, Citrix Workspace and Omnissa Horizon Client remain.
+
+## D-012 — The contract is read, never restated
+
+Anything expressed in the contract is loaded from it at runtime rather than
+copied: request schemas are compiled from the spec, permissions come from
+`x-required-permission`, and the seed reads the role matrix out of `x-roles`.
+
+This started as a preference and became a rule after three drift incidents in
+one build, each caught by a test, each more expensive than agreeing the change
+would have been:
+
+- The wizard sent `software-install` where the contract says `install-software`,
+  so every submit failed after six filled-in steps.
+- The seeded role matrix was a hand-maintained copy of `x-roles` and had lost
+  `overview:read` for the Auditor, so auditors got 403 on the landing page.
+- The console checked `profiles:read` and `sites:read`; the contract says
+  `config:read` and `zones:read`.
+
+A second copy of a fact drifts. The only reliable fix is not to have one.
+
+## D-013 — Estate aggregates are cached for five seconds
+
+Overview, DEX and the Devices facets each sweep the whole device table.
+better-sqlite3 is synchronous, so those sweeps do not merely cost CPU — they
+block every other request behind them. Recomputing them per reader is the main
+reason the first load run showed p95 above two seconds.
+
+`TtlCache` holds them for five seconds, keyed by the caller's zone scope.
+Keyed by scope rather than by user, because two users with the same scope see
+the same estate — and because a narrower scope must never read a wider entry.
+
+Five seconds is short enough that nobody notices and long enough that twenty
+concurrent readers pay for one computation. It is a mock-server concern: a real
+database serves these concurrently and may not need it at all.
+
+## D-014 — Every dynamic path goes through safeNavigate
+
+React Router 6 has an open-redirect issue where a backslash in a `to` value is
+treated as a scheme-relative URL. It is fixed only in v7, and the stack is
+pinned to v6.
+
+Rather than accept the risk in the abstract, `src/app/safeNavigate.ts` escapes
+every dynamic path segment and allowlists the one page name the server
+supplies (the AEGIS Insight action button). Ids are `encodeURIComponent`-escaped
+at every call site.
+
+This is worth keeping after an eventual v7 upgrade. Building a path out of a
+value someone else chose is the kind of thing that should look deliberate.
+
+## D-015 — Two pnpm supply-chain policies are documented, not enabled
+
+Semgrep flagged three missing pnpm settings. `blockExoticSubdeps` is on.
+`minimumReleaseAge` and `trustPolicy` are not, and the reasoning is in
+docs/vapt-checklist.md as AR-1.
+
+Both are correct controls that cannot be retrofitted onto an existing lockfile:
+a ten-day minimum age rejects 78 legitimate entries, three days still rejects
+ten, and `no-downgrade` rejects `semver@6.3.1` and `undici-types@6.21.0` as
+possible takeovers when they are ordinary old majors pulled in transitively.
+
+A policy that blocks `pnpm install` is a policy the next person deletes. A
+commented setting with the reason, the values and the trigger for enabling it
+survives; a broken install does not. Both go on at the next dependency refresh,
+with a lockfile rebuilt from a fresh resolution and a full test pass.

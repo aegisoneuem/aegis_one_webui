@@ -6,13 +6,13 @@ makes a screenshot, a load-test result or a failing test worth anything.
 
 ## The seed
 
-| | |
-| --- | --- |
-| Default seed | **`20260401`** |
-| Default device count | **50,000** |
-| Generator | `mulberry32`, in `packages/mock-core/src/db/rng.ts` |
-| Fixed "now" | `2026-11-01T09:30:00+05:30` |
-| Output | `apps/aegis-one/mock-server/data/aegis-mock.db` (SQLite) |
+|                      |                                                          |
+| -------------------- | -------------------------------------------------------- |
+| Default seed         | **`20260401`**                                           |
+| Default device count | **50,000**                                               |
+| Generator            | `mulberry32`, in `packages/mock-core/src/db/rng.ts`      |
+| Fixed "now"          | `2026-11-01T09:30:00+05:30`                              |
+| Output               | `apps/aegis-one/mock-server/data/aegis-mock.db` (SQLite) |
 
 `Math.random` is never used in seeding. Every value — a hostname, a last-seen
 timestamp, which CVEs land on which endpoint — comes from the same stream in
@@ -37,25 +37,25 @@ takes under two seconds.
 
 ## What gets generated
 
-| Table | Rows at 50,000 devices | Notes |
-| --- | --- | --- |
-| `devices` | 50,000 | Windows 10/11, Server 2016–2022, RHEL 8/9, Ubuntu 20.04–24.04, macOS 13–15, a small AIX set |
-| `device_software` | ~575,000 | Per-endpoint installs drawn from a 32-title catalogue |
-| `device_patches` | ~290,000 | Installed, pending, failed and not-applicable |
-| `device_vulnerabilities` | ~130,000 | Open, remediated and accepted-risk findings |
-| `zones` | 9 | Mumbai HQ, Delhi Branch, Bengaluru Campus, Jaipur Branch, Pune Data Centre, Hyderabad, Chennai, Kochi, Ahmedabad |
-| `software` | 32 | With publisher, category and size |
-| `patches` | 31 | Windows, Linux, macOS, third-party and firmware |
-| `vulnerabilities` | 16 | CVEs with CVSS and a known-exploited flag |
-| `config_checks` | 200 | Against CIS and an internal baseline |
-| `device_groups` | 12 | Static and rule-based |
-| `deployments` | 15 | With ~4,500 per-endpoint results |
-| `live_jobs` | 8 | Script, live-data and log-collection jobs, with per-endpoint output |
-| `log_bundles` | 600 | Collected diagnostic bundles |
-| `peers` | ~24 | Peer-cache nodes in the zones that have caching |
-| `users` / `roles` | 8 / 6 | One account per built-in role, plus a zone-scoped role |
-| `api_tokens` | 5 | Only SHA-256 hashes are stored |
-| `audit_log` | 1,200 | Spread over 90 days |
+| Table                    | Rows at 50,000 devices | Notes                                                                                                            |
+| ------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `devices`                | 50,000                 | Windows 10/11, Server 2016–2022, RHEL 8/9, Ubuntu 20.04–24.04, macOS 13–15, a small AIX set                      |
+| `device_software`        | ~575,000               | Per-endpoint installs drawn from a 32-title catalogue                                                            |
+| `device_patches`         | ~290,000               | Installed, pending, failed and not-applicable                                                                    |
+| `device_vulnerabilities` | ~130,000               | Open, remediated and accepted-risk findings                                                                      |
+| `zones`                  | 9                      | Mumbai HQ, Delhi Branch, Bengaluru Campus, Jaipur Branch, Pune Data Centre, Hyderabad, Chennai, Kochi, Ahmedabad |
+| `software`               | 32                     | With publisher, category and size                                                                                |
+| `patches`                | 31                     | Windows, Linux, macOS, third-party and firmware                                                                  |
+| `vulnerabilities`        | 16                     | CVEs with CVSS and a known-exploited flag                                                                        |
+| `config_checks`          | 200                    | Against CIS and an internal baseline                                                                             |
+| `device_groups`          | 12                     | Static and rule-based                                                                                            |
+| `deployments`            | 15                     | With ~4,500 per-endpoint results                                                                                 |
+| `live_jobs`              | 8                      | Script, live-data and log-collection jobs, with per-endpoint output                                              |
+| `log_bundles`            | 600                    | Collected diagnostic bundles                                                                                     |
+| `peers`                  | ~24                    | Peer-cache nodes in the zones that have caching                                                                  |
+| `users` / `roles`        | 8 / 6                  | One account per built-in role, plus a zone-scoped role                                                           |
+| `api_tokens`             | 5                      | Only SHA-256 hashes are stored                                                                                   |
+| `audit_log`              | 1,200                  | Spread over 90 days                                                                                              |
 
 ## Deliberate characteristics
 
@@ -81,14 +81,14 @@ a uniform green estate:
 All fixture accounts share one password and one MFA code. They are seed data
 for a mock identity provider, not credentials for anything:
 
-| Email | Role |
-| --- | --- |
-| `rohan.deshpande@example.co.in` | Super Admin |
-| `ananya.iyer@example.co.in` | Admin |
-| `siddharth.kulkarni@example.co.in` | Operator |
-| `kavya.chandrasekar@example.co.in` | Auditor |
-| `imran.shaikh@example.co.in` | Read-only |
-| `divya.nair@example.co.in` | Jaipur Branch Operator (zone-scoped) |
+| Email                              | Role                                 |
+| ---------------------------------- | ------------------------------------ |
+| `rohan.deshpande@example.co.in`    | Super Admin                          |
+| `ananya.iyer@example.co.in`        | Admin                                |
+| `siddharth.kulkarni@example.co.in` | Operator                             |
+| `kavya.chandrasekar@example.co.in` | Auditor                              |
+| `imran.shaikh@example.co.in`       | Read-only                            |
+| `divya.nair@example.co.in`         | Jaipur Branch Operator (zone-scoped) |
 
 Password `Aegis-Demo-2026`, MFA code `246813`. Both can be overridden with
 `MOCK_PASSWORD` and `MOCK_MFA_CODE`.

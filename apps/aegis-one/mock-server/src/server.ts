@@ -84,6 +84,18 @@ export async function start(): Promise<void> {
     tokens: { secret, issuer: ISSUER, audience: 'aegis-one-console' },
     // Everything else needs a bearer token. These four are how you get one.
     publicPaths: ['/auth/token', '/auth/refresh', '/auth/logout', '/health'],
+    /*
+     * Per-session request ceiling. The default of 600/minute is what a person
+     * clicking around needs with a lot of headroom; a load generator drives
+     * far more than any person does, so a run has to raise it deliberately
+     * rather than the limit being quietly weak for everyone.
+     */
+    rateLimits: {
+      max: Number(process.env['MOCK_RATE_MAX'] ?? 600),
+      windowMs: Number(process.env['MOCK_RATE_WINDOW_MS'] ?? 60_000),
+      authMax: Number(process.env['MOCK_AUTH_RATE_MAX'] ?? 10),
+      authWindowMs: Number(process.env['MOCK_AUTH_RATE_WINDOW_MS'] ?? 60_000),
+    },
     dev: process.env['NODE_ENV'] !== 'production',
     secure: process.env['MOCK_SECURE'] === '1',
     ...(process.env['MOCK_LATENCY_MAX']

@@ -23,6 +23,7 @@ import {
 } from '@aegis/ui';
 import { useResource } from '../app/useListController';
 import { humanise, num, pct } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import type { DexSummary } from '../api/types';
 import styles from './Overview.module.css';
 
@@ -201,7 +202,7 @@ export default function Dex() {
                 <tr
                   key={d.id}
                   className={styles.linkRow}
-                  onClick={() => void navigate(`/devices/${d.id}`)}
+                  onClick={() => void navigate(`/devices/${segment(d.id)}`)}
                 >
                   <th scope="row">{d.hostname}</th>
                   <td>{d.zoneName}</td>

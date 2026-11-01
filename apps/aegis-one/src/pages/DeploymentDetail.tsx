@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, ErrorState, KpiTile, PageHeader, Skeleton, StatusPill } from '@aegis/ui';
 import { useResource } from '../app/useListController';
 import { dateTime, humanise, num, pct, relative, toneFor } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import type { Deployment } from '../api/types';
 import styles from './DeviceDetail.module.css';
 import wizardStyles from './DeploymentWizard.module.css';
@@ -114,7 +115,7 @@ export default function DeploymentDetail() {
                       <Button
                         variant="link"
                         size="sm"
-                        onClick={() => void navigate(`/devices/${row.deviceId}`)}
+                        onClick={() => void navigate(`/devices/${segment(row.deviceId)}`)}
                       >
                         {row.hostname}
                       </Button>
@@ -173,7 +174,7 @@ export function DeploymentCreated() {
         endpoints report back.
       </p>
       <div className={wizardStyles.createdActions}>
-        <Button variant="primary" onClick={() => void navigate(`/deployments/${deploymentId}`)}>
+        <Button variant="primary" onClick={() => void navigate(`/deployments/${segment(deploymentId)}`)}>
           View progress
         </Button>
         <Button onClick={() => void navigate('/deployments/new')}>Create another</Button>

@@ -90,7 +90,7 @@ const COLUMNS: DataTableColumn<SoftwareTitle>[] = [
 
 export default function Software() {
   const [selected, setSelected] = useState<SoftwareTitle | null>(null);
-  const canDeploy = useCan('software:deploy');
+  const canDeploy = useCan('software:write');
   const controller = useListController<SoftwareTitle>({
     path: '/software',
     defaultSort: { id: 'installCount', desc: true },

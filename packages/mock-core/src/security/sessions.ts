@@ -26,6 +26,17 @@ export interface Session {
 export class SessionStore {
   private readonly byId = new Map<string, Session>();
   private readonly byHash = new Map<string, string>();
+  /**
+   * Hashes of tokens this session has already rotated away from.
+   *
+   * Without these, a superseded token is indistinguishable from a token that
+   * never existed, and both are quietly refused. That is the wrong outcome: a
+   * thief who redeems a stolen token *first* leaves the real user holding the
+   * superseded one, and silently rejecting the real user logs them out while
+   * the thief keeps a working session. Remembering spent hashes is what turns
+   * that into a detectable replay.
+   */
+  private readonly spentHashes = new Map<string, string>();
 
   create(
     userId: string,
@@ -54,21 +65,26 @@ export class SessionStore {
    */
   rotate(token: string): { session: Session; token: string } | null {
     const hash = hashToken(token);
+
+    // A token this session has already rotated away from. Two parties hold
+    // tokens for one session, which means one of them should not — so the
+    // whole family goes, including whatever the thief is holding.
+    const replayedFor = this.spentHashes.get(hash);
+    if (replayedFor) {
+      this.revoke(replayedFor);
+      return null;
+    }
+
     const sessionId = this.byHash.get(hash);
     if (!sessionId) return null;
 
     const session = this.byId.get(sessionId);
     if (!session) return null;
-
     if (session.revokedAt || Date.now() > session.expiresAt) return null;
 
-    if (session.tokenHash !== hash) {
-      // A superseded token from a live session: treat it as theft.
-      this.revoke(session.id);
-      return null;
-    }
-
     this.byHash.delete(hash);
+    this.spentHashes.set(hash, session.id);
+
     const next = newOpaqueToken();
     session.tokenHash = hashToken(next);
     this.byHash.set(session.tokenHash, session.id);
@@ -86,6 +102,7 @@ export class SessionStore {
     if (!session) return;
     session.revokedAt = Date.now();
     this.byHash.delete(session.tokenHash);
+    for (const [hash, id] of this.spentHashes) if (id === sessionId) this.spentHashes.delete(hash);
   }
 
   revokeAllFor(userId: string): void {
@@ -98,6 +115,7 @@ export class SessionStore {
     for (const [id, session] of this.byId) {
       if (now > session.expiresAt) {
         this.byHash.delete(session.tokenHash);
+        for (const [hash, owner] of this.spentHashes) if (owner === id) this.spentHashes.delete(hash);
         this.byId.delete(id);
       }
     }

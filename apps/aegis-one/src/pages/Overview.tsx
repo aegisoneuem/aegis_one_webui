@@ -25,6 +25,7 @@ import {
 import { useResource } from '../app/useListController';
 import { ApiError } from '../api/client';
 import { complianceTone, humanise, num, pct, relative, toneFor } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import type { Overview as OverviewData } from '../api/types';
 import styles from './Overview.module.css';
 
@@ -365,7 +366,7 @@ export default function Overview() {
                 <tr
                   key={d.id}
                   className={styles.linkRow}
-                  onClick={() => void navigate(`/deployments/${d.id}`)}
+                  onClick={() => void navigate(`/deployments/${segment(d.id)}`)}
                 >
                   <td>
                     <span className={styles.truncate}>{d.name}</span>

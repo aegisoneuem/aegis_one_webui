@@ -1,0 +1,147 @@
+{
+  "takenAt": "2026-11-01T20:24:54.240Z",
+  "concurrency": 20,
+  "seconds": 33.7,
+  "requests": 2287,
+  "errors": 161,
+  "errorRate": 7.04,
+  "requestsPerSecond": 67.8,
+  "journeys": [
+    {
+      "name": "global search",
+      "n": 137,
+      "p50": 921,
+      "p95": 1730,
+      "p99": 2215,
+      "max": 2332
+    },
+    {
+      "name": "overview aggregates",
+      "n": 137,
+      "p50": 627,
+      "p95": 1512,
+      "p99": 1621,
+      "max": 1690
+    },
+    {
+      "name": "vulnerability aggregation",
+      "n": 137,
+      "p50": 227,
+      "p95": 1343,
+      "p99": 1732,
+      "max": 1911
+    },
+    {
+      "name": "devices facets",
+      "n": 137,
+      "p50": 47,
+      "p95": 1276,
+      "p99": 1732,
+      "max": 1733
+    },
+    {
+      "name": "device vulnerabilities tab",
+      "n": 137,
+      "p50": 447,
+      "p95": 1219,
+      "p99": 1429,
+      "max": 1435
+    },
+    {
+      "name": "device diagnostics tab",
+      "n": 137,
+      "p50": 448,
+      "p95": 1219,
+      "p99": 1430,
+      "max": 1435
+    },
+    {
+      "name": "device patches tab",
+      "n": 137,
+      "p50": 446,
+      "p95": 1217,
+      "p99": 1424,
+      "max": 1434
+    },
+    {
+      "name": "device software tab",
+      "n": 137,
+      "p50": 433,
+      "p95": 1120,
+      "p99": 1424,
+      "max": 1433
+    },
+    {
+      "name": "script job submit (zone target)",
+      "n": 137,
+      "p50": 133,
+      "p95": 915,
+      "p99": 1636,
+      "max": 1637
+    },
+    {
+      "name": "script job results poll",
+      "n": 95,
+      "p50": 116,
+      "p95": 838,
+      "p99": 900,
+      "max": 900
+    },
+    {
+      "name": "groups list",
+      "n": 137,
+      "p50": 59,
+      "p95": 834,
+      "p99": 1100,
+      "max": 1108
+    },
+    {
+      "name": "reports list",
+      "n": 137,
+      "p50": 94,
+      "p95": 831,
+      "p99": 1025,
+      "max": 1025
+    },
+    {
+      "name": "device detail",
+      "n": 137,
+      "p50": 223,
+      "p95": 812,
+      "p99": 907,
+      "max": 1042
+    },
+    {
+      "name": "devices list (page 2 by cursor)",
+      "n": 137,
+      "p50": 167,
+      "p95": 799,
+      "p99": 1044,
+      "max": 1047
+    },
+    {
+      "name": "devices list (filter + sort + 100 rows)",
+      "n": 137,
+      "p50": 149,
+      "p95": 773,
+      "p99": 833,
+      "max": 834
+    },
+    {
+      "name": "deployment submit (group target)",
+      "n": 137,
+      "p50": 102,
+      "p95": 755,
+      "p99": 1252,
+      "max": 1635
+    },
+    {
+      "name": "token refresh",
+      "n": 137,
+      "p50": 82,
+      "p95": 696,
+      "p99": 1891,
+      "max": 1910
+    }
+  ]
+}

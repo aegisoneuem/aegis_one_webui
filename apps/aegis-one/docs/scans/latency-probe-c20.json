@@ -1,0 +1,148 @@
+{
+  "takenAt": "2026-11-01T20:30:47.860Z",
+  "concurrency": 20,
+  "seconds": 21.8,
+  "requests": 1685,
+  "errors": 0,
+  "deniedByRbac": 30,
+  "errorRate": 0,
+  "requestsPerSecond": 77.5,
+  "journeys": [
+    {
+      "name": "global search",
+      "n": 100,
+      "p50": 782,
+      "p95": 1173,
+      "p99": 1332,
+      "max": 1332
+    },
+    {
+      "name": "overview aggregates",
+      "n": 100,
+      "p50": 661,
+      "p95": 1078,
+      "p99": 1253,
+      "max": 1253
+    },
+    {
+      "name": "vulnerability aggregation",
+      "n": 100,
+      "p50": 471,
+      "p95": 1002,
+      "p99": 1215,
+      "max": 1215
+    },
+    {
+      "name": "device vulnerabilities tab",
+      "n": 100,
+      "p50": 609,
+      "p95": 990,
+      "p99": 1725,
+      "max": 1725
+    },
+    {
+      "name": "device diagnostics tab",
+      "n": 100,
+      "p50": 624,
+      "p95": 990,
+      "p99": 1732,
+      "max": 1732
+    },
+    {
+      "name": "device patches tab",
+      "n": 100,
+      "p50": 609,
+      "p95": 988,
+      "p99": 1725,
+      "max": 1725
+    },
+    {
+      "name": "devices facets",
+      "n": 100,
+      "p50": 269,
+      "p95": 984,
+      "p99": 1130,
+      "max": 1130
+    },
+    {
+      "name": "device software tab",
+      "n": 100,
+      "p50": 592,
+      "p95": 927,
+      "p99": 1017,
+      "max": 1017
+    },
+    {
+      "name": "device detail",
+      "n": 100,
+      "p50": 225,
+      "p95": 902,
+      "p99": 986,
+      "max": 986
+    },
+    {
+      "name": "devices list (page 2 by cursor)",
+      "n": 100,
+      "p50": 141,
+      "p95": 729,
+      "p99": 921,
+      "max": 921
+    },
+    {
+      "name": "groups list",
+      "n": 100,
+      "p50": 93,
+      "p95": 584,
+      "p99": 828,
+      "max": 828
+    },
+    {
+      "name": "devices list (filter + sort + 100 rows)",
+      "n": 100,
+      "p50": 124,
+      "p95": 383,
+      "p99": 522,
+      "max": 522
+    },
+    {
+      "name": "deployment submit (group target)",
+      "n": 100,
+      "p50": 89,
+      "p95": 357,
+      "p99": 828,
+      "max": 828
+    },
+    {
+      "name": "script job submit (zone target)",
+      "n": 100,
+      "p50": 92,
+      "p95": 190,
+      "p99": 785,
+      "max": 785
+    },
+    {
+      "name": "token refresh",
+      "n": 100,
+      "p50": 82,
+      "p95": 190,
+      "p99": 223,
+      "max": 223
+    },
+    {
+      "name": "reports list",
+      "n": 100,
+      "p50": 81,
+      "p95": 126,
+      "p99": 164,
+      "max": 164
+    },
+    {
+      "name": "script job results poll",
+      "n": 85,
+      "p50": 83,
+      "p95": 111,
+      "p99": 175,
+      "max": 175
+    }
+  ]
+}

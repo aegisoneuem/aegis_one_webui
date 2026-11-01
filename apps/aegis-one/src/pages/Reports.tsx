@@ -62,7 +62,7 @@ const COLUMNS: DataTableColumn<Report>[] = [
 
 export default function Reports() {
   const navigate = useNavigate();
-  const canCreate = useCan('reports:create');
+  const canCreate = useCan('reports:build');
   const controller = useListController<Report>({
     path: '/reports',
     defaultSort: { id: 'name', desc: false },

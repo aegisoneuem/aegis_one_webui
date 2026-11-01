@@ -326,3 +326,14 @@ CREATE TABLE enrollment_tokens (
   created_by TEXT NOT NULL,
   revoked_at TEXT
 );
+
+-- Indexes for the GROUP BY columns behind the Overview and facet aggregates.
+-- Without these each one is a full scan of 50,000 rows, and better-sqlite3 is
+-- synchronous, so concurrent requests queue behind it.
+CREATE INDEX idx_devices_department ON devices(department);
+CREATE INDEX idx_devices_agent ON devices(agent_version);
+CREATE INDEX idx_devices_kind ON devices(kind);
+CREATE INDEX idx_devices_encrypted ON devices(encrypted);
+CREATE INDEX idx_devices_zone_compliance ON devices(zone_id, compliance_pct);
+CREATE INDEX idx_devices_osname ON devices(os_family, os_name);
+CREATE INDEX idx_devpatch_state ON device_patches(state);

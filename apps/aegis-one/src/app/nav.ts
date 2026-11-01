@@ -247,7 +247,7 @@ export const PAGE_BY_ID: Record<PageId, PageDef> = Object.fromEntries(
  * and that check is the one that matters.
  */
 export const PAGE_PERMISSIONS: Record<PageId, string | undefined> = {
-  home: undefined,
+  home: 'overview:read',
   devices: 'devices:read',
   groups: 'groups:read',
   enrollment: 'enrollment:read',
@@ -256,10 +256,10 @@ export const PAGE_PERMISSIONS: Record<PageId, string | undefined> = {
   liveops: 'liveops:read',
   deployments: 'deployments:read',
   vulns: 'vulns:read',
-  profiles: 'profiles:read',
+  profiles: 'config:read',
   dex: 'dex:read',
-  insight: 'insight:read',
-  sites: 'sites:read',
+  insight: 'insight:run',
+  sites: 'zones:read',
   peercache: 'peercache:read',
   reports: 'reports:read',
   integrations: 'integrations:read',

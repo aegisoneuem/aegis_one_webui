@@ -4,6 +4,7 @@ import { Button, MultiSelect, Select, StatusPill, type DataTableColumn } from '@
 import { useListController } from '../app/useListController';
 import { useCan } from '../app/auth';
 import { complianceTone, humanise, num, pct, relative, toneFor } from '../app/format';
+import { segment } from '../app/safeNavigate';
 import { ResourceList } from './shared/ResourceList';
 import type { Device, Zone } from '../api/types';
 import { api, type Page } from '../api/client';
@@ -352,7 +353,7 @@ export default function Devices() {
       getRowId={(d) => d.id}
       searchPlaceholder="Search hostname, IP, serial, user or model"
       chips={chips}
-      onRowClick={(d) => void navigate(`/devices/${d.id}`)}
+      onRowClick={(d) => void navigate(`/devices/${segment(d.id)}`)}
       selectable={canAct}
       selectedIds={selected}
       onSelectedIdsChange={setSelected}

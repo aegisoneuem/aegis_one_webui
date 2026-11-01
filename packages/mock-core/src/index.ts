@@ -24,6 +24,8 @@ export type { ErrorBody } from './errors';
 
 export { loggerOptions, genRequestId } from './logging';
 export { registerChaos } from './chaos';
+export { TtlCache } from './cache';
+export type { CacheOptions } from './cache';
 export type { ChaosOptions } from './chaos';
 
 export { loadContract, routeKey, assertValidBody } from './openapi/validate';

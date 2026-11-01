@@ -91,7 +91,7 @@ const COLUMNS: DataTableColumn<Vulnerability>[] = [
 
 export default function Vulnerabilities() {
   const [finding, setFinding] = useState<Vulnerability | null>(null);
-  const canRemediate = useCan('vulns:remediate');
+  const canRemediate = useCan('vulns:scan');
   const controller = useListController<Vulnerability>({
     path: '/vulnerabilities',
     defaultSort: { id: 'cvss', desc: true },

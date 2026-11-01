@@ -55,7 +55,6 @@ export interface AuthCode {
 const LOGIN_TTL_MS = 5 * 60_000;
 const CODE_TTL_MS = 60_000;
 
-/** Escapes everything that reaches the login page; `state` is attacker-supplied. */
 function escapeHtml(value: string): string {
   return value.replace(
     /[&<>"']/g,
@@ -63,13 +62,35 @@ function escapeHtml(value: string): string {
   );
 }
 
-function page(title: string, body: string): string {
+/**
+ * Tagged template that escapes every interpolated value.
+ *
+ * The sign-in pages are built by hand because they must work with a CSP that
+ * forbids inline script, which rules out a client-side renderer. Escaping each
+ * value at the call site works right up until someone adds a field and forgets;
+ * here, forgetting is not possible — nothing reaches the output unescaped
+ * unless it is already `SafeHtml`.
+ */
+class SafeHtml {
+  constructor(readonly value: string) {}
+}
+
+function html(parts: TemplateStringsArray, ...values: (string | SafeHtml)[]): SafeHtml {
+  let out = parts[0] ?? '';
+  values.forEach((value, i) => {
+    out += value instanceof SafeHtml ? value.value : escapeHtml(String(value));
+    out += parts[i + 1] ?? '';
+  });
+  return new SafeHtml(out);
+}
+
+function page(title: string, body: SafeHtml): string {
   // No inline script and no inline style: the CSP forbids both, and a login
   // page is exactly where an injected script would be worth the most.
-  return `<!doctype html>
+  return html`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title><link rel="stylesheet" href="idp.css"></head>
-<body><main class="card">${body}</main></body></html>`;
+<title>${title}</title><link rel="stylesheet" href="idp.css"></head>
+<body><main class="card">${body}</main></body></html>`.value;
 }
 
 export interface IdpStore {
@@ -122,10 +143,10 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     reply.type('text/html');
     return page(
       'Sign in',
-      `<h1>Sign in</h1>
+      html`<h1>Sign in</h1>
 <p class="muted">Use your organisation account to continue to the console.</p>
 <form method="post" action="login">
-  <input type="hidden" name="login_id" value="${escapeHtml(loginId)}">
+  <input type="hidden" name="login_id" value="${loginId}">
   <label for="email">Work email</label>
   <input id="email" name="email" type="email" autocomplete="username" required>
   <label for="password">Password</label>
@@ -153,10 +174,10 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
       reply.type('text/html').status(401);
       return page(
         'Sign in',
-        `<h1>Sign in</h1>
+        html`<h1>Sign in</h1>
 <p class="error" role="alert">That email and password did not match.</p>
 <form method="post" action="login">
-  <input type="hidden" name="login_id" value="${escapeHtml(form['login_id'] ?? '')}">
+  <input type="hidden" name="login_id" value="${form['login_id'] ?? ''}">
   <label for="email">Work email</label>
   <input id="email" name="email" type="email" autocomplete="username" required>
   <label for="password">Password</label>
@@ -171,10 +192,10 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     reply.type('text/html');
     return page(
       'Two-step verification',
-      `<h1>Two-step verification</h1>
+      html`<h1>Two-step verification</h1>
 <p class="muted">Enter the six-digit code from your authenticator app.</p>
 <form method="post" action="mfa">
-  <input type="hidden" name="login_id" value="${escapeHtml(form['login_id'] ?? '')}">
+  <input type="hidden" name="login_id" value="${form['login_id'] ?? ''}">
   <label for="code">Verification code</label>
   <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
   <button type="submit">Verify</button>
@@ -197,10 +218,10 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
       reply.type('text/html').status(401);
       return page(
         'Two-step verification',
-        `<h1>Two-step verification</h1>
+        html`<h1>Two-step verification</h1>
 <p class="error" role="alert">That code was not correct.</p>
 <form method="post" action="mfa">
-  <input type="hidden" name="login_id" value="${escapeHtml(loginId)}">
+  <input type="hidden" name="login_id" value="${loginId}">
   <label for="code">Verification code</label>
   <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
   <button type="submit">Verify</button>

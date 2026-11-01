@@ -15,7 +15,9 @@
     "contract:lint": "redocly lint contracts/aegis-one.openapi.yaml",
     "contract:types": "openapi-typescript contracts/aegis-one.openapi.yaml -o apps/aegis-one/src/api/schema.d.ts",
     "mock": "pnpm --filter @aegis/mock-server start",
-    "mock:seed": "pnpm --filter @aegis/mock-server seed"
+    "mock:seed": "pnpm --filter @aegis/mock-server seed",
+    "test": "pnpm --filter @aegis/mock-core test && pnpm --filter @aegis/ui test",
+    "e2e": "pnpm --filter @aegis/console e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

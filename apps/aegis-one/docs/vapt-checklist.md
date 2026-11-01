@@ -2,6 +2,8 @@
 
 Last run 2026-11-02 against the console and the mock server.
 
+Every scan listed in section 1 was executed. Raw reports are in `docs/scans/`.
+
 Scope is the console and `packages/mock-core`. The real Go backend is not in
 scope and must be reviewed on its own — the contract describes what it has to
 enforce, but nothing here proves it does.
@@ -30,6 +32,72 @@ estimated.**
 | 4   | High     | `pnpm-block-exotic-sub-dependencies`                            | **Fixed.** `blockExoticSubdeps: true`. Transitive dependencies must come from the registry, never a git URL or a relocatable tarball.                                                                                                                                                                               |
 | 5   | High     | `pnpm-minimum-release-age`                                      | **Accepted risk AR-1.**                                                                                                                                                                                                                                                                                             |
 | 6   | High     | `pnpm-trust-policy`                                             | **Accepted risk AR-1.**                                                                                                                                                                                                                                                                                             |
+
+### ZAP results
+
+ZAP 2.17.0. Plans are in `security/`; `security/README.md` explains how to run
+them.
+
+#### Passive baseline
+
+Crawls the console and the identity provider's sign-in pages. **0 high, 0
+medium, 0 low, 4 informational.**
+
+The first run found one Medium — **Absence of Anti-CSRF Tokens** on the sign-in
+and MFA forms — and it was right. See fix F-1.
+
+The four informational findings are benign: "Authentication Request Identified"
+and "Session Management Response Identified" are ZAP noting that it found a
+login flow and a session cookie, "Modern Web Application" is it noting the app
+is a SPA, and "Information Disclosure — Suspicious Comments" matched the word
+`QUERY` inside a React Router deprecation URL in minified vendor code.
+
+The baseline covers the IdP's sign-in pages deliberately. They are hand-built
+HTML rather than React output, which makes them the one place in the console
+where an escaping mistake could produce XSS — and they are reachable without a
+session, which is exactly what a passive baseline can reach.
+
+#### Authenticated active scan
+
+124 endpoints imported from the contract, four minutes of attack traffic:
+injection payloads, traversal, tampering, fuzzing.
+
+**No injection, no XSS, no traversal, no authentication or authorisation
+bypass.** One Medium — "HTTP Only Site" — is ZAP noting that `http://localhost`
+is not TLS. Expected in development; production is behind TLS with HSTS.
+
+Traffic during the scan, from the server's own logs:
+
+| Response      | Count | What it means                                                             |
+| ------------- | ----- | ------------------------------------------------------------------------- |
+| 404           | 9,209 | ZAP probing paths that do not exist                                       |
+| 400           | 4,228 | Payloads rejected by contract schema validation before reaching a handler |
+| 200           | 731   | Authenticated requests that succeeded                                     |
+| **500**       | **0** |                                                                           |
+| **401 / 403** | **0** |                                                                           |
+
+**That verification matters more than the finding count.** The first two
+attempts at this scan reported exactly the same "nothing found" — while every
+request came back 401, because ZAP's `${VAR}` substitution never reached the
+replacer's `replacementString`. A scan that bounces off the auth layer finds
+nothing and looks identical to a clean one.
+
+`security/run-active-scan.mjs` now signs in, verifies the token against a real
+endpoint before handing it to ZAP, and injects the session cookie as well as
+the bearer and CSRF headers — the server uses a double-submit pair, so a header
+alone is always refused.
+
+### Fixes from the ZAP scans
+
+| #   | Finding                                                                                                                                                                                                                                                                                                                                                                                                              | Fix                                                                                                                                                                                                                   |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-1 | **Login CSRF.** The sign-in and MFA forms had no anti-CSRF token. An attacker could start their own authorize flow, obtain a `login_id`, and trick a victim's browser into posting it with the attacker's credentials. The victim then browses in the attacker's session, and whatever they do there is the attacker's to read.                                                                                      | A double-submit pair: an httpOnly, SameSite=Strict cookie issued at `/authorize` and a matching hidden `csrf_token` field, both checked on every POST. An attacker can read neither, so they cannot produce the pair. |
+| F-2 | **Unknown paths returned 500.** A request to a contract endpoint the mock does not implement went through the auth hook, which threw into the not-found context — whose error handler is not the app's. The caller was told "something went wrong on our side" for what is simply an unknown path. The scan produced 1,930 of them.                                                                                  | The auth hook skips requests with no matched route, and the not-found context gets its own copy of the error handler so the envelope survives.                                                                        |
+| F-3 | **Rate limiting returned 500 instead of 429.** `@fastify/rate-limit` throws whatever `errorResponseBuilder` returns, and it was returning the envelope _object_, not an Error. The app's handler did not recognise it, logged it as unhandled, and answered 500. A client over its budget was told the server had broken rather than to slow down — and nothing backs off on a 500. The scan produced 3,199 of them. | `errorResponseBuilder` returns an `ApiError`, which the handler maps to 429 with the right envelope.                                                                                                                  |
+
+Both server-side fixes have regression coverage: `check:api` asserts an unknown
+path is 404 with a proper envelope, and a unit test asserts the rate-limit
+error is an `ApiError` carrying 429.
 
 ### `pnpm audit` findings
 
@@ -249,12 +317,16 @@ ones. Keep the stricter auth bucket.
 pnpm audit --audit-level high          # fails on high or critical
 pnpm lint                              # includes eslint-plugin-security
 pnpm -r typecheck
-pnpm test                              # 52 unit tests
-pnpm --filter @aegis/mock-server check:api   # 39 live security checks
+pnpm test                                    # 53 unit tests
+pnpm --filter @aegis/mock-server check:api   # 41 live security checks
 pnpm --filter @aegis/console e2e             # 33 browser tests
 
-semgrep --config p/react --config p/typescript --config p/owasp-top-ten \
-  --exclude node_modules --exclude dist .
+pnpm scan:semgrep
+
+# ZAP — see security/README.md
+pnpm scan:zap:baseline
+node security/run-active-scan.mjs            # signs in, verifies, then scans
 ```
 
-The mock server and the dev server must both be running for the last two.
+The mock server and the console must both be running for everything after the
+typecheck.

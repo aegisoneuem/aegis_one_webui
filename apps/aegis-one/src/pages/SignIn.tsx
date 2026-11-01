@@ -25,7 +25,7 @@ export default function SignIn() {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.panel}>
+      <main className={styles.panel}>
         <div className={styles.brand}>
           <img className={styles.mark} src={mark} alt="" />
           <span className={styles.wordmark}>AEGIS ONE</span>
@@ -58,7 +58,7 @@ export default function SignIn() {
           You will be taken to your organisation&rsquo;s identity provider to enter your password
           and your second factor. This console never sees either.
         </p>
-      </div>
+      </main>
 
       <aside className={styles.aside}>
         <p className={styles.asideTitle}>Estate at a glance</p>
@@ -133,20 +133,20 @@ export function AuthCallback() {
 
   if (message) {
     return (
-      <div className={styles.callback}>
+      <main className={styles.callback}>
         <ErrorState
           title="Could not complete sign-in"
           description={message}
           retryLabel="Back to sign-in"
           onRetry={() => void navigate('/sign-in', { replace: true })}
         />
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className={styles.callback} role="status">
+    <main className={styles.callback} role="status">
       Completing sign-in…
-    </div>
+    </main>
   );
 }

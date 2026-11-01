@@ -15,7 +15,7 @@ const columns = [
 ];
 
 describe('neutralizeFormula', () => {
-  it.each(['=cmd|\'/c calc\'!A1', '+1+1', '-1+1', '@SUM(A1)', '\tSUM(A1)', '\rSUM(A1)'])(
+  it.each(["=cmd|'/c calc'!A1", '+1+1', '-1+1', '@SUM(A1)', '\tSUM(A1)', '\rSUM(A1)'])(
     'prefixes %j so a spreadsheet treats it as text',
     (value) => {
       expect(neutralizeFormula(value)).toBe(`'${value}`);

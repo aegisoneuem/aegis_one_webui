@@ -132,10 +132,15 @@ let refreshInFlight: Promise<SessionResponse | null> | null = null;
 
 export function refreshSession(): Promise<SessionResponse | null> {
   refreshInFlight ??= (async () => {
+    // Refresh is a state-changing request and needs a CSRF token. The CSRF
+    // cookie and the refresh cookie are issued together, so without the one
+    // there cannot be the other: a visitor with no session would otherwise
+    // make a request that is guaranteed to come back 403, on every cold load.
+    const csrf = csrfToken();
+    if (!csrf) return null;
+
     try {
-      const headers: Record<string, string> = {};
-      const csrf = csrfToken();
-      if (csrf) headers['x-csrf-token'] = csrf;
+      const headers: Record<string, string> = { 'x-csrf-token': csrf };
 
       const res = await fetch(`${BASE_URL}/auth/refresh`, {
         method: 'POST',

@@ -115,7 +115,8 @@ export class SessionStore {
     for (const [id, session] of this.byId) {
       if (now > session.expiresAt) {
         this.byHash.delete(session.tokenHash);
-        for (const [hash, owner] of this.spentHashes) if (owner === id) this.spentHashes.delete(hash);
+        for (const [hash, owner] of this.spentHashes)
+          if (owner === id) this.spentHashes.delete(hash);
         this.byId.delete(id);
       }
     }

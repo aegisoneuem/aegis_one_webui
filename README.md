@@ -56,11 +56,21 @@ loadtest/            k6 scenarios and a Node latency probe.
 ```bash
 pnpm -r typecheck                            # strict, no any, no @ts-ignore
 pnpm lint                                    # ESLint + security plugin + Prettier
-pnpm test                                    # 52 unit tests
+pnpm test                                    # 53 unit tests
 pnpm contract:lint                           # OpenAPI, 126 operations
-pnpm --filter @aegis/mock-server check:api   # 39 live security checks
+pnpm --filter @aegis/mock-server check:api   # 41 live security checks
 pnpm --filter @aegis/console e2e             # 33 browser tests (needs both servers)
 pnpm audit --audit-level high
+```
+
+Load, performance and security scans — see `loadtest/` and [`security/README.md`](security/README.md):
+
+```bash
+pnpm load:smoke                              # k6, 5 VUs
+pnpm perf:lighthouse                         # against a production build
+pnpm scan:semgrep
+pnpm scan:zap:baseline
+node security/run-active-scan.mjs            # authenticated ZAP active scan
 ```
 
 The two integration suites are the ones that matter. They caught, during this

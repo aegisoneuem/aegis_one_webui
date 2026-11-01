@@ -9,3 +9,5 @@ mock-server/data/*.db
 apps/*/mock-server/data/
 storybook-static/
 test-results/
+tools/
+security/.zap-*.generated.yaml

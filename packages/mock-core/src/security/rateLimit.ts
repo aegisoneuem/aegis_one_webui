@@ -1,6 +1,6 @@
 import rateLimit from '@fastify/rate-limit';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { toErrorBody, tooManyRequests } from '../errors';
+import { tooManyRequests } from '../errors';
 
 export interface RateLimitOptions {
   /** Requests per window for an authenticated caller. */
@@ -35,11 +35,17 @@ export async function registerRateLimit(
     max: options.max,
     timeWindow: options.windowMs,
     keyGenerator: (request: FastifyRequest) => request.auth?.sid ?? request.ip,
-    errorResponseBuilder: (request) =>
-      toErrorBody(
-        tooManyRequests(),
-        typeof request.id === 'string' ? request.id : String(request.id),
-      ),
+    /*
+     * Must return an ApiError, not the envelope object.
+     *
+     * @fastify/rate-limit throws whatever this returns, and a plain object is
+     * not an Error — so the app's error handler did not recognise it, logged
+     * it as unhandled, and answered 500. A client over its budget was told the
+     * server had broken rather than to slow down, which is both wrong and the
+     * opposite of actionable: nothing backs off on a 500. A ZAP scan produced
+     * 3,199 of them.
+     */
+    errorResponseBuilder: () => tooManyRequests(),
     // Telling an unauthenticated caller the exact budget helps them pace an
     // attack; an authenticated client needs the headers to back off politely.
     addHeaders: {

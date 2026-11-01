@@ -17,7 +17,16 @@
     "mock": "pnpm --filter @aegis/mock-server start",
     "mock:seed": "pnpm --filter @aegis/mock-server seed",
     "test": "pnpm --filter @aegis/mock-core test && pnpm --filter @aegis/ui test",
-    "e2e": "pnpm --filter @aegis/console e2e"
+    "e2e": "pnpm --filter @aegis/console e2e",
+    "scan:semgrep": "semgrep --config p/react --config p/typescript --config p/owasp-top-ten --exclude node_modules --exclude dist --exclude storybook-static --exclude test-results .",
+    "scan:zap:baseline": "zap.bat -cmd -autorun security/zap-baseline.yaml",
+    "scan:zap:active": "zap.bat -cmd -autorun security/zap-active-api.yaml",
+    "scan:token": "node security/get-token.mjs --export",
+    "perf:lighthouse": "pnpm --filter @aegis/console lighthouse",
+    "load:smoke": "k6 run -e PROFILE=smoke loadtest/scenarios.js",
+    "load:load": "k6 run -e PROFILE=load loadtest/scenarios.js",
+    "load:stress": "k6 run -e PROFILE=stress loadtest/scenarios.js",
+    "load:soak": "k6 run -e PROFILE=soak loadtest/scenarios.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

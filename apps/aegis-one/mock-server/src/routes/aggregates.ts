@@ -32,20 +32,20 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
 
   app.get(`${basePath}/overview`, async (request) =>
     aggregates.get(`overview:${scopeKey(request.auth?.zoneIds ?? [])}`, () => {
-    const { where, params } = scoped(request.auth?.zoneIds ?? []);
+      const { where, params } = scoped(request.auth?.zoneIds ?? []);
 
-    const totals = one<{
-      total: number;
-      online: number;
-      offline: number;
-      pendingRestart: number;
-      encrypted: number;
-      avgCompliance: number;
-      avgDex: number;
-      criticalVulns: number;
-      pendingPatches: number;
-    }>(
-      `SELECT COUNT(*) AS total,
+      const totals = one<{
+        total: number;
+        online: number;
+        offline: number;
+        pendingRestart: number;
+        encrypted: number;
+        avgCompliance: number;
+        avgDex: number;
+        criticalVulns: number;
+        pendingPatches: number;
+      }>(
+        `SELECT COUNT(*) AS total,
               SUM(status = 'online') AS online,
               SUM(status = 'offline') AS offline,
               SUM(status = 'pending-restart') AS pendingRestart,
@@ -55,92 +55,94 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
               SUM(critical_vulns) AS criticalVulns,
               SUM(pending_patches) AS pendingPatches
        FROM devices ${where}`,
-      params,
-    );
+        params,
+      );
 
-    const staleCutoff = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    const stale = one<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM devices ${where ? `${where} AND` : 'WHERE'} last_seen_at < ?`,
-      [...params, staleCutoff],
-    );
+      const staleCutoff = new Date(Date.now() - 7 * 86_400_000).toISOString();
+      const stale = one<{ n: number }>(
+        `SELECT COUNT(*) AS n FROM devices ${where ? `${where} AND` : 'WHERE'} last_seen_at < ?`,
+        [...params, staleCutoff],
+      );
 
-    return {
-      endpoints: {
-        total: totals.total,
-        online: totals.online,
-        offline: totals.offline,
-        pendingRestart: totals.pendingRestart,
-        notSeen7Days: stale.n,
-      },
-      posture: {
-        compliancePct: totals.avgCompliance,
-        encryptedPct: totals.total ? Math.round((totals.encrypted / totals.total) * 1000) / 10 : 0,
-        dexScore: totals.avgDex,
-        criticalVulnerabilities: totals.criticalVulns,
-        pendingPatches: totals.pendingPatches,
-      },
-      byZone: many(
-        `SELECT zone_id AS zoneId, zone_name AS zoneName, COUNT(*) AS devices,
+      return {
+        endpoints: {
+          total: totals.total,
+          online: totals.online,
+          offline: totals.offline,
+          pendingRestart: totals.pendingRestart,
+          notSeen7Days: stale.n,
+        },
+        posture: {
+          compliancePct: totals.avgCompliance,
+          encryptedPct: totals.total
+            ? Math.round((totals.encrypted / totals.total) * 1000) / 10
+            : 0,
+          dexScore: totals.avgDex,
+          criticalVulnerabilities: totals.criticalVulns,
+          pendingPatches: totals.pendingPatches,
+        },
+        byZone: many(
+          `SELECT zone_id AS zoneId, zone_name AS zoneName, COUNT(*) AS devices,
                 ROUND(AVG(compliance_pct), 1) AS compliancePct,
                 SUM(status = 'offline') AS offline
          FROM devices ${where} GROUP BY 1, 2 ORDER BY devices DESC`,
-        params,
-      ),
-      byOs: many(
-        `SELECT os_family AS osFamily, os_name AS osName, COUNT(*) AS devices
+          params,
+        ),
+        byOs: many(
+          `SELECT os_family AS osFamily, os_name AS osName, COUNT(*) AS devices
          FROM devices ${where} GROUP BY 1, 2 ORDER BY devices DESC`,
-        params,
-      ),
-      patchState: many(
-        `SELECT state, COUNT(*) AS n FROM device_patches GROUP BY 1 ORDER BY n DESC`,
-      ),
-      topVulnerabilities: many(
-        `SELECT id, title, severity, cvss, exploited, affected_count AS affectedCount
+          params,
+        ),
+        patchState: many(
+          `SELECT state, COUNT(*) AS n FROM device_patches GROUP BY 1 ORDER BY n DESC`,
+        ),
+        topVulnerabilities: many(
+          `SELECT id, title, severity, cvss, exploited, affected_count AS affectedCount
          FROM vulnerabilities WHERE affected_count > 0 ORDER BY exploited DESC, cvss DESC LIMIT 8`,
-      ).map((row) => shapeRow(row as Record<string, unknown>)),
-      recentDeployments: many(
-        `SELECT id, name, type, status, target_count AS targetCount, succeeded, failed, created_at AS createdAt
+        ).map((row) => shapeRow(row as Record<string, unknown>)),
+        recentDeployments: many(
+          `SELECT id, name, type, status, target_count AS targetCount, succeeded, failed, created_at AS createdAt
          FROM deployments ORDER BY created_at DESC LIMIT 6`,
-      ),
-      serviceHealth: many(
-        `SELECT component, status, latency_ms AS latencyMs, message, checked_at AS checkedAt FROM service_health ORDER BY status DESC, component`,
-      ),
-    };
+        ),
+        serviceHealth: many(
+          `SELECT component, status, latency_ms AS latencyMs, message, checked_at AS checkedAt FROM service_health ORDER BY status DESC, component`,
+        ),
+      };
     }),
   );
 
   app.get(`${basePath}/dex`, async (request) =>
     aggregates.get(`dex:${scopeKey(request.auth?.zoneIds ?? [])}`, () => {
-    const { where, params } = scoped(request.auth?.zoneIds ?? []);
-    return {
-      overall: one(`SELECT ROUND(AVG(dex_score), 1) AS score FROM devices ${where}`, params),
-      byDepartment: many(
-        `SELECT department, ROUND(AVG(dex_score), 1) AS score, COUNT(*) AS devices
+      const { where, params } = scoped(request.auth?.zoneIds ?? []);
+      return {
+        overall: one(`SELECT ROUND(AVG(dex_score), 1) AS score FROM devices ${where}`, params),
+        byDepartment: many(
+          `SELECT department, ROUND(AVG(dex_score), 1) AS score, COUNT(*) AS devices
          FROM devices ${where} GROUP BY 1 ORDER BY score ASC`,
-        params,
-      ),
-      byZone: many(
-        `SELECT zone_name AS zoneName, ROUND(AVG(dex_score), 1) AS score, COUNT(*) AS devices
+          params,
+        ),
+        byZone: many(
+          `SELECT zone_name AS zoneName, ROUND(AVG(dex_score), 1) AS score, COUNT(*) AS devices
          FROM devices ${where} GROUP BY 1 ORDER BY score ASC`,
-        params,
-      ),
-      distribution: many(
-        `SELECT CASE
+          params,
+        ),
+        distribution: many(
+          `SELECT CASE
                   WHEN dex_score >= 85 THEN 'excellent'
                   WHEN dex_score >= 70 THEN 'good'
                   WHEN dex_score >= 50 THEN 'fair'
                   ELSE 'poor' END AS band,
                 COUNT(*) AS devices
          FROM devices ${where} GROUP BY 1`,
-        params,
-      ),
-      lowestScoring: many(
-        `SELECT id, hostname, zone_name AS zoneName, department, dex_score AS dexScore,
+          params,
+        ),
+        lowestScoring: many(
+          `SELECT id, hostname, zone_name AS zoneName, department, dex_score AS dexScore,
                 disk_free_pct AS diskFreePct, ram_gb AS ramGb
          FROM devices ${where} ORDER BY dex_score ASC LIMIT 25`,
-        params,
-      ),
-    };
+          params,
+        ),
+      };
     }),
   );
 

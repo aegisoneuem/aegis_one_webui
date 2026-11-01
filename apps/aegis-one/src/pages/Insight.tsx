@@ -46,7 +46,9 @@ export default function Insight() {
                 onClick={() =>
                   // The page name comes from the API, so it is checked against
                   // the nineteen real pages before it becomes a path.
-                  void navigate(`${pagePath(finding.action?.page ?? '')}${query(finding.action?.filter)}`)
+                  void navigate(
+                    `${pagePath(finding.action?.page ?? '')}${query(finding.action?.filter)}`,
+                  )
                 }
               >
                 {finding.action.label}

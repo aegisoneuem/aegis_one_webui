@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
 import { Trend } from 'k6/metrics';
+import exec from 'k6/execution';
 import { ACCOUNTS, API, refresh, signIn } from './lib/session.js';
 
 /**
@@ -158,6 +159,7 @@ export default function scenarios() {
   });
 
   group('6. deployment wizard submit against 500 devices', () => {
+    if (!session.can('deployments:create')) return;
     const group500 = http.get(`${API}/groups?limit=5&fields=id,memberCount`, {
       headers,
       tags: { kind: 'list', name: 'groups' },
@@ -169,7 +171,7 @@ export default function scenarios() {
       `${API}/deployments`,
       JSON.stringify({
         type: 'install-software',
-        name: `Load test action ${__VU}-${__ITER}`,
+        name: `Load test action ${exec.vu.idInTest}-${exec.scenario.iterationInTest}`,
         content: { packageId: 'sw-chrome' },
         targets: { groupIds: [groupId] },
         schedule: { mode: 'now' },
@@ -182,11 +184,12 @@ export default function scenarios() {
   });
 
   group('7. script execution job on a zone', () => {
+    if (!session.can('liveops:run')) return;
     const res = http.post(
       `${API}/liveops/script-jobs`,
       JSON.stringify({
         kind: 'script',
-        name: `Load test script ${__VU}-${__ITER}`,
+        name: `Load test script ${exec.vu.idInTest}-${exec.scenario.iterationInTest}`,
         targets: { zone: pick(ZONES) },
         outputLimitKb: 64,
         script: {

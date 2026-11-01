@@ -27,7 +27,9 @@ let db: Db;
 
 beforeEach(() => {
   db = openDb({ file: ':memory:' });
-  db.exec(`CREATE TABLE widgets (id TEXT PRIMARY KEY, name TEXT, size INTEGER, colour TEXT, secret TEXT)`);
+  db.exec(
+    `CREATE TABLE widgets (id TEXT PRIMARY KEY, name TEXT, size INTEGER, colour TEXT, secret TEXT)`,
+  );
   const insert = db.prepare(`INSERT INTO widgets VALUES (?,?,?,?,?)`);
   const colours = ['red', 'green', 'blue'];
   db.transaction(() => {
@@ -56,7 +58,10 @@ describe('listRows', () => {
     let cursor: string | undefined;
 
     for (let page = 0; page < 20; page++) {
-      const result = listRows<{ id: string }>(db, spec, { limit: 25, ...(cursor ? { cursor } : {}) });
+      const result = listRows<{ id: string }>(db, spec, {
+        limit: 25,
+        ...(cursor ? { cursor } : {}),
+      });
       seen.push(...result.items.map((r) => r.id));
       if (!result.page.nextCursor) break;
       cursor = result.page.nextCursor;
@@ -125,7 +130,9 @@ describe('listRows', () => {
     });
 
     it('rejects an operator the column does not allow', () => {
-      expect(() => listRows(db, spec, { filters: { 'colour.gte': 'red' } })).toThrow(/Cannot filter/);
+      expect(() => listRows(db, spec, { filters: { 'colour.gte': 'red' } })).toThrow(
+        /Cannot filter/,
+      );
     });
 
     it('ignores an unknown filter instead of echoing it back', () => {
@@ -166,9 +173,14 @@ describe('listRows', () => {
     });
 
     it('applies a caller scope on top of the client filters', () => {
-      const result = listRows(db, spec, { filters: { colour: 'red' } }, {
-        scope: { sql: 'size < ?', params: [30] },
-      });
+      const result = listRows(
+        db,
+        spec,
+        { filters: { colour: 'red' } },
+        {
+          scope: { sql: 'size < ?', params: [30] },
+        },
+      );
       expect(result.page.total).toBe(10);
     });
   });

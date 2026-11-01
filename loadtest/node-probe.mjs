@@ -25,7 +25,7 @@ const { values } = parseArgs({
 
 const BASE = values.base;
 const API = `${BASE}/api/v1`;
-const REDIRECT = 'http://localhost:5173/auth/callback';
+const REDIRECT = process.env['E2E_REDIRECT_URI'] ?? 'http://localhost:5173/auth/callback';
 const CONCURRENCY = Number(values.concurrency);
 const SECONDS = Number(values.seconds);
 
@@ -68,18 +68,27 @@ async function signIn(email) {
   const authorize = await fetch(
     `${BASE}/oidc/authorize?client_id=aegis-one-console&redirect_uri=${encodeURIComponent(REDIRECT)}&state=s&code_challenge=${challenge}&code_challenge_method=S256`,
   );
-  const loginId = /name="login_id" value="([^"]+)"/.exec(await authorize.text())?.[1];
+  const page = await authorize.text();
+  const loginId = /name="login_id" value="([^"]+)"/.exec(page)?.[1];
+  const formCsrf = /name="csrf_token" value="([^"]+)"/.exec(page)?.[1];
+  // The sign-in flow is cookie-bound now, so carry them as a browser would.
+  const flow = (authorize.headers.getSetCookie?.() ?? []).map((c) => c.split(';')[0]).join('; ');
 
   await fetch(`${BASE}/oidc/login`, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ login_id: loginId, email, password: 'Aegis-Demo-2026' }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: flow },
+    body: new URLSearchParams({
+      login_id: loginId,
+      csrf_token: formCsrf,
+      email,
+      password: 'Aegis-Demo-2026',
+    }),
   });
 
   const mfa = await fetch(`${BASE}/oidc/mfa`, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ login_id: loginId, code: '246813' }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: flow },
+    body: new URLSearchParams({ login_id: loginId, csrf_token: formCsrf, code: '246813' }),
     redirect: 'manual',
   });
   const code = new URL(mfa.headers.get('location')).searchParams.get('code');

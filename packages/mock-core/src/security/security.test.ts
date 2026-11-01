@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { SessionStore } from './sessions';
 import { hasPermission, zoneScope } from './rbac';
 import { hashToken, newOpaqueToken, safeEqual, signAccessToken, verifyAccessToken } from './tokens';
-import { ApiError } from '../errors';
+import { ApiError, tooManyRequests } from '../errors';
+import { DEFAULT_RATE_LIMITS } from './rateLimit';
 
-const config = { secret: 'test-secret-at-least-32-characters-long!', issuer: 'test', audience: 'test-aud' };
+const config = {
+  secret: 'test-secret-at-least-32-characters-long!',
+  issuer: 'test',
+  audience: 'test-aud',
+};
 
 describe('SessionStore', () => {
   it('stores only the hash of a refresh token', () => {
@@ -83,7 +88,10 @@ describe('access tokens', () => {
   });
 
   it('refuses a token signed with another secret', async () => {
-    const token = await signAccessToken(claims, { ...config, secret: 'a-completely-different-secret-value!!' });
+    const token = await signAccessToken(claims, {
+      ...config,
+      secret: 'a-completely-different-secret-value!!',
+    });
     await expect(verifyAccessToken(token, config)).rejects.toThrow(ApiError);
   });
 
@@ -148,5 +156,20 @@ describe('zoneScope', () => {
     const scope = zoneScope({ zoneIds: ['zn-a', 'zn-b'] });
     expect(scope?.sql).toBe('"zone_id" IN (?,?)');
     expect(scope?.params).toEqual(['zn-a', 'zn-b']);
+  });
+});
+
+describe('rate limit responses', () => {
+  /**
+   * @fastify/rate-limit throws whatever `errorResponseBuilder` returns. A plain
+   * object is not an Error, so the app's error handler did not recognise it and
+   * answered 500 — telling a client over its budget that the server had broken
+   * rather than to slow down. Nothing backs off on a 500.
+   */
+  it('builds an ApiError the error handler can map to 429', () => {
+    const built = DEFAULT_RATE_LIMITS && tooManyRequests();
+    expect(built).toBeInstanceOf(ApiError);
+    expect(built.status).toBe(429);
+    expect(built.code).toBe('rate_limited');
   });
 });

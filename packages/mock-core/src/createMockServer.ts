@@ -178,5 +178,27 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
       .send(toErrorBody(new ApiError(404, 'not_found', 'Not found.'), String(request.id))),
   );
 
+  /*
+   * Fastify gives the not-found handler its own encapsulation context with its
+   * own error handler, so the one above does not cover this path. Both are set,
+   * or a failure here leaves through Fastify's default handler and loses the
+   * envelope every client is written against.
+   */
+  app.setErrorHandler((error, request, reply) => {
+    const requestId = String(request.id);
+    if (error instanceof ApiError) {
+      return reply.status(error.status).send(toErrorBody(error, requestId));
+    }
+    request.log.error({ err: error }, 'unhandled error on the not-found path');
+    return reply
+      .status(500)
+      .send(
+        toErrorBody(
+          new ApiError(500, 'internal_error', 'Something went wrong on our side.'),
+          requestId,
+        ),
+      );
+  });
+
   return { app, contract };
 }

@@ -1,0 +1,103 @@
+# ZAP Automation Framework — authenticated active scan of the API
+#
+# Sends real attack traffic: injection payloads, traversal, tampering. Run it
+# against the mock server only, never against anything with real data.
+#
+#   ZAP_TOKEN=<access token> ZAP_CSRF=<csrf token> \
+#     zap.bat -cmd -autorun security/zap-active-api.yaml
+#
+# Get the two tokens with security/get-token.mjs, which signs in through the
+# OIDC flow the same way the console does.
+#
+# Scanning only the unauthenticated surface would miss almost everything that
+# matters here: every injection sink, every object id and the whole permission
+# model sit behind a bearer token.
+
+env:
+  contexts:
+    - name: aegis-api
+      urls:
+        - ${ZAP_API}
+      includePaths:
+        - '${ZAP_API}.*'
+      excludePaths:
+        # Ending the session mid-scan makes every later request a 401, and the
+        # scan reports nothing while appearing to have run.
+        - '.*/auth/logout.*'
+        # Rotates the refresh token; a scanner replaying it trips the replay
+        # detection and destroys the session.
+        - '.*/auth/refresh.*'
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+  vars:
+    ZAP_API: 'http://localhost:8080/api/v1'
+    # ZAP resolves report paths relative to this plan file, not the working
+    # directory, so this one is absolute.
+    ZAP_REPORTS: 'C:/Users/sumit.jat/Aegis One/apps/aegis-one/docs/scans'
+
+jobs:
+  # The bearer and CSRF headers are added to every request, so the scanner
+  # tests the API as a signed-in user rather than bouncing off 401s.
+  - type: replacer
+    parameters:
+      deleteAllRules: true
+    rules:
+      - description: bearer token
+        matchType: req_header
+        matchString: Authorization
+        replacementString: 'Bearer ${ZAP_TOKEN}'
+        tokenProcessing: false
+      - description: csrf token
+        matchType: req_header
+        matchString: X-CSRF-Token
+        replacementString: '${ZAP_CSRF}'
+        tokenProcessing: false
+      # CSRF here is a double-submit pair: the header has to match a cookie.
+      # Sending only the header means every write is refused with 403 and the
+      # scan never reaches the code behind it.
+      - description: session cookies
+        matchType: req_header
+        matchString: Cookie
+        replacementString: '${ZAP_COOKIES}'
+        tokenProcessing: false
+
+  - type: openapi
+    parameters:
+      apiFile: 'C:/Users/sumit.jat/Aegis One/contracts/aegis-one.openapi.yaml'
+      targetUrl: ${ZAP_API}
+      context: aegis-api
+
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 20
+      scanOnlyInScope: true
+
+  - type: activeScan
+    parameters:
+      context: aegis-api
+      policy: 'Default Policy'
+      maxRuleDurationInMins: 3
+      maxScanDurationInMins: 30
+      threadPerHost: 4
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: ${ZAP_REPORTS}
+      reportFile: zap-active-api.json
+      reportTitle: Aegis One — ZAP authenticated active scan
+    risks: [high, medium, low, info]
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: ${ZAP_REPORTS}
+      reportFile: zap-active-api.html
+      reportTitle: Aegis One — ZAP authenticated active scan
+    risks: [high, medium, low, info]

@@ -113,7 +113,10 @@ export default function DeviceDetail() {
               {humanise(d.status)}
             </StatusPill>
             {canRunScripts ? (
-              <Button size="sm" onClick={() => void navigate(`/liveops?deviceIds=${segment(d.id)}`)}>
+              <Button
+                size="sm"
+                onClick={() => void navigate(`/liveops?deviceIds=${segment(d.id)}`)}
+              >
                 Run script
               </Button>
             ) : null}

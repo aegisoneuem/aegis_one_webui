@@ -35,6 +35,8 @@ export interface IdpOptions {
   prefix: string;
   issuer: string;
   clientId: string;
+  /** Behind TLS: marks the sign-in cookie Secure. */
+  secure?: boolean;
 }
 
 interface PendingLogin {
@@ -43,6 +45,17 @@ interface PendingLogin {
   codeChallenge: string;
   userId?: string;
   createdAt: number;
+  /**
+   * Anti-CSRF token for this sign-in attempt, mirrored in a cookie.
+   *
+   * Without it the sign-in form is open to login CSRF: an attacker starts
+   * their own authorize flow, obtains a `login_id`, and tricks a victim's
+   * browser into posting it with the attacker's credentials. The victim then
+   * browses in the attacker's session, and whatever they do there is the
+   * attacker's to read. The cookie is SameSite=Strict and httpOnly, so the
+   * attacker can neither read nor plant it.
+   */
+  csrf: string;
 }
 
 export interface AuthCode {
@@ -54,6 +67,7 @@ export interface AuthCode {
 
 const LOGIN_TTL_MS = 5 * 60_000;
 const CODE_TTL_MS = 60_000;
+const LOGIN_COOKIE = 'aegis_login';
 
 function escapeHtml(value: string): string {
   return value.replace(
@@ -88,13 +102,42 @@ function page(title: string, body: SafeHtml): string {
   // No inline script and no inline style: the CSP forbids both, and a login
   // page is exactly where an injected script would be worth the most.
   return html`<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title}</title><link rel="stylesheet" href="idp.css"></head>
-<body><main class="card">${body}</main></body></html>`.value;
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>${title}</title>
+        <link rel="stylesheet" href="idp.css" />
+      </head>
+      <body>
+        <main class="card">${body}</main>
+      </body>
+    </html>`.value;
 }
 
 export interface IdpStore {
   codes: Map<string, AuthCode>;
+}
+
+/**
+ * The sign-in form's hidden `login_id` is not a secret the victim's browser
+ * holds — an attacker can obtain one and put it in their own form. The cookie
+ * is, which is what makes the pair meaningful.
+ */
+function assertLoginCsrf(
+  request: FastifyRequest,
+  login: PendingLogin,
+  form: Record<string, string | undefined>,
+): void {
+  const cookie = request.cookies[LOGIN_COOKIE];
+  const field = form['csrf_token'];
+
+  // Double submit: the cookie the browser holds and the field the page was
+  // rendered with must both be present and must agree. An attacker can read
+  // neither, so they cannot produce the pair.
+  if (!cookie || !field || !safeEqual(cookie, login.csrf) || !safeEqual(field, login.csrf)) {
+    throw badRequest('That sign-in attempt could not be verified. Start again.');
+  }
 }
 
 export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store: IdpStore): void {
@@ -138,21 +181,43 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     }
 
     const loginId = randomUUID();
-    logins.set(loginId, { state, redirectUri, codeChallenge: challenge, createdAt: Date.now() });
+    const csrf = newOpaqueToken();
+    logins.set(loginId, {
+      state,
+      redirectUri,
+      codeChallenge: challenge,
+      createdAt: Date.now(),
+      csrf,
+    });
+
+    reply.setCookie(LOGIN_COOKIE, csrf, {
+      path: options.prefix,
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: options.secure ?? false,
+      maxAge: LOGIN_TTL_MS / 1000,
+    });
 
     reply.type('text/html');
     return page(
       'Sign in',
       html`<h1>Sign in</h1>
-<p class="muted">Use your organisation account to continue to the console.</p>
-<form method="post" action="login">
-  <input type="hidden" name="login_id" value="${loginId}">
-  <label for="email">Work email</label>
-  <input id="email" name="email" type="email" autocomplete="username" required>
-  <label for="password">Password</label>
-  <input id="password" name="password" type="password" autocomplete="current-password" required>
-  <button type="submit">Continue</button>
-</form>`,
+        <p class="muted">Use your organisation account to continue to the console.</p>
+        <form method="post" action="login">
+          <input type="hidden" name="login_id" value="${loginId}" />
+          <input type="hidden" name="csrf_token" value="${csrf}" />
+          <label for="email">Work email</label>
+          <input id="email" name="email" type="email" autocomplete="username" required />
+          <label for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+          <button type="submit">Continue</button>
+        </form>`,
     );
   });
 
@@ -161,6 +226,7 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     const form = request.body as Record<string, string | undefined>;
     const login = logins.get(form['login_id'] ?? '');
     if (!login) throw badRequest('That sign-in attempt has expired. Start again.');
+    assertLoginCsrf(request, login, form);
 
     const user = options.users.find(
       (u) => u.email.toLowerCase() === (form['email'] ?? '').toLowerCase().trim(),
@@ -175,15 +241,22 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
       return page(
         'Sign in',
         html`<h1>Sign in</h1>
-<p class="error" role="alert">That email and password did not match.</p>
-<form method="post" action="login">
-  <input type="hidden" name="login_id" value="${form['login_id'] ?? ''}">
-  <label for="email">Work email</label>
-  <input id="email" name="email" type="email" autocomplete="username" required>
-  <label for="password">Password</label>
-  <input id="password" name="password" type="password" autocomplete="current-password" required>
-  <button type="submit">Continue</button>
-</form>`,
+          <p class="error" role="alert">That email and password did not match.</p>
+          <form method="post" action="login">
+            <input type="hidden" name="login_id" value="${form['login_id'] ?? ''}" />
+            <input type="hidden" name="csrf_token" value="${form['csrf_token'] ?? ''}" />
+            <label for="email">Work email</label>
+            <input id="email" name="email" type="email" autocomplete="username" required />
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+            <button type="submit">Continue</button>
+          </form>`,
       );
     }
 
@@ -193,13 +266,22 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     return page(
       'Two-step verification',
       html`<h1>Two-step verification</h1>
-<p class="muted">Enter the six-digit code from your authenticator app.</p>
-<form method="post" action="mfa">
-  <input type="hidden" name="login_id" value="${form['login_id'] ?? ''}">
-  <label for="code">Verification code</label>
-  <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
-  <button type="submit">Verify</button>
-</form>`,
+        <p class="muted">Enter the six-digit code from your authenticator app.</p>
+        <form method="post" action="mfa">
+          <input type="hidden" name="login_id" value="${form['login_id'] ?? ''}" />
+          <input type="hidden" name="csrf_token" value="${form['csrf_token'] ?? ''}" />
+          <label for="code">Verification code</label>
+          <input
+            id="code"
+            name="code"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            autocomplete="one-time-code"
+            required
+          />
+          <button type="submit">Verify</button>
+        </form>`,
     );
   });
 
@@ -209,6 +291,7 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     const loginId = form['login_id'] ?? '';
     const login = logins.get(loginId);
     if (!login?.userId) throw badRequest('That sign-in attempt has expired. Start again.');
+    assertLoginCsrf(request, login, form);
 
     const user = options.users.find((u) => u.id === login.userId);
     if (!user) throw unauthorized();
@@ -219,17 +302,33 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
       return page(
         'Two-step verification',
         html`<h1>Two-step verification</h1>
-<p class="error" role="alert">That code was not correct.</p>
-<form method="post" action="mfa">
-  <input type="hidden" name="login_id" value="${loginId}">
-  <label for="code">Verification code</label>
-  <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
-  <button type="submit">Verify</button>
-</form>`,
+          <p class="error" role="alert">That code was not correct.</p>
+          <form method="post" action="mfa">
+            <input type="hidden" name="login_id" value="${loginId}" />
+            <input type="hidden" name="csrf_token" value="${form['csrf_token'] ?? ''}" />
+            <label for="code">Verification code</label>
+            <input
+              id="code"
+              name="code"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required
+            />
+            <button type="submit">Verify</button>
+          </form>`,
       );
     }
 
     logins.delete(loginId);
+    reply.setCookie(LOGIN_COOKIE, '', {
+      path: options.prefix,
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 0,
+    });
+
     const code = newOpaqueToken();
     store.codes.set(code, {
       userId: user.id,

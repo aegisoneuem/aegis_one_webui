@@ -174,7 +174,10 @@ export function DeploymentCreated() {
         endpoints report back.
       </p>
       <div className={wizardStyles.createdActions}>
-        <Button variant="primary" onClick={() => void navigate(`/deployments/${segment(deploymentId)}`)}>
+        <Button
+          variant="primary"
+          onClick={() => void navigate(`/deployments/${segment(deploymentId)}`)}
+        >
           View progress
         </Button>
         <Button onClick={() => void navigate('/deployments/new')}>Create another</Button>

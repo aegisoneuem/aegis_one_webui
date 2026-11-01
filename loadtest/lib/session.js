@@ -26,7 +26,12 @@ function base64url(bytes) {
 }
 
 export function signIn(email) {
-  const verifier = `v-${__VU}-${__ITER}-${Math.random().toString(36).slice(2)}-padpadpadpadpad`;
+  // PKCE needs 43 or more unreserved characters and nothing else; randomness
+  // alone gives uniqueness, and it works in setup() as well as in a VU, where
+  // scenario context is not available.
+  const verifier = `v-${Math.random().toString(36).slice(2)}-${Math.random()
+    .toString(36)
+    .slice(2)}-${Date.now()}-pad`;
   const challenge = base64url(crypto.sha256(verifier, 'binary'));
 
   const authorize = http.get(
@@ -35,17 +40,19 @@ export function signIn(email) {
     { tags: { name: 'oidc authorize' } },
   );
   const loginId = (/name="login_id" value="([^"]+)"/.exec(authorize.body) || [])[1];
-  if (!loginId) fail('could not start sign-in');
+  // Double-submit pair: this field has to match the cookie k6 is holding.
+  const formCsrf = (/name="csrf_token" value="([^"]+)"/.exec(authorize.body) || [])[1];
+  if (!loginId || !formCsrf) fail('could not start sign-in');
 
   http.post(
     `${BASE}/oidc/login`,
-    { login_id: loginId, email, password: PASSWORD },
+    { login_id: loginId, csrf_token: formCsrf, email, password: PASSWORD },
     { tags: { name: 'oidc password' } },
   );
 
   const mfa = http.post(
     `${BASE}/oidc/mfa`,
-    { login_id: loginId, code: MFA_CODE },
+    { login_id: loginId, csrf_token: formCsrf, code: MFA_CODE },
     { redirects: 0, tags: { name: 'oidc mfa' } },
   );
   const location = mfa.headers['Location'] || '';
@@ -60,9 +67,22 @@ export function signIn(email) {
   check(token, { 'signed in': (r) => r.status === 200 });
 
   const body = token.json();
+  const permissions = body.user.permissions || [];
   return {
     accessToken: body.accessToken,
     csrfToken: body.csrfToken,
+    role: body.user.role,
+    permissions,
+    /**
+     * Mirrors the console's own check. A load profile that has an Auditor
+     * clicking "New action" is not modelling anything real — the button is
+     * not on their screen — and it turns correct 403s into a failure rate
+     * that hides genuine ones.
+     */
+    can: (permission) =>
+      permissions.includes('*') ||
+      permissions.includes(permission) ||
+      permissions.includes(`${permission.split(':')[0]}:*`),
     headers: {
       Authorization: `Bearer ${body.accessToken}`,
       'Content-Type': 'application/json',

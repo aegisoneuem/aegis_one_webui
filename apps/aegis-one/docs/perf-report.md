@@ -54,16 +54,44 @@ Three things are deliberately kept out of the initial download:
   A user who goes straight to Devices never downloads it.
 - **The DataTable stack** loads with the first list page, not with the shell.
 
-### Not run
+### Lighthouse — run
 
-- **Lighthouse** — not installed on the build machine. The score is unknown,
-  not assumed. Run `npx lighthouse http://localhost:5173 --view` against a
-  production build to fill this in.
-- **60 fps scrolling of the 50k-row table** — not measured. Rows are
-  virtualized with TanStack Virtual and the server never returns more than 200
-  at a time, so the DOM holds roughly 30 rows regardless of the result size,
-  but no frame timings were captured. A Chrome DevTools performance recording
-  while flinging the Devices table is the check.
+Lighthouse 13.6.0, desktop preset, against `vite preview` on the production
+bundle. Raw report: `docs/scans/lighthouse.report.html`.
+
+| Category       | Score   |
+| -------------- | ------- |
+| Performance    | **100** |
+| Accessibility  | **100** |
+| Best Practices | **100** |
+| SEO            | 66      |
+
+| Metric                   | Value |
+| ------------------------ | ----- |
+| First Contentful Paint   | 0.3 s |
+| Largest Contentful Paint | 0.3 s |
+| Total Blocking Time      | 0 ms  |
+| Cumulative Layout Shift  | 0     |
+| Speed Index              | 0.3 s |
+
+**SEO is 66 because the console is deliberately `noindex`.** The only failing
+audit is "Page is blocked from indexing", which is the correct behaviour for an
+internal console and is not going to be changed to raise a score.
+
+Three defects came out of the first run and are fixed:
+
+| Lighthouse said                             | What it actually was                                                                                                           | Fix                                                                                                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "No CSP found in enforcement mode"          | Real. The mock server sets a CSP on _API_ responses, but the API does not serve the app — and nothing else did either.         | A Vite plugin serves the production CSP from `vite preview`, and a relaxed one in dev where Vite needs an inline bootstrap. Keep it in step with whatever serves `dist/`. |
+| "Document does not have a main landmark"    | Real. The sign-in and callback pages were bare `<div>`s, so screen-reader users had no skip target. Accessibility 98 → 100.    | `<main>` on all three.                                                                                                                                                    |
+| "Browser errors were logged to the console" | Real. A cold load called `/auth/refresh` with no CSRF cookie, which can never succeed — a guaranteed 403 on every first visit. | The client checks for the cookie first. A visitor with no session now makes no request at all.                                                                            |
+
+### 60 fps scrolling — still not measured
+
+Rows are virtualized with TanStack Virtual and the server never returns more
+than 200 at a time, so the DOM holds roughly 30 rows regardless of result size.
+No frame timings were captured. A Chrome DevTools performance recording while
+flinging the Devices table is the check.
 
 ---
 
@@ -201,26 +229,57 @@ node loadtest/node-probe.mjs --concurrency 20 --seconds 30 \
   and excluded from the error rate — RBAC working is not a failure.
 - **Raw output**: `docs/scans/latency-probe-c1.json`, `-c5.json`, `-c20.json`.
 
-### k6 — not run
+### k6 — run
 
-The brief specifies k6, and the scenarios are written and committed:
+k6 v2.3.0. The scenarios are in `loadtest/scenarios.js`; sign-in through the
+OIDC flow is in `loadtest/lib/session.js`.
 
-| File                      | What it covers                                         |
-| ------------------------- | ------------------------------------------------------ |
-| `loadtest/scenarios.js`   | All nine journeys, with thresholds matching the budget |
-| `loadtest/lib/session.js` | Sign-in through the OIDC flow, including PKCE and MFA  |
+Thresholds are the product budget, so a run that breaches them exits non-zero.
 
-Profiles are defined as the brief specifies — smoke 5 VUs, load 200 VUs for
-10 minutes, stress ramping to 1,000, soak 100 VUs for an hour — and the
-thresholds fail the run rather than printing a report nobody reads.
+#### smoke — 5 VUs, 1 minute
 
-**k6 is not installed on this machine, so none of these profiles has been
-executed and this report contains no k6 numbers.** To run them:
+| Threshold                 | Result                    |      |
+| ------------------------- | ------------------------- | ---- |
+| checks pass rate > 99.5 % | **100 %** (1,166 / 1,166) | Pass |
+| list p95 < 500 ms         | **361 ms**                | Pass |
+| detail p95 < 200 ms       | **45 ms**                 | Pass |
+| aggregate p95 < 800 ms    | **487 ms**                | Pass |
+| error rate < 0.5 %        | **0 %** (0 / 2,067)       | Pass |
 
-```bash
-k6 run -e PROFILE=smoke loadtest/scenarios.js
-```
+#### load — 200 VUs, 10 minutes
 
-`node-probe.mjs` is not a substitute. It has no VU model, no ramping and no
-thresholds, and it runs beside the server. It exists so that this report has
-measured numbers with a stated method rather than no numbers at all.
+| Threshold                 | Result                      |          |
+| ------------------------- | --------------------------- | -------- |
+| checks pass rate > 99.5 % | **100 %** (32,780 / 32,780) | Pass     |
+| error rate < 0.5 %        | **0.42 %** (248 / 58,284)   | Pass     |
+| list p95 < 500 ms         | **8,045 ms**                | **Fail** |
+| detail p95 < 200 ms       | **8,140 ms**                | **Fail** |
+| aggregate p95 < 800 ms    | **9,210 ms**                | **Fail** |
+
+Throughput: 93.3 requests/second, 2,915 iterations.
+
+**Every functional check passes at 200 concurrent users. Only latency fails**,
+and it fails for the reason in section 5: better-sqlite3 is synchronous, so
+200 concurrent readers queue rather than overlap. Throughput is flat at 70–93
+requests/second from 1 VU to 200, which is the signature of one saturated
+worker, not of a query getting slower.
+
+These are the mock server's numbers. **They say nothing about the Go service**,
+which runs these queries concurrently against a connection pool.
+
+#### stress and soak — not run
+
+Both profiles are defined (`-e PROFILE=stress` ramps to 1,000 VUs;
+`-e PROFILE=soak` holds 100 VUs for an hour). Neither has been executed.
+
+Running them here would measure this laptop rather than the software: the load
+generator, the server and the database all share one machine, and it already
+saturates at 200 VUs. They belong on a host where the generator and the service
+are separate, against the Go implementation.
+
+### What the load runs fixed
+
+| Observed                                  | Cause                                                                                                                                                          | Fix                                                                                                                    |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Smoke reported 2.25 % failures            | The load model had an Auditor clicking "New action" — a button that is not on their screen. Correct 403s were counted as failures, which would hide real ones. | The script checks the session's permissions, exactly as the console does, and only exercises what that role can reach. |
+| Thresholds crossed on a run with 0 errors | k6 v2 removed the `__VU` and `__ITER` globals, and `setup()` has no scenario context.                                                                          | The PKCE verifier is built from randomness alone, which is unique in both contexts.                                    |

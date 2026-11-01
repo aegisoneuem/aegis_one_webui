@@ -7,7 +7,9 @@ import { createHash } from 'node:crypto';
 
 const BASE = 'http://localhost:8080';
 const API = `${BASE}/api/v1`;
-const REDIRECT = 'http://localhost:5173/auth/callback';
+// Must match a redirect URI the server has registered, which follows
+// APP_ORIGIN. Override when the console is served from somewhere else.
+const REDIRECT = process.env['E2E_REDIRECT_URI'] ?? 'http://localhost:5173/auth/callback';
 
 let failures = 0;
 function check(name, ok, detail = '') {
@@ -33,21 +35,27 @@ async function signIn(email, password) {
   const authorize = await fetch(
     `${BASE}/oidc/authorize?client_id=aegis-one-console&redirect_uri=${encodeURIComponent(REDIRECT)}&state=s1&code_challenge=${challenge}&code_challenge_method=S256`,
   );
+  saveCookies(authorize);
   const html = await authorize.text();
   const loginId = /name="login_id" value="([^"]+)"/.exec(html)?.[1];
+  const formCsrf = /name="csrf_token" value="([^"]+)"/.exec(html)?.[1];
 
-  await fetch(`${BASE}/oidc/login`, {
+  // The sign-in flow is bound to an httpOnly cookie set at /authorize, so a
+  // non-browser client has to carry it the way a browser would.
+  const login = await fetch(`${BASE}/oidc/login`, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ login_id: loginId, email, password }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: cookieHeader() },
+    body: new URLSearchParams({ login_id: loginId, csrf_token: formCsrf, email, password }),
   });
+  saveCookies(login);
 
   const mfa = await fetch(`${BASE}/oidc/mfa`, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ login_id: loginId, code: '246813' }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: cookieHeader() },
+    body: new URLSearchParams({ login_id: loginId, csrf_token: formCsrf, code: '246813' }),
     redirect: 'manual',
   });
+  saveCookies(mfa);
   const code = new URL(mfa.headers.get('location')).searchParams.get('code');
 
   const tokenRes = await fetch(`${API}/auth/token`, {
@@ -216,6 +224,17 @@ const run = async () => {
   check(
     'api token list never returns a secret or a hash',
     !JSON.stringify(tokenList).match(/token_?hash|secret/i),
+  );
+
+  // --- Failure modes -------------------------------------------------------
+  // Both of these came back as 500 until a ZAP scan produced thousands of them.
+  const unknownPath = await fetch(`${API}/no-such-endpoint`, { headers: authed(token) });
+  check('an unknown path is 404, not 500', unknownPath.status === 404, `HTTP ${unknownPath.status}`);
+
+  const unknownBody = await unknownPath.json();
+  check(
+    'a 404 still uses the error envelope',
+    unknownBody.error?.code === 'not_found' && Boolean(unknownBody.error?.requestId),
   );
 
   const bad = await fetch(`${API}/devices`, { headers: { authorization: 'Bearer not-a-real-token' } });

@@ -155,3 +155,51 @@ A policy that blocks `pnpm install` is a policy the next person deletes. A
 commented setting with the reason, the values and the trigger for enabling it
 survives; a broken install does not. Both go on at the next dependency refresh,
 with a lockfile rebuilt from a fresh resolution and a full test pass.
+
+## D-016 — The app serves its own security headers from Vite
+
+Lighthouse reported "No CSP found in enforcement mode", and it was right. The
+mock server sets a CSP on API responses, but the API does not serve the app.
+Whatever hosts `dist/` has to send its own, and nothing did.
+
+A Vite plugin now sends the production policy from `vite preview` and a relaxed
+one from the dev server. The dev concession is real and deliberate: Vite
+bootstraps React Refresh from an inline `<script>`, which `script-src 'self'`
+blocks, leaving a blank page. Turning the strict policy on in dev broke the
+whole app and every end-to-end test with it.
+
+Keep the preview policy in step with whatever serves the bundle in production,
+and verify against `vite preview` rather than the dev server.
+
+## D-017 — Sign-in is a double-submit pair, not just a cookie
+
+A ZAP baseline flagged the sign-in and MFA forms as having no anti-CSRF token,
+and the attack is real: an attacker starts their own authorize flow, obtains a
+`login_id`, and tricks a victim's browser into posting it with the attacker's
+credentials. The victim then browses in the attacker's session.
+
+The first fix bound the flow to an httpOnly cookie, which closes the attack —
+the attacker can neither read nor plant it. But ZAP still reported the finding,
+because a cookie-only defence is invisible to a scanner and to a reviewer.
+
+So the token is also a hidden `csrf_token` field. That is the shape people
+expect, it is checkable from outside, and it costs nothing. A control nobody
+can see is a control nobody can confirm.
+
+## D-018 — A scan that cannot authenticate reports a clean result
+
+The first two ZAP active scans reported no findings across 124 endpoints. Both
+were worthless: every request came back 401, because ZAP's `${VAR}`
+substitution never reached the replacer's `replacementString`, and the scan
+bounced off the auth layer without ever reaching the code it was meant to test.
+
+Nothing in the output said so. "No findings" from a scan that could not get in
+looks exactly like "no findings" from a scan that got in and found nothing.
+
+`security/run-active-scan.mjs` therefore signs in, **verifies the token against
+a real endpoint**, generates the plan with the values already in it, and the
+report records the server-side response mix — 731 × 200, 0 × 401, 0 × 500 — so
+the next reader can tell which kind of clean it was.
+
+The same trap exists for anyone scanning the Go service. Check the traffic, not
+just the findings.

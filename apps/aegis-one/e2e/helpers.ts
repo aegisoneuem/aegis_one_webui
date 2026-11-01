@@ -20,7 +20,7 @@ const MFA_CODE = process.env['MOCK_MFA_CODE'] ?? '246813';
  */
 export async function signIn(page: Page, email: string = ACCOUNTS.superAdmin): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: /single sign-on/i }).click();
+  await page.getByRole('button', { name: /Continue with SSO/i }).click();
 
   await page.getByLabel('Work email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);

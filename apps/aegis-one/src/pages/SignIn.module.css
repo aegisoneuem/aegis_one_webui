@@ -35,6 +35,7 @@
 }
 
 .wordmark {
+  font-family: var(--ui-font-display, var(--ui-font-sans));
   color: var(--ao-text);
   font-size: 17px;
   font-weight: 600;
@@ -118,6 +119,7 @@
 }
 
 .statValue {
+  font-family: var(--ui-font-display, var(--ui-font-sans));
   font-size: 23px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -148,4 +150,22 @@
   min-height: 100vh;
   color: var(--ao-muted);
   font-size: var(--ui-text-sm);
+}
+
+.methodsLabel {
+  width: 100%;
+  max-width: 340px;
+  padding-top: var(--ui-space-5);
+  margin: var(--ui-space-2) 0 0;
+  border-top: 1px solid var(--ao-border);
+  color: var(--ao-muted);
+  font-size: var(--ui-text-xs);
+}
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ui-space-4);
+  width: 100%;
+  max-width: 340px;
 }

@@ -155,12 +155,19 @@
   /* ---------------------------------------------------------------- */
 
   /*
-   * Inter. Currently the @fontsource variable build, which registers as
-   * 'Inter Variable'; v129 embeds its own static woff2 files. Extracting those
-   * is still open — see the note in docs/decisions.md D-019 — so both names
-   * are listed and the rendering does not change either way.
+   * The three faces v129 embeds, in the roles its own cascade gives them.
+   *
+   * The written token list says Inter, and Inter is embedded — but the
+   * reference's final style blocks override body text to Aegis Barlow and set
+   * KPI figures and the wordmark in Aegis Condensed. The file is the stated
+   * source of truth, so these follow the file. Inter stays in the stack.
+   *
+   * All three are self-hosted from the woff2 extracted out of v129; see
+   * src/assets/fonts/fonts.css. Nothing comes from a CDN, which the CSP
+   * forbids anyway.
    */
-  --ui-font-sans: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-font-sans: 'Aegis Barlow', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-font-display: 'Aegis Condensed', 'Aegis Barlow', sans-serif;
   --ui-font-mono: ui-monospace, Menlo, Consolas, monospace;
 
   /* Shell base is 14px, per v129. */

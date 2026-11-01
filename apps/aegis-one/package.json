@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@aegis/ui": "workspace:*",
-    "@fontsource-variable/inter": "^5.3.0",
     "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-query": "^5.105.0",
     "@tanstack/react-table": "^9.3.1",

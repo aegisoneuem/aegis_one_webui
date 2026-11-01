@@ -246,3 +246,41 @@ specification would pass on anything, which is worse than no check.
 - **Chart assignment.** Series now use the approved navy palette everywhere.
   Some charts probably want the severity or compliance palette instead; which
   chart uses which is a v129 question, not a token question.
+
+## D-020 — The fonts are v129's own files, and v129's own roles
+
+The woff2 files are extracted byte-for-byte out of the reference build: 11
+distinct files, 629 KB, loaded through `src/assets/fonts/fonts.css` with the
+reference's own `unicode-range` subsetting. `@fontsource-variable/inter` is
+gone. Nothing comes from a CDN, which the CSP forbids in any case.
+
+Extracting them turned up something the written token list does not say. The
+list specifies Inter, and Inter is embedded — but v129 also embeds **Aegis
+Barlow** and **Aegis Condensed**, and its final style blocks apply them:
+
+- `body, button, input, select, textarea, table` → **Aegis Barlow**
+- `.am-large`, `.aox .card.kpi strong`, `.ax-big`, `.compact-wordmark` →
+  **Aegis Condensed**
+- Inter is declared 34 times but overridden by the later cascade
+
+The file is the stated source of truth, so the tokens follow the file: Barlow
+is `--ui-font-sans`, Condensed is `--ui-font-display` for KPI figures and the
+wordmark, Inter stays in the stack behind Barlow. This is flagged rather than
+assumed — it is the one place the written list and the reference disagree.
+
+## D-021 — The logo is the extracted asset, not a trace
+
+`aegis-mark.svg` was a potrace vector trace of the mark. It has been deleted,
+along with the lockup built from it and the traced favicon.
+
+The console now uses `aegis-mark.png` everywhere. That file was already
+byte-identical to the mark embedded in v129 — the Phase 1 extraction was
+exact; the mistake was drawing a vector from it and then preferring the
+drawing.
+
+Two of the ten PNGs embedded in the bundle are the VS Code and VLC icons, from
+the software catalogue. The brand mark is the 256×194 one, sha `0ddb72ac`.
+
+There is no vector version in the reference. If a scalable mark is wanted, it
+has to come from whoever holds the original artwork — not from tracing the
+bitmap again.

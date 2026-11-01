@@ -9,7 +9,7 @@ import { ACCOUNTS, PAGES, signIn } from './helpers';
 test.describe('sign-in', () => {
   test('rejects a wrong password without saying which field was wrong', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /single sign-on/i }).click();
+    await page.getByRole('button', { name: /Continue with SSO/i }).click();
     await page.getByLabel('Work email').fill(ACCOUNTS.superAdmin);
     await page.getByLabel('Password').fill('not-the-password');
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -21,7 +21,7 @@ test.describe('sign-in', () => {
 
   test('requires the second factor', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /single sign-on/i }).click();
+    await page.getByRole('button', { name: /Continue with SSO/i }).click();
     await page.getByLabel('Work email').fill(ACCOUNTS.superAdmin);
     await page.getByLabel('Password').fill(process.env['MOCK_PASSWORD'] ?? 'Aegis-Demo-2026');
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -35,7 +35,9 @@ test.describe('sign-in', () => {
   test('sends an unauthenticated visitor to sign-in and back again', async ({ page }) => {
     await page.goto('/devices');
     await expect(page).toHaveURL(/\/sign-in/);
-    await expect(page.getByRole('heading', { name: 'Sign in to the console' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Sign in to your endpoint management console.' }),
+    ).toBeVisible();
   });
 });
 

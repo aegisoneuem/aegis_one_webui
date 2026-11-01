@@ -67,6 +67,8 @@
 }
 
 .value {
+  /* The reference sets its KPI figures in the condensed face. */
+  font-family: var(--ui-font-display, var(--ui-font-sans));
   font-size: 24px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

@@ -29,6 +29,7 @@
   flex: none;
 }
 .wordmark {
+  font-family: var(--ui-font-display, var(--ui-font-sans));
   font: 700 14px / 1 var(--ui-font-sans);
   letter-spacing: 0.14em;
   color: var(--ui-accent);

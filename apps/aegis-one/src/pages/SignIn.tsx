@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, ErrorState } from '@aegis/ui';
 import { useAuth } from '../app/auth';
-import mark from '../assets/brand/aegis-mark.svg';
+// The reference build's own asset, extracted byte-for-byte. The SVG that was
+// here was a potrace trace — a redraw, not the approved mark.
+import mark from '../assets/brand/aegis-mark.png';
 import styles from './SignIn.module.css';
 
 /**
@@ -13,6 +15,12 @@ import styles from './SignIn.module.css';
  * provider, which collects the password and the second factor and sends back
  * an authorization code.
  */
+const AUTH_METHODS = [
+  { id: 'oidc', label: 'OIDC', hint: 'OpenID Connect' },
+  { id: 'saml', label: 'SAML', hint: 'SAML 2.0' },
+  { id: 'ldap', label: 'LDAP', hint: 'Directory sign-in' },
+] as const;
+
 export default function SignIn() {
   const { signIn, status } = useAuth();
   const navigate = useNavigate();
@@ -31,11 +39,7 @@ export default function SignIn() {
           <span className={styles.wordmark}>AEGIS ONE</span>
         </div>
 
-        <h1 className={styles.title}>Sign in to the console</h1>
-        <p className={styles.lede}>
-          Endpoint management for your estate — inventory, patching, software, vulnerabilities and
-          configuration across every Aegis Zone.
-        </p>
+        <h1 className={styles.title}>Sign in to your endpoint management console.</h1>
 
         <div className={styles.actions}>
           {reason === 'expired' ? (
@@ -43,6 +47,7 @@ export default function SignIn() {
               Your session expired. Sign in again to continue.
             </p>
           ) : null}
+
           <Button
             variant="primary"
             size="lg"
@@ -50,8 +55,30 @@ export default function SignIn() {
             onClick={signIn}
             disabled={status === 'checking'}
           >
-            {status === 'checking' ? 'Checking your session…' : 'Continue with single sign-on'}
+            {status === 'checking' ? 'Checking your session…' : 'Continue with SSO'}
           </Button>
+
+          <p className={styles.methodsLabel}>Or sign in with</p>
+
+          {/*
+           * All four routes end at the same identity provider; which protocol
+           * it speaks is the organisation's configuration, not the user's
+           * choice. They are listed because the approved screen lists them —
+           * an operator who was told "use SAML" needs to see the word.
+           */}
+          <div className={styles.methods}>
+            {AUTH_METHODS.map((method) => (
+              <Button
+                key={method.id}
+                fullWidth
+                onClick={signIn}
+                disabled={status === 'checking'}
+                title={method.hint}
+              >
+                {method.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <p className={styles.note}>

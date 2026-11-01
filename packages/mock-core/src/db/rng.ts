@@ -20,12 +20,12 @@ export function createRng(seed: number): Rng {
   return {
     next,
     int: (min, max) => min + Math.floor(next() * (max - min + 1)),
-    pick: <T,>(items: readonly T[]): T => {
+    pick: <T>(items: readonly T[]): T => {
       const item = items[Math.floor(next() * items.length)];
       if (item === undefined) throw new Error('pick() called with an empty list');
       return item;
     },
-    weighted: <T,>(entries: readonly (readonly [T, number])[]): T => {
+    weighted: <T>(entries: readonly (readonly [T, number])[]): T => {
       const total = entries.reduce((sum, [, w]) => sum + w, 0);
       let roll = next() * total;
       for (const [value, weight] of entries) {

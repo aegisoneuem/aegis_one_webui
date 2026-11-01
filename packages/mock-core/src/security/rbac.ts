@@ -18,7 +18,10 @@ export interface RoleDefinition {
   system?: boolean;
 }
 
-export function hasPermission(claims: Pick<AccessClaims, 'permissions'>, required: string): boolean {
+export function hasPermission(
+  claims: Pick<AccessClaims, 'permissions'>,
+  required: string,
+): boolean {
   if (claims.permissions.includes('*')) return true;
   if (claims.permissions.includes(required)) return true;
 
@@ -27,7 +30,10 @@ export function hasPermission(claims: Pick<AccessClaims, 'permissions'>, require
   return area ? claims.permissions.includes(`${area}:*`) : false;
 }
 
-export function assertPermission(claims: Pick<AccessClaims, 'permissions'>, required: string): void {
+export function assertPermission(
+  claims: Pick<AccessClaims, 'permissions'>,
+  required: string,
+): void {
   if (!hasPermission(claims, required)) throw forbidden();
 }
 

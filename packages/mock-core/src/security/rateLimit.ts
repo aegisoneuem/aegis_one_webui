@@ -26,14 +26,20 @@ export const DEFAULT_RATE_LIMITS: RateLimitOptions = {
  * exhaust the budget for a whole office, and would let an attacker rotating
  * source addresses sidestep the limit entirely.
  */
-export async function registerRateLimit(app: FastifyInstance, options: RateLimitOptions): Promise<void> {
+export async function registerRateLimit(
+  app: FastifyInstance,
+  options: RateLimitOptions,
+): Promise<void> {
   await app.register(rateLimit, {
     global: true,
     max: options.max,
     timeWindow: options.windowMs,
     keyGenerator: (request: FastifyRequest) => request.auth?.sid ?? request.ip,
     errorResponseBuilder: (request) =>
-      toErrorBody(tooManyRequests(), typeof request.id === 'string' ? request.id : String(request.id)),
+      toErrorBody(
+        tooManyRequests(),
+        typeof request.id === 'string' ? request.id : String(request.id),
+      ),
     // Telling an unauthenticated caller the exact budget helps them pace an
     // attack; an authenticated client needs the headers to back off politely.
     addHeaders: {

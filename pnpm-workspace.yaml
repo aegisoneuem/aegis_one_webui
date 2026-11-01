@@ -1,5 +1,8 @@
 packages:
   - 'apps/*'
+  # Each console keeps its own mock server beside it, since the seed, the
+  # routes and the contract belong to that console rather than to the library.
+  - 'apps/*/mock-server'
   - 'packages/*'
 
 # Build scripts are blocked by default. Only these are allowed to run, and each

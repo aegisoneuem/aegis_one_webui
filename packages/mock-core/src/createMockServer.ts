@@ -5,7 +5,11 @@ import formbody from '@fastify/formbody';
 import { ApiError, toErrorBody, unauthorized } from './errors';
 import { genRequestId, loggerOptions } from './logging';
 import { registerSecurityHeaders } from './security/headers';
-import { DEFAULT_RATE_LIMITS, registerRateLimit, type RateLimitOptions } from './security/rateLimit';
+import {
+  DEFAULT_RATE_LIMITS,
+  registerRateLimit,
+  type RateLimitOptions,
+} from './security/rateLimit';
 import { assertCsrf } from './security/csrf';
 import { assertPermission } from './security/rbac';
 import { verifyAccessToken, type AccessClaims, type TokenConfig } from './security/tokens';
@@ -95,7 +99,10 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
   await registerRateLimit(app, rateLimits);
 
   if (dev && options.chaos) {
-    registerChaos(app, { ...options.chaos, exclude: [/\/auth\//, /\/oidc\//, ...(options.chaos.exclude ?? [])] });
+    registerChaos(app, {
+      ...options.chaos,
+      exclude: [/\/auth\//, /\/oidc\//, ...(options.chaos.exclude ?? [])],
+    });
   } else if (options.chaos) {
     app.log.warn('chaos options were supplied but ignored: the server is not in development mode');
   }
@@ -113,7 +120,9 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
     const url = request.routeOptions.url ?? request.url;
     if (!url.startsWith(basePath)) return;
 
-    const isPublic = publicPaths.some((p) => url === `${basePath}${p}` || url.startsWith(`${basePath}${p}/`));
+    const isPublic = publicPaths.some(
+      (p) => url === `${basePath}${p}` || url.startsWith(`${basePath}${p}/`),
+    );
     const schema = contract.operations.get(routeKey(request.method, url));
 
     if (!isPublic) {
@@ -142,7 +151,12 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
     if (typeof status === 'number' && status < 500) {
       return reply
         .status(status)
-        .send(toErrorBody(new ApiError(status, 'bad_request', 'That request could not be handled.'), requestId));
+        .send(
+          toErrorBody(
+            new ApiError(status, 'bad_request', 'That request could not be handled.'),
+            requestId,
+          ),
+        );
     }
 
     // The real message and stack go to the log, never to the client: they name
@@ -150,11 +164,18 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
     request.log.error({ err: error }, 'unhandled error');
     return reply
       .status(500)
-      .send(toErrorBody(new ApiError(500, 'internal_error', 'Something went wrong on our side.'), requestId));
+      .send(
+        toErrorBody(
+          new ApiError(500, 'internal_error', 'Something went wrong on our side.'),
+          requestId,
+        ),
+      );
   });
 
   app.setNotFoundHandler((request, reply) =>
-    reply.status(404).send(toErrorBody(new ApiError(404, 'not_found', 'Not found.'), String(request.id))),
+    reply
+      .status(404)
+      .send(toErrorBody(new ApiError(404, 'not_found', 'Not found.'), String(request.id))),
   );
 
   return { app, contract };

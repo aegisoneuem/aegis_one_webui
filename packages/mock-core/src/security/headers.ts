@@ -35,7 +35,9 @@ export async function registerSecurityHeaders(
         objectSrc: ["'none'"],
         // Defence in depth beside X-Frame-Options, for the clickjacking case.
         frameAncestors: ["'none'"],
-        ...(secure ? { upgradeInsecureRequests: [] } : {}),
+        // Helmet sets this by default; over plain http in dev it rewrites every
+        // request to https and nothing loads, so it is removed unless secure.
+        ...(secure ? { upgradeInsecureRequests: [] } : { upgradeInsecureRequests: null }),
       },
     },
     // Pointless and misleading over plain http, so it is only set behind TLS.

@@ -141,7 +141,9 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
     const login = logins.get(form['login_id'] ?? '');
     if (!login) throw badRequest('That sign-in attempt has expired. Start again.');
 
-    const user = options.users.find((u) => u.email.toLowerCase() === (form['email'] ?? '').toLowerCase().trim());
+    const user = options.users.find(
+      (u) => u.email.toLowerCase() === (form['email'] ?? '').toLowerCase().trim(),
+    );
 
     // One message for a wrong email, a wrong password and a disabled account,
     // so the form cannot be used to find out which addresses exist.
@@ -223,12 +225,18 @@ export function registerMockIdp(app: FastifyInstance, options: IdpOptions, store
 }
 
 /** Verifies the PKCE verifier and burns the code. Codes are single-use. */
-export function redeemAuthCode(store: IdpStore, code: string, verifier: string, redirectUri: string): string {
+export function redeemAuthCode(
+  store: IdpStore,
+  code: string,
+  verifier: string,
+  redirectUri: string,
+): string {
   const entry = store.codes.get(code);
   // Deleted whatever happens: a replayed code must not get a second chance.
   store.codes.delete(code);
 
-  if (!entry || Date.now() > entry.expiresAt) throw badRequest('That sign-in code has expired. Start again.');
+  if (!entry || Date.now() > entry.expiresAt)
+    throw badRequest('That sign-in code has expired. Start again.');
   if (entry.redirectUri !== redirectUri) throw badRequest('Redirect URI mismatch.');
 
   const expected = createHash('sha256').update(verifier).digest('base64url');

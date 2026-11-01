@@ -33,13 +33,15 @@ export class ApiError extends Error {
 export const badRequest = (message: string, fields?: Record<string, string>) =>
   new ApiError(400, 'bad_request', message, fields);
 
-export const unauthorized = (message = 'Sign in to continue.') => new ApiError(401, 'unauthorized', message);
+export const unauthorized = (message = 'Sign in to continue.') =>
+  new ApiError(401, 'unauthorized', message);
 
 /**
  * Deliberately vague. Saying which permission is missing tells an attacker
  * what the permission list looks like and confirms the object exists.
  */
-export const forbidden = (message = 'You do not have access to this.') => new ApiError(403, 'forbidden', message);
+export const forbidden = (message = 'You do not have access to this.') =>
+  new ApiError(403, 'forbidden', message);
 
 /**
  * Used both for "no such id" and for "exists but not yours". Returning 403 for

@@ -1,0 +1,875 @@
+/**
+ * Reference data the seed draws from.
+ *
+ * Names, sites, OS builds and software titles are realistic for an Indian
+ * enterprise estate, because a console full of "Device 1" and "Acme Corp"
+ * tells you nothing about whether a column is wide enough or a filter is
+ * useful.
+ */
+
+export interface ZoneDef {
+  id: string;
+  name: string;
+  city: string;
+  /** Rough share of the estate. */
+  weight: number;
+  peerCache: boolean;
+  bandwidthMbps: number;
+}
+
+export const ZONES: readonly ZoneDef[] = [
+  {
+    id: 'zn-mum-hq',
+    name: 'Mumbai HQ',
+    city: 'Mumbai',
+    weight: 30,
+    peerCache: true,
+    bandwidthMbps: 1000,
+  },
+  {
+    id: 'zn-del-br',
+    name: 'Delhi Branch',
+    city: 'New Delhi',
+    weight: 16,
+    peerCache: true,
+    bandwidthMbps: 500,
+  },
+  {
+    id: 'zn-blr-cmp',
+    name: 'Bengaluru Campus',
+    city: 'Bengaluru',
+    weight: 20,
+    peerCache: true,
+    bandwidthMbps: 1000,
+  },
+  {
+    id: 'zn-jai-br',
+    name: 'Jaipur Branch',
+    city: 'Jaipur',
+    weight: 8,
+    peerCache: false,
+    bandwidthMbps: 100,
+  },
+  {
+    id: 'zn-pun-dc',
+    name: 'Pune Data Centre',
+    city: 'Pune',
+    weight: 9,
+    peerCache: true,
+    bandwidthMbps: 10000,
+  },
+  {
+    id: 'zn-hyd-br',
+    name: 'Hyderabad Branch',
+    city: 'Hyderabad',
+    weight: 7,
+    peerCache: true,
+    bandwidthMbps: 300,
+  },
+  {
+    id: 'zn-che-br',
+    name: 'Chennai Branch',
+    city: 'Chennai',
+    weight: 6,
+    peerCache: false,
+    bandwidthMbps: 200,
+  },
+  {
+    id: 'zn-koc-br',
+    name: 'Kochi Branch',
+    city: 'Kochi',
+    weight: 2,
+    peerCache: false,
+    bandwidthMbps: 100,
+  },
+  {
+    id: 'zn-ahm-br',
+    name: 'Ahmedabad Branch',
+    city: 'Ahmedabad',
+    weight: 2,
+    peerCache: false,
+    bandwidthMbps: 100,
+  },
+];
+
+export interface OsDef {
+  family: string;
+  name: string;
+  version: string;
+  build: string;
+  kind: 'workstation' | 'server';
+  weight: number;
+}
+
+export const OPERATING_SYSTEMS: readonly OsDef[] = [
+  {
+    family: 'Windows',
+    name: 'Windows 11 Enterprise',
+    version: '24H2',
+    build: '26100.2314',
+    kind: 'workstation',
+    weight: 34,
+  },
+  {
+    family: 'Windows',
+    name: 'Windows 11 Enterprise',
+    version: '23H2',
+    build: '22631.4317',
+    kind: 'workstation',
+    weight: 14,
+  },
+  {
+    family: 'Windows',
+    name: 'Windows 10 Enterprise',
+    version: '22H2',
+    build: '19045.5011',
+    kind: 'workstation',
+    weight: 18,
+  },
+  {
+    family: 'Windows Server',
+    name: 'Windows Server 2022',
+    version: '21H2',
+    build: '20348.2762',
+    kind: 'server',
+    weight: 7,
+  },
+  {
+    family: 'Windows Server',
+    name: 'Windows Server 2019',
+    version: '1809',
+    build: '17763.6414',
+    kind: 'server',
+    weight: 4,
+  },
+  {
+    family: 'Windows Server',
+    name: 'Windows Server 2016',
+    version: '1607',
+    build: '14393.7426',
+    kind: 'server',
+    weight: 2,
+  },
+  {
+    family: 'Linux',
+    name: 'Red Hat Enterprise Linux 9',
+    version: '9.4',
+    build: '5.14.0-427',
+    kind: 'server',
+    weight: 5,
+  },
+  {
+    family: 'Linux',
+    name: 'Red Hat Enterprise Linux 8',
+    version: '8.10',
+    build: '4.18.0-553',
+    kind: 'server',
+    weight: 3,
+  },
+  {
+    family: 'Linux',
+    name: 'Ubuntu',
+    version: '24.04 LTS',
+    build: '6.8.0-45',
+    kind: 'server',
+    weight: 4,
+  },
+  {
+    family: 'Linux',
+    name: 'Ubuntu',
+    version: '22.04 LTS',
+    build: '5.15.0-122',
+    kind: 'workstation',
+    weight: 3,
+  },
+  {
+    family: 'Linux',
+    name: 'Ubuntu',
+    version: '20.04 LTS',
+    build: '5.4.0-200',
+    kind: 'server',
+    weight: 1,
+  },
+  {
+    family: 'macOS',
+    name: 'macOS Sequoia',
+    version: '15.1',
+    build: '24B83',
+    kind: 'workstation',
+    weight: 2,
+  },
+  {
+    family: 'macOS',
+    name: 'macOS Sonoma',
+    version: '14.7',
+    build: '23H124',
+    kind: 'workstation',
+    weight: 2,
+  },
+  {
+    family: 'macOS',
+    name: 'macOS Ventura',
+    version: '13.7',
+    build: '22H123',
+    kind: 'workstation',
+    weight: 1,
+  },
+  {
+    family: 'AIX',
+    name: 'IBM AIX',
+    version: '7.3 TL2',
+    build: '7300-02-01',
+    kind: 'server',
+    weight: 1,
+  },
+];
+
+export const WORKSTATION_MODELS = [
+  'Dell Latitude 5450',
+  'Dell Latitude 7450',
+  'Lenovo ThinkPad T14 Gen 5',
+  'Lenovo ThinkPad X1 Carbon Gen 12',
+  'HP EliteBook 840 G11',
+  'HP ProBook 450 G10',
+  'Apple MacBook Pro 14 (M3)',
+  'Apple MacBook Air 13 (M3)',
+] as const;
+
+export const SERVER_MODELS = [
+  'Dell PowerEdge R660',
+  'Dell PowerEdge R760',
+  'HPE ProLiant DL380 Gen11',
+  'Lenovo ThinkSystem SR650 V3',
+  'IBM Power S1022',
+] as const;
+
+export const FIRST_NAMES = [
+  'Aarav',
+  'Ananya',
+  'Rohan',
+  'Priya',
+  'Vikram',
+  'Meera',
+  'Siddharth',
+  'Kavya',
+  'Arjun',
+  'Neha',
+  'Rahul',
+  'Divya',
+  'Karthik',
+  'Sneha',
+  'Aditya',
+  'Pooja',
+  'Nikhil',
+  'Ishita',
+  'Manish',
+  'Shruti',
+  'Harsh',
+  'Lakshmi',
+  'Imran',
+  'Fatima',
+  'Sandeep',
+  'Ritu',
+  'Joseph',
+  'Anjali',
+] as const;
+
+export const LAST_NAMES = [
+  'Deshpande',
+  'Iyer',
+  'Kulkarni',
+  'Banerjee',
+  'Chandrasekar',
+  'Shaikh',
+  'Nair',
+  'Reddy',
+  'Pillai',
+  'Chatterjee',
+  'Gowda',
+  'Malhotra',
+  'Rao',
+  'Sengupta',
+  'Varma',
+  'Bhatt',
+  'Menon',
+  'Joshi',
+  'Kaur',
+  'Fernandes',
+  'Mehta',
+  'Khanna',
+  'Dutta',
+  'Thakur',
+] as const;
+
+export const DEPARTMENTS = [
+  'Finance',
+  'Human Resources',
+  'Engineering',
+  'Field Operations',
+  'Customer Support',
+  'Legal & Compliance',
+  'Manufacturing',
+  'Sales',
+  'IT Infrastructure',
+  'Logistics',
+] as const;
+
+export interface SoftwareDef {
+  id: string;
+  title: string;
+  publisher: string;
+  category: string;
+  latestVersion: string;
+  /** Rough share of endpoints with it installed. */
+  install: number;
+  sizeMb: number;
+}
+
+/**
+ * Software catalogue.
+ *
+ * The "Remote Access" category of the reference build is kept, minus the three
+ * titles whose names literally contain "Remote Desktop" or "Remote Control".
+ * The product rule is about capability in this console, not about which
+ * third-party software an estate happens to have installed — but shipping a
+ * seeded catalogue row that reads "Microsoft Remote Desktop" would make the
+ * console look as though it offers remote control, so those three are out.
+ * See docs/decisions.md D-011.
+ */
+export const SOFTWARE: readonly SoftwareDef[] = [
+  {
+    id: 'sw-chrome',
+    title: 'Google Chrome',
+    publisher: 'Google LLC',
+    category: 'Browsers',
+    latestVersion: '142.0.7204.92',
+    install: 0.94,
+    sizeMb: 118,
+  },
+  {
+    id: 'sw-edge',
+    title: 'Microsoft Edge',
+    publisher: 'Microsoft Corporation',
+    category: 'Browsers',
+    latestVersion: '142.0.3296.68',
+    install: 0.88,
+    sizeMb: 142,
+  },
+  {
+    id: 'sw-firefox',
+    title: 'Mozilla Firefox ESR',
+    publisher: 'Mozilla Foundation',
+    category: 'Browsers',
+    latestVersion: '128.6.0esr',
+    install: 0.21,
+    sizeMb: 96,
+  },
+  {
+    id: 'sw-m365',
+    title: 'Microsoft 365 Apps for enterprise',
+    publisher: 'Microsoft Corporation',
+    category: 'Productivity',
+    latestVersion: '16.0.18227.20162',
+    install: 0.91,
+    sizeMb: 3840,
+  },
+  {
+    id: 'sw-teams',
+    title: 'Microsoft Teams',
+    publisher: 'Microsoft Corporation',
+    category: 'Collaboration',
+    latestVersion: '24295.605.3225.8804',
+    install: 0.87,
+    sizeMb: 412,
+  },
+  {
+    id: 'sw-zoom',
+    title: 'Zoom Workplace',
+    publisher: 'Zoom Communications',
+    category: 'Collaboration',
+    latestVersion: '6.2.11',
+    install: 0.44,
+    sizeMb: 286,
+  },
+  {
+    id: 'sw-slack',
+    title: 'Slack',
+    publisher: 'Salesforce Inc.',
+    category: 'Collaboration',
+    latestVersion: '4.41.98',
+    install: 0.19,
+    sizeMb: 204,
+  },
+  {
+    id: 'sw-acrobat',
+    title: 'Adobe Acrobat Reader',
+    publisher: 'Adobe Inc.',
+    category: 'Productivity',
+    latestVersion: '24.4.20272',
+    install: 0.76,
+    sizeMb: 428,
+  },
+  {
+    id: 'sw-7zip',
+    title: '7-Zip',
+    publisher: 'Igor Pavlov',
+    category: 'Utilities',
+    latestVersion: '24.09',
+    install: 0.63,
+    sizeMb: 6,
+  },
+  {
+    id: 'sw-notepadpp',
+    title: 'Notepad++',
+    publisher: 'Notepad++ Team',
+    category: 'Developer Tools',
+    latestVersion: '8.7.1',
+    install: 0.28,
+    sizeMb: 18,
+  },
+  {
+    id: 'sw-vscode',
+    title: 'Visual Studio Code',
+    publisher: 'Microsoft Corporation',
+    category: 'Developer Tools',
+    latestVersion: '1.95.3',
+    install: 0.22,
+    sizeMb: 364,
+  },
+  {
+    id: 'sw-git',
+    title: 'Git for Windows',
+    publisher: 'The Git Development Community',
+    category: 'Developer Tools',
+    latestVersion: '2.47.0',
+    install: 0.18,
+    sizeMb: 312,
+  },
+  {
+    id: 'sw-nodejs',
+    title: 'Node.js LTS',
+    publisher: 'OpenJS Foundation',
+    category: 'Developer Tools',
+    latestVersion: '22.11.0',
+    install: 0.14,
+    sizeMb: 88,
+  },
+  {
+    id: 'sw-jre',
+    title: 'Oracle Java SE Runtime',
+    publisher: 'Oracle Corporation',
+    category: 'Runtimes',
+    latestVersion: '21.0.5',
+    install: 0.31,
+    sizeMb: 190,
+  },
+  {
+    id: 'sw-dotnet',
+    title: '.NET Desktop Runtime 8',
+    publisher: 'Microsoft Corporation',
+    category: 'Runtimes',
+    latestVersion: '8.0.11',
+    install: 0.58,
+    sizeMb: 142,
+  },
+  {
+    id: 'sw-crowdstrike',
+    title: 'CrowdStrike Falcon Sensor',
+    publisher: 'CrowdStrike Inc.',
+    category: 'Security',
+    latestVersion: '7.20.19507',
+    install: 0.96,
+    sizeMb: 148,
+  },
+  {
+    id: 'sw-defender',
+    title: 'Microsoft Defender for Endpoint',
+    publisher: 'Microsoft Corporation',
+    category: 'Security',
+    latestVersion: '10.8760.0',
+    install: 0.72,
+    sizeMb: 96,
+  },
+  {
+    id: 'sw-netskope',
+    title: 'Netskope Client',
+    publisher: 'Netskope Inc.',
+    category: 'Security',
+    latestVersion: '120.0.1',
+    install: 0.54,
+    sizeMb: 62,
+  },
+  {
+    id: 'sw-globalprotect',
+    title: 'Palo Alto GlobalProtect',
+    publisher: 'Palo Alto Networks',
+    category: 'Networking',
+    latestVersion: '6.2.4',
+    install: 0.61,
+    sizeMb: 74,
+  },
+  {
+    id: 'sw-anyconnect',
+    title: 'Cisco Secure Client',
+    publisher: 'Cisco Systems',
+    category: 'Networking',
+    latestVersion: '5.1.6.103',
+    install: 0.29,
+    sizeMb: 118,
+  },
+  {
+    id: 'sw-citrix',
+    title: 'Citrix Workspace App',
+    publisher: 'Cloud Software Group',
+    category: 'Remote Access',
+    latestVersion: '2409',
+    install: 0.33,
+    sizeMb: 286,
+  },
+  {
+    id: 'sw-horizon',
+    title: 'Omnissa Horizon Client',
+    publisher: 'Omnissa LLC',
+    category: 'Remote Access',
+    latestVersion: '2406',
+    install: 0.11,
+    sizeMb: 224,
+  },
+  {
+    id: 'sw-anydesk',
+    title: 'AnyDesk',
+    publisher: 'AnyDesk Software GmbH',
+    category: 'Remote Access',
+    latestVersion: '8.1.3',
+    install: 0.06,
+    sizeMb: 24,
+  },
+  {
+    id: 'sw-teamviewer',
+    title: 'TeamViewer',
+    publisher: 'TeamViewer SE',
+    category: 'Remote Access',
+    latestVersion: '15.58.4',
+    install: 0.08,
+    sizeMb: 68,
+  },
+  {
+    id: 'sw-tally',
+    title: 'TallyPrime',
+    publisher: 'Tally Solutions',
+    category: 'Line of Business',
+    latestVersion: '5.0.1',
+    install: 0.12,
+    sizeMb: 240,
+  },
+  {
+    id: 'sw-sapgui',
+    title: 'SAP GUI for Windows',
+    publisher: 'SAP SE',
+    category: 'Line of Business',
+    latestVersion: '8.00 PL12',
+    install: 0.27,
+    sizeMb: 1180,
+  },
+  {
+    id: 'sw-autocad',
+    title: 'Autodesk AutoCAD',
+    publisher: 'Autodesk Inc.',
+    category: 'Engineering',
+    latestVersion: '2025.1.2',
+    install: 0.04,
+    sizeMb: 7400,
+  },
+  {
+    id: 'sw-matlab',
+    title: 'MATLAB',
+    publisher: 'MathWorks',
+    category: 'Engineering',
+    latestVersion: 'R2024b',
+    install: 0.03,
+    sizeMb: 9600,
+  },
+  {
+    id: 'sw-putty',
+    title: 'PuTTY',
+    publisher: 'Simon Tatham',
+    category: 'Utilities',
+    latestVersion: '0.82',
+    install: 0.24,
+    sizeMb: 4,
+  },
+  {
+    id: 'sw-winscp',
+    title: 'WinSCP',
+    publisher: 'Martin Prikryl',
+    category: 'Utilities',
+    latestVersion: '6.3.6',
+    install: 0.16,
+    sizeMb: 12,
+  },
+  {
+    id: 'sw-vlc',
+    title: 'VLC Media Player',
+    publisher: 'VideoLAN',
+    category: 'Media',
+    latestVersion: '3.0.21',
+    install: 0.35,
+    sizeMb: 42,
+  },
+  {
+    id: 'sw-zscaler',
+    title: 'Zscaler Client Connector',
+    publisher: 'Zscaler Inc.',
+    category: 'Networking',
+    latestVersion: '4.4.0.238',
+    install: 0.18,
+    sizeMb: 86,
+  },
+];
+
+export interface CveDef {
+  id: string;
+  title: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  cvss: number;
+  /** Known exploited; drives the "exploited in the wild" counts. */
+  exploited: boolean;
+  publishedDaysAgo: number;
+  affects: string;
+  fixedBy: string;
+}
+
+export const CVES: readonly CveDef[] = [
+  {
+    id: 'CVE-2026-20881',
+    title: 'Windows LSASS elevation of privilege',
+    severity: 'critical',
+    cvss: 9.8,
+    exploited: true,
+    publishedDaysAgo: 22,
+    affects: 'Windows',
+    fixedBy: 'KB5041585',
+  },
+  {
+    id: 'CVE-2026-20644',
+    title: 'Windows TCP/IP remote code execution',
+    severity: 'critical',
+    cvss: 9.6,
+    exploited: true,
+    publishedDaysAgo: 41,
+    affects: 'Windows',
+    fixedBy: 'KB5040712',
+  },
+  {
+    id: 'CVE-2026-19902',
+    title: 'Chromium V8 type confusion',
+    severity: 'critical',
+    cvss: 9.1,
+    exploited: true,
+    publishedDaysAgo: 9,
+    affects: 'Google Chrome',
+    fixedBy: 'Chrome 142.0.7204.92',
+  },
+  {
+    id: 'CVE-2026-18877',
+    title: 'OpenSSL certificate verification bypass',
+    severity: 'high',
+    cvss: 8.6,
+    exploited: false,
+    publishedDaysAgo: 63,
+    affects: 'Linux',
+    fixedBy: 'openssl-3.2.4',
+  },
+  {
+    id: 'CVE-2026-18214',
+    title: 'Linux kernel netfilter use-after-free',
+    severity: 'high',
+    cvss: 8.4,
+    exploited: true,
+    publishedDaysAgo: 77,
+    affects: 'Linux',
+    fixedBy: 'kernel-5.14.0-427.33',
+  },
+  {
+    id: 'CVE-2026-17760',
+    title: 'Adobe Acrobat Reader out-of-bounds write',
+    severity: 'high',
+    cvss: 7.8,
+    exploited: false,
+    publishedDaysAgo: 30,
+    affects: 'Adobe Acrobat Reader',
+    fixedBy: '24.4.20272',
+  },
+  {
+    id: 'CVE-2026-17331',
+    title: 'Oracle Java SE deserialisation flaw',
+    severity: 'high',
+    cvss: 7.5,
+    exploited: false,
+    publishedDaysAgo: 55,
+    affects: 'Oracle Java SE Runtime',
+    fixedBy: '21.0.5',
+  },
+  {
+    id: 'CVE-2026-16988',
+    title: 'macOS WebKit sandbox escape',
+    severity: 'high',
+    cvss: 7.7,
+    exploited: true,
+    publishedDaysAgo: 18,
+    affects: 'macOS',
+    fixedBy: 'macOS 15.1',
+  },
+  {
+    id: 'CVE-2026-16402',
+    title: 'Microsoft Office remote code execution',
+    severity: 'high',
+    cvss: 7.9,
+    exploited: false,
+    publishedDaysAgo: 36,
+    affects: 'Microsoft 365 Apps for enterprise',
+    fixedBy: '16.0.18227.20162',
+  },
+  {
+    id: 'CVE-2026-15771',
+    title: 'Windows Print Spooler privilege escalation',
+    severity: 'medium',
+    cvss: 6.8,
+    exploited: false,
+    publishedDaysAgo: 88,
+    affects: 'Windows',
+    fixedBy: 'KB5039895',
+  },
+  {
+    id: 'CVE-2026-15230',
+    title: 'curl heap buffer overflow',
+    severity: 'medium',
+    cvss: 6.5,
+    exploited: false,
+    publishedDaysAgo: 102,
+    affects: 'Linux',
+    fixedBy: 'curl-8.11.0',
+  },
+  {
+    id: 'CVE-2026-14866',
+    title: 'PuTTY weak key generation',
+    severity: 'medium',
+    cvss: 5.9,
+    exploited: false,
+    publishedDaysAgo: 120,
+    affects: 'PuTTY',
+    fixedBy: '0.82',
+  },
+  {
+    id: 'CVE-2026-14205',
+    title: 'Windows SMB information disclosure',
+    severity: 'medium',
+    cvss: 5.5,
+    exploited: false,
+    publishedDaysAgo: 74,
+    affects: 'Windows',
+    fixedBy: 'KB5040712',
+  },
+  {
+    id: 'CVE-2026-13644',
+    title: '7-Zip path traversal on extract',
+    severity: 'medium',
+    cvss: 5.3,
+    exploited: false,
+    publishedDaysAgo: 140,
+    affects: '7-Zip',
+    fixedBy: '24.09',
+  },
+  {
+    id: 'CVE-2026-12980',
+    title: 'VLC demuxer denial of service',
+    severity: 'low',
+    cvss: 3.7,
+    exploited: false,
+    publishedDaysAgo: 160,
+    affects: 'VLC Media Player',
+    fixedBy: '3.0.21',
+  },
+  {
+    id: 'CVE-2026-12311',
+    title: 'AIX NFS client information disclosure',
+    severity: 'low',
+    cvss: 3.3,
+    exploited: false,
+    publishedDaysAgo: 190,
+    affects: 'AIX',
+    fixedBy: 'IJ49882',
+  },
+];
+
+/** The 200 configuration checks the Configuration page reports against. */
+export const CONFIG_BENCHMARKS = [
+  'CIS Microsoft Windows 11 Enterprise v3.0.0',
+  'CIS Microsoft Windows Server 2022 v3.0.0',
+  'CIS Red Hat Enterprise Linux 9 v2.0.0',
+  'CIS Ubuntu Linux 24.04 LTS v1.0.0',
+  'CIS Apple macOS 15 Sequoia v1.0.0',
+  'Internal baseline — Aegis One Endpoint Hardening v4',
+] as const;
+
+export const CONFIG_CHECK_TITLES = [
+  'BitLocker enabled on the system drive',
+  'Secure Boot enabled',
+  'TPM 2.0 present and ready',
+  'Local administrator password solution in use',
+  'Guest account disabled',
+  'SMBv1 removed',
+  'PowerShell script block logging enabled',
+  'Windows Firewall enabled on all profiles',
+  'Screen lock after 15 minutes of inactivity',
+  'Removable storage write access restricted',
+  'Audit logon events — success and failure',
+  'NTLMv1 disabled',
+  'LLMNR disabled',
+  'AutoPlay disabled for all drives',
+  'Password minimum length at least 14',
+  'Account lockout threshold at most 5',
+  'Remote registry service disabled',
+  'Unquoted service paths remediated',
+  'SSH root login disabled',
+  'SSH password authentication disabled',
+  'Automatic security updates enabled',
+  'Filesystem integrity checking scheduled',
+  'auditd running and enabled at boot',
+  'World-writable files reviewed',
+  'FileVault enabled',
+  'Gatekeeper enabled',
+  'System Integrity Protection enabled',
+  'Firmware password set',
+] as const;
+
+export const AGENT_VERSIONS = ['7.4.2', '7.4.1', '7.3.9', '7.3.4', '7.2.8'] as const;
+
+export const DEPLOYMENT_TYPES = [
+  'software-install',
+  'software-uninstall',
+  'patch',
+  'script',
+  'os-update',
+] as const;
+
+export const INTEGRATIONS = [
+  { id: 'int-splunk', name: 'Splunk Enterprise Security', kind: 'siem', status: 'connected' },
+  { id: 'int-sentinel', name: 'Microsoft Sentinel', kind: 'siem', status: 'connected' },
+  { id: 'int-servicenow', name: 'ServiceNow ITSM', kind: 'itsm', status: 'connected' },
+  { id: 'int-jira', name: 'Jira Service Management', kind: 'itsm', status: 'degraded' },
+  { id: 'int-slack', name: 'Slack — #endpoint-alerts', kind: 'notification', status: 'connected' },
+  {
+    id: 'int-smtp',
+    name: 'SMTP relay — smtp.corp.internal',
+    kind: 'notification',
+    status: 'connected',
+  },
+  { id: 'int-entra', name: 'Microsoft Entra ID', kind: 'identity', status: 'connected' },
+  {
+    id: 'int-syslog',
+    name: 'Syslog — siem-collector.corp.internal:6514',
+    kind: 'siem',
+    status: 'disconnected',
+  },
+] as const;

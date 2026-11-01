@@ -27,7 +27,10 @@ export class SessionStore {
   private readonly byId = new Map<string, Session>();
   private readonly byHash = new Map<string, string>();
 
-  create(userId: string, meta: { userAgent?: string; ip?: string } = {}): { session: Session; token: string } {
+  create(
+    userId: string,
+    meta: { userAgent?: string; ip?: string } = {},
+  ): { session: Session; token: string } {
     const token = newOpaqueToken();
     const session: Session = {
       id: randomUUID(),
@@ -86,7 +89,8 @@ export class SessionStore {
   }
 
   revokeAllFor(userId: string): void {
-    for (const session of this.byId.values()) if (session.userId === userId) this.revoke(session.id);
+    for (const session of this.byId.values())
+      if (session.userId === userId) this.revoke(session.id);
   }
 
   sweep(): void {

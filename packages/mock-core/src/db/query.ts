@@ -127,7 +127,7 @@ function buildWhere(spec: TableSpec, query: ListQuery, extra?: WhereClause): Whe
     const term = `%${query.q.trim().toLowerCase()}%`;
     const ors = spec.searchColumns.map((c) => `LOWER(${quote(c)}) LIKE ?`);
     parts.push(`(${ors.join(' OR ')})`);
-    for (const _ of spec.searchColumns) params.push(term);
+    for (let i = 0; i < spec.searchColumns.length; i++) params.push(term);
   }
 
   for (const [key, raw] of Object.entries(query.filters ?? {})) {
@@ -210,23 +210,33 @@ export function listRows<T extends Record<string, unknown>>(
     return `${quote(column.column)} AS ${quote(f)}`;
   });
   // The cursor needs the sort value and the id even when the client did not ask for them.
-  const internalSelect = [...select, `${quote(sortColumn)} AS "__sort"`, `${quote(spec.idColumn)} AS "__id"`];
+  const internalSelect = [
+    ...select,
+    `${quote(sortColumn)} AS "__sort"`,
+    `${quote(spec.idColumn)} AS "__id"`,
+  ];
 
   const where = buildWhere(spec, query, options.scope);
   const whereSql = where.sql ? `WHERE ${where.sql}` : '';
 
-  const total = db.prepare(`SELECT COUNT(*) AS n FROM ${quote(spec.table)} ${whereSql}`).get(...where.params) as {
+  const total = db
+    .prepare(`SELECT COUNT(*) AS n FROM ${quote(spec.table)} ${whereSql}`)
+    .get(...where.params) as {
     n: number;
   };
 
   // Keyset pagination: (sort, id) > (lastSort, lastId). Stable under inserts,
   // and does not degrade the way OFFSET does at row 40,000.
   const keyParams: unknown[] = [];
-  let keySql = '';
+  const conditions: string[] = [];
+  if (where.sql) conditions.push(where.sql);
+
   if (query.cursor) {
     const cursor = decodeCursor(query.cursor);
     const cmp = desc ? '<' : '>';
-    keySql = `AND (${quote(sortColumn)} ${cmp} ? OR (${quote(sortColumn)} = ? AND ${quote(spec.idColumn)} ${cmp} ?))`;
+    conditions.push(
+      `(${quote(sortColumn)} ${cmp} ? OR (${quote(sortColumn)} = ? AND ${quote(spec.idColumn)} ${cmp} ?))`,
+    );
     keyParams.push(cursor.v, cursor.v, cursor.i);
   }
 
@@ -234,8 +244,7 @@ export function listRows<T extends Record<string, unknown>>(
   const sql = [
     `SELECT ${internalSelect.join(', ')}`,
     `FROM ${quote(spec.table)}`,
-    whereSql || (keySql ? 'WHERE 1=1' : ''),
-    whereSql && keySql ? keySql : keySql ? keySql.replace(/^AND /, '') : '',
+    conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
     `ORDER BY ${quote(sortColumn)} ${direction}, ${quote(spec.idColumn)} ${direction}`,
     `LIMIT ?`,
   ]
@@ -252,7 +261,10 @@ export function listRows<T extends Record<string, unknown>>(
   const last = page[page.length - 1];
 
   const items = page.map((row) => {
-    const { __sort: _sort, __id: _id, ...rest } = row;
+    const rest = { ...row } as Record<string, unknown>;
+    // Cursor bookkeeping, not part of the resource.
+    delete rest['__sort'];
+    delete rest['__id'];
     return rest as unknown as T;
   });
 

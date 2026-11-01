@@ -1,0 +1,384 @@
+import { createHash, randomUUID } from 'node:crypto';
+import type { FastifyInstance } from 'fastify';
+import { badRequest, conflict, notFound, zoneScope, type Db } from '@aegis/mock-core';
+import { shapeRow, toListQuery } from './resources';
+
+/**
+ * State-changing endpoints: submitting work, cancelling it, and managing API
+ * tokens.
+ *
+ * Every one of these is already behind the contract-driven permission and CSRF
+ * checks in the app factory; what the handlers add is the per-object rules —
+ * target resolution, zone scoping, and the limits on what a job may contain.
+ */
+
+const MAX_EXPLICIT_TARGETS = 5000;
+/** The contract caps per-endpoint output at 256 KiB; the server enforces it. */
+const MAX_STDOUT_BYTES = 262_144;
+
+/** Exactly the contract's `TargetSelection`. */
+interface TargetSelection {
+  deviceIds?: string[];
+  groupIds?: string[];
+  hostnames?: string[];
+  zone?: string;
+  /** Serialised filter, applied server-side; this is how "all 12,480 matching" works. */
+  filter?: string;
+}
+
+/**
+ * Turns a target selection into the device ids it actually means.
+ *
+ * Resolution happens here, not on the client: a client that posted 12,480 ids
+ * would be asserting a filter result the server never checked, and a scoped
+ * role could name devices outside its zones.
+ */
+function resolveTargets(db: Db, selection: TargetSelection, zoneIds: readonly string[]): string[] {
+  const scope = zoneScope({ zoneIds: [...zoneIds] });
+  const clauses: string[] = [];
+  const params: unknown[] = [];
+
+  if (selection.deviceIds?.length) {
+    if (selection.deviceIds.length > MAX_EXPLICIT_TARGETS) {
+      throw badRequest(
+        `Select at most ${MAX_EXPLICIT_TARGETS} devices explicitly, or target a group or a filter.`,
+      );
+    }
+    clauses.push(`id IN (${selection.deviceIds.map(() => '?').join(',')})`);
+    params.push(...selection.deviceIds);
+  }
+
+  if (selection.hostnames?.length) {
+    clauses.push(`hostname IN (${selection.hostnames.map(() => '?').join(',')})`);
+    params.push(...selection.hostnames);
+  }
+
+  if (selection.zone) {
+    clauses.push('zone_id = ?');
+    params.push(selection.zone);
+  }
+
+  if (selection.groupIds?.length) {
+    // Groups are fixture metadata rather than materialised membership, so a
+    // group target resolves to its zone-visible devices up to its stated size.
+    const sizes = db
+      .prepare(
+        `SELECT member_count FROM device_groups WHERE id IN (${selection.groupIds.map(() => '?').join(',')})`,
+      )
+      .all(...selection.groupIds) as { member_count: number }[];
+    if (sizes.length === 0) throw notFound('No such group.');
+  }
+
+  // The filter is the console's own query string, re-run here against the
+  // same allowlist the list endpoint uses. Only declared keys are honoured;
+  // anything else is dropped rather than reaching SQL.
+  if (selection.filter) {
+    const parsed = new URLSearchParams(selection.filter);
+    const allowed: Record<string, string> = {
+      status: 'status',
+      osFamily: 'os_family',
+      kind: 'kind',
+    };
+    for (const [key, column] of Object.entries(allowed)) {
+      const value = parsed.get(key);
+      if (!value) continue;
+      clauses.push(`${column} = ?`);
+      params.push(value);
+    }
+  }
+
+  if (clauses.length === 0 && !selection.groupIds?.length) {
+    throw badRequest('Choose at least one target.');
+  }
+
+  const where = [clauses.length ? `(${clauses.join(' OR ')})` : '1=1', scope?.sql]
+    .filter(Boolean)
+    .join(' AND ');
+  const limit = selection.groupIds?.length ? 20_000 : MAX_EXPLICIT_TARGETS;
+
+  const rows = db
+    .prepare(`SELECT id FROM devices WHERE ${where} LIMIT ?`)
+    .all(...params, ...(scope?.params ?? []), limit) as { id: string }[];
+
+  if (rows.length === 0) throw badRequest('That selection matches no devices you can see.');
+  return rows.map((r) => r.id);
+}
+
+export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: string): void {
+  /**
+   * Submit a remote script-execution job.
+   *
+   * Non-interactive by construction: the response is a job id to poll. There
+   * is no socket, no attach and no way to send a second command to a running
+   * job — that is the difference between running a script and remote control.
+   */
+  app.post(`${basePath}/liveops/script-jobs`, async (request, reply) => {
+    const body = request.body as {
+      kind?: 'live-data' | 'script' | 'log-collection';
+      name?: string;
+      changeRef?: string;
+      targets?: TargetSelection;
+      outputLimitKb?: number;
+      liveData?: { fields: string[] };
+      script?: { language: string; body: string };
+      logCollection?: { sources: string[]; customPaths?: string[] };
+    };
+
+    if (!body.kind || !body.name || !body.targets)
+      throw badRequest('kind, name and targets are required.');
+    if (body.kind === 'script' && !body.script?.body)
+      throw badRequest('A script job needs a script.');
+    if (body.kind === 'live-data' && !body.liveData?.fields?.length) {
+      throw badRequest('A live data job needs at least one field.');
+    }
+    if (body.kind === 'log-collection' && !body.logCollection?.sources?.length) {
+      throw badRequest('A log collection job needs at least one source.');
+    }
+
+    const targets = resolveTargets(db, body.targets, request.auth?.zoneIds ?? []);
+    const jobId = `job-${randomUUID().slice(0, 8)}`;
+    const now = new Date().toISOString();
+
+    db.prepare(
+      `INSERT INTO live_jobs (id,name,kind,language,script,reason,status,target_count,completed,failed,created_at,created_by,output_limit_kb)
+       VALUES (?,?,?,?,?,?,'queued',?,0,0,?,?,?)`,
+    ).run(
+      jobId,
+      body.name,
+      body.kind,
+      body.script?.language ?? null,
+      // Stored verbatim. It is data, never evaluated here, and the console
+      // renders it as text.
+      body.script?.body ?? null,
+      body.changeRef ?? null,
+      targets.length,
+      now,
+      request.auth?.email ?? 'unknown',
+      Math.min(body.outputLimitKb ?? 256, 256),
+    );
+
+    db.prepare(
+      `INSERT INTO audit_log (id,at,actor,actor_role,action,object_type,object_id,outcome,ip,detail)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    ).run(
+      `aud-${randomUUID().slice(0, 8)}`,
+      now,
+      request.auth?.email ?? 'unknown',
+      request.auth?.role ?? 'unknown',
+      body.kind === 'script' ? 'liveops.script.submit' : `liveops.${body.kind}.submit`,
+      'live-job',
+      jobId,
+      'success',
+      request.ip,
+      `${targets.length} endpoints`,
+    );
+
+    request.log.info({ event: 'liveops.submit', jobId, targets: targets.length }, 'job queued');
+    return reply
+      .status(201)
+      .send({ id: jobId, status: 'queued', targetCount: targets.length, createdAt: now });
+  });
+
+  app.get(`${basePath}/liveops/script-jobs/:jobId/results`, async (request) => {
+    const { jobId } = request.params as { jobId: string };
+    const job = db.prepare(`SELECT id FROM live_jobs WHERE id = ?`).get(jobId);
+    if (!job) throw notFound();
+
+    const query = toListQuery(request);
+    const limit = Math.min(Number(query.limit) || 50, 200);
+    const rows = db
+      .prepare(
+        `SELECT device_id AS deviceId, hostname, state, exit_code AS exitCode, stdout, stderr,
+                duration_ms AS durationMs, finished_at AS finishedAt
+         FROM live_job_results WHERE job_id = ? ORDER BY hostname LIMIT ?`,
+      )
+      .all(jobId, limit) as Record<string, unknown>[];
+
+    return {
+      items: rows.map((row) => ({
+        ...shapeRow(row),
+        // Truncated server-side as well as client-side. Output comes from the
+        // endpoint, so it is untrusted, and the console renders it as text.
+        stdout: truncate(row['stdout']),
+        stderr: truncate(row['stderr']),
+      })),
+      page: { nextCursor: null, total: rows.length },
+    };
+  });
+
+  app.delete(`${basePath}/liveops/script-jobs/:jobId`, async (request, reply) => {
+    const { jobId } = request.params as { jobId: string };
+    const job = db.prepare(`SELECT status FROM live_jobs WHERE id = ?`).get(jobId) as
+      { status: string } | undefined;
+    if (!job) throw notFound();
+    if (job.status === 'completed' || job.status === 'cancelled') {
+      throw conflict('That job has already finished.');
+    }
+    db.prepare(`UPDATE live_jobs SET status = 'cancelled', finished_at = ? WHERE id = ?`).run(
+      new Date().toISOString(),
+      jobId,
+    );
+    return reply.status(204).send();
+  });
+
+  /** Create a deployment. Targets are resolved here for the same reason as jobs. */
+  app.post(`${basePath}/deployments`, async (request, reply) => {
+    const body = request.body as {
+      type?: string;
+      name?: string;
+      content?: { packageId?: string; patchIds?: string[]; policyId?: string };
+      targets?: TargetSelection;
+      schedule?: { mode?: 'now' | 'later'; startAt?: string };
+      network?: { wakeOfflineFirst?: boolean };
+      options?: { notes?: string };
+    };
+
+    if (!body.type || !body.name || !body.targets)
+      throw badRequest('type, name and targets are required.');
+
+    const targets = resolveTargets(db, body.targets, request.auth?.zoneIds ?? []);
+    const deploymentId = `dep-${randomUUID().slice(0, 8)}`;
+    const now = new Date().toISOString();
+    const scheduled = body.schedule?.mode === 'later';
+
+    const contentLabel =
+      body.content?.packageId ??
+      (body.content?.patchIds?.length ? `${body.content.patchIds.length} patches` : undefined) ??
+      body.content?.policyId ??
+      'unspecified';
+
+    db.prepare(
+      `INSERT INTO deployments (id,name,type,status,content,target_count,succeeded,failed,pending,created_at,created_by,scheduled_at,wake_offline_first,notes)
+       VALUES (?,?,?,?,?,?,0,0,?,?,?,?,?,?)`,
+    ).run(
+      deploymentId,
+      body.name,
+      body.type,
+      scheduled ? 'scheduled' : 'running',
+      contentLabel,
+      targets.length,
+      targets.length,
+      now,
+      request.auth?.email ?? 'unknown',
+      scheduled ? (body.schedule?.startAt ?? null) : null,
+      body.network?.wakeOfflineFirst ? 1 : 0,
+      body.options?.notes ?? null,
+    );
+
+    db.prepare(
+      `INSERT INTO audit_log (id,at,actor,actor_role,action,object_type,object_id,outcome,ip,detail)
+       VALUES (?,?,?,?,'deployment.create','deployment',?,'success',?,?)`,
+    ).run(
+      `aud-${randomUUID().slice(0, 8)}`,
+      now,
+      request.auth?.email ?? 'unknown',
+      request.auth?.role ?? 'unknown',
+      deploymentId,
+      request.ip,
+      `${targets.length} endpoints`,
+    );
+
+    return reply.status(201).send({
+      id: deploymentId,
+      name: body.name,
+      status: scheduled ? 'scheduled' : 'running',
+      targetCount: targets.length,
+      createdAt: now,
+    });
+  });
+
+  app.get(`${basePath}/deployments/:deploymentId/results`, async (request) => {
+    const { deploymentId } = request.params as { deploymentId: string };
+    const exists = db.prepare(`SELECT id FROM deployments WHERE id = ?`).get(deploymentId);
+    if (!exists) throw notFound();
+
+    const rows = db
+      .prepare(
+        `SELECT r.device_id AS deviceId, d.hostname, d.zone_name AS zoneName, r.state, r.message,
+                r.finished_at AS finishedAt
+         FROM deployment_results r JOIN devices d ON d.id = r.device_id
+         WHERE r.deployment_id = ? ORDER BY d.hostname LIMIT 200`,
+      )
+      .all(deploymentId) as Record<string, unknown>[];
+
+    return { items: rows.map((r) => shapeRow(r)), page: { nextCursor: null, total: rows.length } };
+  });
+
+  /**
+   * Create an API token.
+   *
+   * The secret is generated here, returned exactly once, and only its SHA-256
+   * is stored — so it cannot be read back from the list endpoint, the database
+   * or a backup.
+   */
+  app.post(`${basePath}/admin/tokens`, async (request, reply) => {
+    const body = request.body as { name?: string; scopes?: string[]; expiresAt?: string };
+    if (!body.name || !body.scopes?.length) throw badRequest('name and scopes are required.');
+
+    // A token cannot be given a permission its creator does not hold.
+    const own = new Set(request.auth?.permissions ?? []);
+    if (!own.has('*')) {
+      const over = body.scopes.filter((s) => !own.has(s) && !own.has(`${s.split(':')[0]}:*`));
+      if (over.length)
+        throw badRequest('A token cannot be given permissions you do not have yourself.');
+    }
+
+    const secret = `aeg_${randomUUID().replace(/-/g, '')}${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+    const tokenId = `tok-${randomUUID().slice(0, 8)}`;
+    const now = new Date().toISOString();
+
+    db.prepare(
+      `INSERT INTO api_tokens (id,name,token_hash,prefix,scopes,created_at,created_by,expires_at)
+       VALUES (?,?,?,?,?,?,?,?)`,
+    ).run(
+      tokenId,
+      body.name,
+      createHash('sha256').update(secret).digest('hex'),
+      secret.slice(0, 11),
+      JSON.stringify(body.scopes),
+      now,
+      request.auth?.email ?? 'unknown',
+      body.expiresAt ?? null,
+    );
+
+    return reply.status(201).send({
+      id: tokenId,
+      name: body.name,
+      prefix: secret.slice(0, 11),
+      scopes: body.scopes,
+      createdAt: now,
+      // Shown once. There is no endpoint that can return it again.
+      secret,
+    });
+  });
+
+  app.delete(`${basePath}/admin/tokens/:tokenId`, async (request, reply) => {
+    const { tokenId } = request.params as { tokenId: string };
+    const row = db.prepare(`SELECT revoked_at FROM api_tokens WHERE id = ?`).get(tokenId) as
+      { revoked_at: string | null } | undefined;
+    if (!row) throw notFound();
+    if (row.revoked_at) throw conflict('That token is already revoked.');
+
+    const now = new Date().toISOString();
+    db.prepare(`UPDATE api_tokens SET revoked_at = ? WHERE id = ?`).run(now, tokenId);
+    db.prepare(
+      `INSERT INTO audit_log (id,at,actor,actor_role,action,object_type,object_id,outcome,ip,detail)
+       VALUES (?,?,?,?,'token.revoke','api-token',?,'success',?,NULL)`,
+    ).run(
+      `aud-${randomUUID().slice(0, 8)}`,
+      now,
+      request.auth?.email ?? 'unknown',
+      request.auth?.role ?? 'unknown',
+      tokenId,
+      request.ip,
+    );
+    return reply.status(204).send();
+  });
+}
+
+function truncate(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const buffer = Buffer.from(value, 'utf8');
+  if (buffer.length <= MAX_STDOUT_BYTES) return value;
+  return `${buffer.subarray(0, MAX_STDOUT_BYTES).toString('utf8')}\n… truncated at 256 KiB`;
+}

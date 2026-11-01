@@ -42,7 +42,12 @@ export function loggerOptions(pretty: boolean): FastifyServerOptions['logger'] {
       },
     },
     ...(pretty
-      ? { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss', ignore: 'pid,hostname' } } }
+      ? {
+          transport: {
+            target: 'pino-pretty',
+            options: { translateTime: 'HH:MM:ss', ignore: 'pid,hostname' },
+          },
+        }
       : {}),
   };
 }

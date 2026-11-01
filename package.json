@@ -13,7 +13,9 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "contract:lint": "redocly lint contracts/aegis-one.openapi.yaml",
-    "contract:types": "openapi-typescript contracts/aegis-one.openapi.yaml -o apps/aegis-one/src/api/schema.d.ts"
+    "contract:types": "openapi-typescript contracts/aegis-one.openapi.yaml -o apps/aegis-one/src/api/schema.d.ts",
+    "mock": "pnpm --filter @aegis/mock-server start",
+    "mock:seed": "pnpm --filter @aegis/mock-server seed"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -27,11 +29,5 @@
     "prettier": "^3.9.10",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "better-sqlite3"
-    ]
   }
 }

@@ -80,7 +80,9 @@ export function loadContract(specPath: string, basePath: string): LoadedContract
         try {
           validateBody = ajv.compile(bodySchema as object);
         } catch (err) {
-          throw new Error(`Could not compile the request schema for ${op.operationId}: ${String(err)}`);
+          throw new Error(`Could not compile the request schema for ${op.operationId}`, {
+            cause: err,
+          });
         }
       }
 

@@ -38,7 +38,12 @@ export function openDb({ file, fresh = false }: OpenDbOptions): Db {
  * Wraps inserts in a single transaction. Inserting 50,000 rows one commit at a
  * time takes minutes; in one transaction it takes a second.
  */
-export function bulkInsert<T>(db: Db, sql: string, rows: readonly T[], toParams: (row: T) => unknown[]): void {
+export function bulkInsert<T>(
+  db: Db,
+  sql: string,
+  rows: readonly T[],
+  toParams: (row: T) => unknown[],
+): void {
   const statement = db.prepare(sql);
   const run = db.transaction((items: readonly T[]) => {
     for (const item of items) statement.run(...toParams(item));

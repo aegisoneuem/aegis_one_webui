@@ -10,6 +10,7 @@ export default tseslint.config(
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
+      '**/storybook-static/**',
       'apps/aegis-one/src/api/schema.d.ts',
       'apps/aegis-one/docs/**',
     ],
@@ -37,5 +38,11 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // Plain Node scripts: check harnesses and tooling, not application code.
+    files: ['**/*.mjs', '**/*.cjs'],
+    languageOptions: { globals: globals.node },
+    rules: { 'no-console': 'off' },
   },
 );

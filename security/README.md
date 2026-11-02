@@ -2,11 +2,11 @@
 
 Scan configurations and the helper that gets a scanner a session.
 
-| File | What it does |
-| --- | --- |
-| `zap-baseline.yaml` | Passive crawl of the console and API. Sends no attack traffic. |
+| File                  | What it does                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `zap-baseline.yaml`   | Passive crawl of the console and API. Sends no attack traffic.                             |
 | `zap-active-api.yaml` | Authenticated active scan of the API from the OpenAPI contract. Sends real attack traffic. |
-| `get-token.mjs` | Signs in through the OIDC flow and prints a bearer and CSRF token. |
+| `get-token.mjs`       | Signs in through the OIDC flow and prints a bearer and CSRF token.                         |
 
 Results land in `apps/aegis-one/docs/scans/`. Findings and their dispositions
 are written up in `apps/aegis-one/docs/vapt-checklist.md`.

@@ -271,8 +271,8 @@ function seedDevices(
     id,hostname,status,os_family,os_name,os_version,os_build,kind,zone_id,zone_name,
     primary_user,primary_user_name,department,ip,mac,serial,model,cpu,ram_gb,disk_total_gb,disk_free_pct,
     agent_version,last_seen_at,enrolled_at,compliance_pct,pending_patches,critical_vulns,dex_score,
-    encrypted,reboot_pending,config_pass_pct
-  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    encrypted,antivirus_ok,firewall_ok,reboot_pending,config_pass_pct
+  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
   const insertSoftware = db.prepare(
     `INSERT INTO device_software (device_id,software_id,version,outdated,installed_at) VALUES (?,?,?,?,?)`,
@@ -352,11 +352,19 @@ function seedDevices(
           (p.platform === 'Firmware' && !isServer);
         if (!applicable || !rng.chance(0.45)) continue;
 
+        /*
+         * Per applicable patch, not per device. A device draws roughly
+         * fourteen of these, so a 14% pending rate would leave only one
+         * endpoint in twenty fully patched — which contradicts the ~90% mean
+         * compliance the same seed gives each device. These rates put the
+         * estate near 55% fully patched, which is what a managed fleet with
+         * monthly patch windows actually looks like.
+         */
         const state = rng.weighted([
-          ['installed', 76],
-          ['pending', 14],
-          ['failed', 4],
-          ['not-applicable', 6],
+          ['installed', 880],
+          ['pending', 35],
+          ['failed', 8],
+          ['not-applicable', 77],
         ] as const);
         if (state === 'pending' || state === 'failed') pendingPatches++;
         patchRows.push([deviceId, p.id, state, iso(rng.recentMs(NOW, 60))]);
@@ -428,6 +436,18 @@ function seedDevices(
           : rng.chance(0.93)
             ? 1
             : 0,
+        // Antivirus is near-universal on Windows and macOS and rarer on the
+        // Linux and AIX estate, where the control is usually a different
+        // product; the firewall is on almost everywhere but servers, which are
+        // more often fronted by a network appliance instead.
+        os.family === 'Linux' || os.family === 'AIX'
+          ? rng.chance(0.55)
+            ? 1
+            : 0
+          : rng.chance(0.89)
+            ? 1
+            : 0,
+        rng.chance(isServer ? 0.82 : 0.96) ? 1 : 0,
         status === 'pending-restart' ? 1 : 0,
         Math.max(40, Math.min(100, compliance + rng.int(-10, 6))),
       );

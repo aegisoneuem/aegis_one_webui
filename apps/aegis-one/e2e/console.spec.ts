@@ -64,8 +64,47 @@ test.describe('signed in as Super Admin', () => {
 
   test('Overview reports the whole estate', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('button', { name: /Managed endpoints/ })).toContainText('50,000');
-    await expect(page.getByRole('heading', { name: 'Service health' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Managed Endpoints/ })).toContainText('50,000');
+    // The six widgets the approved design puts on this page. Service health
+    // is not among them; it lives on Diagnostics, which is the only page that
+    // reads it.
+    for (const widget of [
+      'Overall Health Score',
+      'Patch Compliance',
+      'Security Posture',
+      'Deployment Status',
+      'Expiring Soon',
+      'Needs Attention',
+      'Recent Activity',
+    ]) {
+      await expect(page.getByRole('heading', { name: widget, exact: true })).toBeVisible();
+    }
+  });
+
+  test('Overview scope filters narrow the estate', async ({ page }) => {
+    await page.goto('/');
+    const managed = page.getByRole('button', { name: /Managed Endpoints/ });
+    await expect(managed).toContainText('50,000');
+
+    await page.getByLabel('Platform').selectOption('macos');
+    // A narrower scope must report fewer endpoints, and the figure has to come
+    // back from the server rather than being filtered in the browser.
+    await expect(managed).not.toContainText('50,000');
+    await expect(page.getByRole('heading', { name: 'Overall Health Score' })).toBeVisible();
+  });
+
+  test('Overview charts switch form without losing the figures', async ({ page }) => {
+    await page.goto('/');
+    const compliance = page
+      .getByRole('article')
+      .filter({ has: page.getByRole('heading', { name: 'Patch Compliance' }) });
+
+    await expect(compliance.getByRole('table', { name: /Device compliance/i })).toBeAttached();
+    await compliance.getByLabel('Chart type').selectOption('bar');
+    await expect(compliance.getByRole('table', { name: /Device compliance/i })).toBeAttached();
+
+    await compliance.getByLabel('View').selectOption('severity');
+    await expect(compliance.getByRole('table', { name: /severity/i })).toBeAttached();
   });
 
   test('Devices lists, filters, sorts and pages', async ({ page }) => {

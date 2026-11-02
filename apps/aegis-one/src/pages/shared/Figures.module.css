@@ -1,0 +1,444 @@
+/*
+ * Geometry and type sizes read from design-reference/Aegis-One-Console-v129.html.
+ * Colours come from the approved tokens only.
+ */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Slice and bar tones ---------------------------------------------------- */
+
+.good {
+  color: var(--chart-compliance-1);
+}
+
+.warn {
+  color: var(--chart-compliance-2);
+}
+
+.bad {
+  color: var(--chart-compliance-3);
+}
+
+.info {
+  color: var(--chart-navy-2);
+}
+
+/* A second navy, so two in-flight states never read as one slice. */
+.alt {
+  color: var(--chart-navy-4);
+}
+
+.neutral {
+  color: var(--ao-neutral);
+}
+
+/* `currentColor` is what makes one tone class serve a stroke, a fill and a
+   text colour at once, so a slice and its legend swatch can never drift. */
+.arc {
+  fill: none;
+  stroke: currentcolor;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.track {
+  fill: none;
+  stroke: var(--ao-track);
+}
+
+/* Donut ------------------------------------------------------------------ */
+
+.donutWrap {
+  display: flex;
+  flex: 1;
+  gap: var(--ui-space-7);
+  align-items: center;
+  min-height: 0;
+}
+
+.donutFig {
+  position: relative;
+  flex: none;
+  width: 148px;
+  height: 148px;
+}
+
+.donutSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.donutCentre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donutCentre strong {
+  color: var(--ao-navy-ink);
+  font-family: var(--ui-font-display);
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.donutCentre small {
+  max-width: 76px;
+  overflow: hidden;
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 10px 1fr auto 42px;
+  gap: var(--ui-space-4);
+  align-items: center;
+  width: 100%;
+  padding: var(--ui-space-3) var(--ui-space-2);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.legendRow:disabled {
+  cursor: default;
+}
+
+.legendRow:not(:disabled):hover {
+  background: var(--ui-surface-sunken);
+}
+
+.legendRow:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.legendLabel {
+  overflow: hidden;
+  color: var(--ao-text);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendValue {
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.legendPct {
+  color: var(--ao-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Columns ---------------------------------------------------------------- */
+
+.columns {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* A definite height, not a flexed one: the bars inside are percentages of it,
+   and a percentage of an indefinite height falls back to the SVG's own
+   aspect ratio, which is 1:100. */
+.plot {
+  position: relative;
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-6);
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 184px;
+  padding-top: 18px;
+}
+
+/* The dashed rule is the Healthy threshold; it is drawn behind the columns so
+   a column that clears it visibly crosses the line. */
+.target {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.target line {
+  stroke: var(--chart-compliance-1);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
+}
+
+.column {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 92px;
+  height: 100%;
+}
+
+.columnValue {
+  margin-bottom: var(--ui-space-2);
+  color: var(--ao-navy-ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.columnBar {
+  position: relative;
+  width: 34px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Absolute, so the svg takes the button's box instead of its own intrinsic
+   1:100 ratio. */
+.columnBar svg,
+.bar svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.columnBar rect,
+.bar rect {
+  fill: currentcolor;
+}
+
+.columnBar:disabled {
+  cursor: default;
+}
+
+.columnBar:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.axis {
+  display: flex;
+  gap: var(--ui-space-6);
+  justify-content: space-around;
+  padding-top: var(--ui-space-4);
+  border-top: 1px solid var(--chart-axis);
+}
+
+.axisTick {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  align-items: center;
+  max-width: 92px;
+  text-align: center;
+}
+
+.axisTick b {
+  color: var(--ao-text);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.axisTick small {
+  color: var(--ao-muted);
+  font-size: 10.5px;
+}
+
+/* Bars ------------------------------------------------------------------- */
+
+.bars {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+  justify-content: center;
+  min-height: 0;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 148px 1fr 64px;
+  gap: var(--ui-space-5);
+  align-items: center;
+}
+
+.barLabel {
+  overflow: hidden;
+  color: var(--ao-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  position: relative;
+  display: block;
+  height: 14px;
+  background: var(--ao-track);
+}
+
+.bar {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.bar:disabled {
+  cursor: default;
+}
+
+.bar:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.barValue {
+  color: var(--ao-navy-ink);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Rings ------------------------------------------------------------------ */
+
+.rings {
+  display: flex;
+  flex: 1;
+  gap: var(--ui-space-5);
+  align-items: flex-start;
+  justify-content: space-around;
+}
+
+.ring {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  max-width: 140px;
+  padding: var(--ui-space-3) var(--ui-space-1);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ring:disabled {
+  cursor: default;
+}
+
+.ring:not(:disabled):hover {
+  background: var(--ui-surface-sunken);
+}
+
+.ring:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ringFig {
+  position: relative;
+  width: 86px;
+  height: 86px;
+}
+
+.ringFig svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ringFig em {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ao-navy-ink);
+  font-family: var(--ui-font-display);
+  font-size: 19px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.ring strong {
+  margin-top: var(--ui-space-3);
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ring small {
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+.pill {
+  margin-top: var(--ui-space-2);
+  color: currentcolor;
+  font-size: 11px;
+  font-weight: 500;
+}

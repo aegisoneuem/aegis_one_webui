@@ -42,6 +42,11 @@ CREATE TABLE devices (
   critical_vulns INTEGER NOT NULL,
   dex_score INTEGER NOT NULL,
   encrypted INTEGER NOT NULL,
+  -- The Overview's Security Posture widget reports three controls side by
+  -- side. Disk encryption was already here; antivirus and firewall are the
+  -- other two the contract's securityPosture array names.
+  antivirus_ok INTEGER NOT NULL DEFAULT 1,
+  firewall_ok INTEGER NOT NULL DEFAULT 1,
   reboot_pending INTEGER NOT NULL,
   config_pass_pct INTEGER NOT NULL
 );
@@ -334,6 +339,8 @@ CREATE INDEX idx_devices_department ON devices(department);
 CREATE INDEX idx_devices_agent ON devices(agent_version);
 CREATE INDEX idx_devices_kind ON devices(kind);
 CREATE INDEX idx_devices_encrypted ON devices(encrypted);
+CREATE INDEX idx_devices_antivirus ON devices(antivirus_ok);
+CREATE INDEX idx_devices_firewall ON devices(firewall_ok);
 CREATE INDEX idx_devices_zone_compliance ON devices(zone_id, compliance_pct);
 CREATE INDEX idx_devices_osname ON devices(os_family, os_name);
 CREATE INDEX idx_devpatch_state ON device_patches(state);

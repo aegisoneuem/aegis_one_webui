@@ -284,3 +284,44 @@ the software catalogue. The brand mark is the 256×194 one, sha `0ddb72ac`.
 There is no vector version in the reference. If a scalable mark is wanted, it
 has to come from whoever holds the original artwork — not from tracing the
 bitmap again.
+
+## D-022 — The Overview renders the contract's Overview schema, not the server's old one
+
+`components.schemas.Overview` already described the approved page: weighted
+health measures, patch compliance with severity / install-result / per-OS
+breakdowns, three security controls, deployment status, expiring items, a
+Needs Attention list and recent activity. It was modelled from v129 in Phase 1
+and nothing had read it since.
+
+The mock server returned a different shape, and the page rendered that shape.
+Both now use the declared one, and the zone / platform / department query
+parameters the contract already declares are implemented. The caller's zone
+scope is ANDed with the query filter, so a filter can only narrow what the
+role already allows, never widen it.
+
+Service health left the Overview with the old shape. v129 has no such widget
+and the schema has no field for it; `/diagnostics` still serves it, and the
+Diagnostics page is now its only reader.
+
+Six things v129 shows are not restored because each needs a contract change
+or an asset that is not in the bundle: the Setup checklist, Custom Widget and
+Customize, the Ask Aegis box, the deployment Device Results view, the patch
+Devices-Needing-Patches-by-OS view, and the panel icon glyphs. They are listed
+in `overview-restoration.md` rather than faked.
+
+## D-023 — Chart geometry is SVG, so no data value is set through `style`
+
+The columns, bars, donuts, pies and rings are drawn as SVG with the value in a
+`height`, `width` or `dasharray` attribute. The first cut set bar heights with
+inline `style`, which the `no-restricted-syntax` rule forbids — the rule is
+there so the stylesheet keeps sole say over presentation, and a data-driven
+pixel is still presentation.
+
+Two things this cost, both worth knowing before editing these:
+
+- A percentage height resolves against an indefinite height by falling back
+  to the SVG's own aspect ratio, which for the column bars is 1:100. The plot
+  needs a definite height and the svg needs `position: absolute`.
+- A pie is the donut's arcs with a stroke wide enough to close the hole, and
+  the stroke straddles the radius: `r + strokeWidth / 2` has to land exactly
+  on the viewBox radius or the circle is clipped into a square.

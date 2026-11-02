@@ -41,21 +41,20 @@ function securityHeaders(): Plugin {
       "frame-ancestors 'none'",
     ].join('; ');
 
-  const apply =
-    (dev: boolean) => (server: { middlewares: { use: (fn: Middleware) => void } }) => {
-      const csp = policy(dev);
-      server.middlewares.use((_req, res, next) => {
-        res.setHeader('Content-Security-Policy', csp);
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('X-Frame-Options', 'DENY');
-        res.setHeader('Referrer-Policy', 'no-referrer');
-        res.setHeader(
-          'Permissions-Policy',
-          'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
-        );
-        next();
-      });
-    };
+  const apply = (dev: boolean) => (server: { middlewares: { use: (fn: Middleware) => void } }) => {
+    const csp = policy(dev);
+    server.middlewares.use((_req, res, next) => {
+      res.setHeader('Content-Security-Policy', csp);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.setHeader(
+        'Permissions-Policy',
+        'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+      );
+      next();
+    });
+  };
 
   return {
     name: 'aegis-security-headers',

@@ -276,33 +276,77 @@ export type ServiceHealth = {
   checkedAt: string;
 };
 
+export type HealthMeasure = { id: string; label: string; weight: number; score: number };
+
+export type SecurityControl = {
+  control: 'disk-encryption' | 'antivirus' | 'firewall';
+  protected: number;
+  total: number;
+};
+
+export type ExpiringItem = {
+  kind: 'enrollment-token' | 'api-token' | 'certificate' | 'license';
+  name: string;
+  expiresAt: string;
+};
+
+export type AttentionItem = {
+  id: string;
+  severity: 'high' | 'medium' | 'low';
+  count: number;
+  title: string;
+  detail: string;
+  action: string;
+};
+
+export type ActivityItem = {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  targetCount: number;
+  counts: { done: number; failed: number; pending: number };
+  triggeredBy: string;
+  triggeredAt: string;
+};
+
+/**
+ * The Overview aggregate, in the shape `components.schemas.Overview` declares.
+ * Nothing on the page may read a field that is not here, and nothing is here
+ * that the contract does not define.
+ */
 export type Overview = {
-  endpoints: {
-    total: number;
+  counts: {
+    managedEndpoints: number;
     online: number;
-    offline: number;
-    pendingRestart: number;
-    notSeen7Days: number;
+    highRiskEndpoints: number;
+    deviceGroups: number;
+    softwarePackages: number;
+    patchUpdates: number;
+    deployments: number;
+    zones: number;
   };
-  posture: {
-    compliancePct: number;
-    encryptedPct: number;
-    dexScore: number;
-    criticalVulnerabilities: number;
-    pendingPatches: number;
+  health: { score: number; band: 'healthy' | 'fair' | 'poor'; measures: HealthMeasure[] };
+  patchCompliance: {
+    compliantPct: number;
+    compliant: number;
+    nonCompliant: number;
+    missingBySeverity: { critical: number; high: number; medium: number; low: number };
+    lastInstall: { successful: number; restartNeeded: number; pending: number; failed: number };
+    byOs: { family: string; compliantPct: number }[];
   };
-  byZone: {
-    zoneId: string;
-    zoneName: string;
-    devices: number;
-    compliancePct: number;
-    offline: number;
-  }[];
-  byOs: { osFamily: string; osName: string; devices: number }[];
-  patchState: { state: string; n: number }[];
-  topVulnerabilities: Vulnerability[];
-  recentDeployments: Deployment[];
-  serviceHealth: ServiceHealth[];
+  securityPosture: SecurityControl[];
+  deploymentStatus: {
+    completed: number;
+    queuedOrScheduled: number;
+    running: number;
+    failed: number;
+    paused: number;
+  };
+  expiring: ExpiringItem[];
+  attention: AttentionItem[];
+  recentActivity: ActivityItem[];
+  updatedAt: string;
 };
 
 export type DexSummary = {

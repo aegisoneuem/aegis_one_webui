@@ -240,3 +240,25 @@ you.
 5. **Group membership.** Rule-based groups are fixture metadata here. The real
    service needs to decide whether membership is materialised or evaluated per
    query, which affects how fast a group target resolves.
+6. **A facet endpoint for departments.** The Overview's department filter
+   sends `?department=` as the contract declares, but nothing serves the list
+   of distinct departments, so the console carries its own constant. That will
+   drift from the real directory the day it ships. Something like
+   `GET /devices/facets?field=department` returning the distinct values and
+   their counts would also serve the Devices filters, which have the same gap.
+7. **`/zones` or `/sites`.** The contract declares `GET /zones`; the mock
+   server serves `/sites` and every console caller uses `/sites`. One of the
+   two has to move. Our preference is the contract's `/zones`, since `sites`
+   collides with the UI route name and means nothing in the domain language
+   the rest of the contract uses ("Aegis Zones").
+8. **Per-device deployment results, and devices-needing-patches by OS.** The
+   approved Overview offers both as chart views. `deploymentStatus` in the
+   contract is per-action counts, and `patchCompliance.byOs` is a percentage
+   per family, so neither view can be built from what is declared. Both want
+   an additional aggregate rather than a client-side derivation — the device
+   counts are in the tens of thousands.
+9. **Patch severity vocabulary.** The contract's `missingBySeverity` buckets
+   are critical / high / medium / low; patch vendors publish critical /
+   important / moderate / low. We map the middle two in the aggregate. Decide
+   which vocabulary is canonical, and make the import normalise to it rather
+   than leaving every reader to guess.

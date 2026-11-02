@@ -41,7 +41,8 @@ export const PAGES = [
   { path: '/enrollment', heading: 'Enrollment' },
   // The sidebar says Patches; the approved page's own title is longer.
   { path: '/patches', heading: 'Patch Management' },
-  { path: '/software', heading: 'Software' },
+  // The sidebar says Software; the approved page's own title is longer.
+  { path: '/software', heading: 'Software Catalog' },
   { path: '/liveops', heading: 'Live Activity' },
   { path: '/deployments', heading: 'Deployments' },
   { path: '/vulns', heading: 'Vulnerabilities' },

@@ -1,0 +1,310 @@
+/*
+ * Software Catalog — geometry read from design-reference/Aegis-One-Console-v129.html
+ * (the Software page). Colours are the approved tokens.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.heading {
+  display: flex;
+  gap: var(--ui-space-7);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--ao-brand-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.9px;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 17px;
+  height: 1px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: 9px;
+  align-items: center;
+}
+
+/* Counters --------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 13px;
+  margin-bottom: var(--ui-space-5);
+}
+
+.kpi,
+.kpiActive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 84px;
+  padding: 14px 18px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+  font: inherit;
+  text-align: left;
+}
+
+/* The tile the grid is currently showing is inverted and underlined in gold. */
+.kpiActive {
+  border-color: var(--ao-sidebar);
+  border-bottom: 3px solid var(--ao-brand);
+  background: var(--ao-sidebar);
+}
+
+button.kpi,
+button.kpiActive {
+  cursor: pointer;
+}
+
+button.kpi:hover {
+  border-color: var(--ao-brand);
+}
+
+button.kpi:focus-visible,
+button.kpiActive:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.kpiLabel {
+  color: var(--ao-navy);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.kpiActive .kpiLabel {
+  color: var(--ao-brand-hi);
+}
+
+.kpiValue {
+  color: var(--ao-navy-ink);
+  font-family: var(--ui-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.kpiActive .kpiValue {
+  color: var(--ao-surface);
+}
+
+.kpiSkeleton {
+  height: 84px;
+}
+
+/* Toolbar ---------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+/* Each control is as wide as what it holds; left to flex, the two selects
+   take the row and squeeze the search box to a few characters. */
+.search {
+  flex: none;
+  width: 310px;
+}
+
+.toolbar select {
+  flex: none;
+  width: 190px;
+}
+
+.count {
+  margin-left: auto;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cards ------------------------------------------------------------------ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  padding: 0;
+  margin: 0 0 var(--ui-space-5);
+  list-style: none;
+}
+
+.grid > li {
+  display: flex;
+}
+
+.cardSkeleton {
+  height: 274px;
+}
+
+.card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 274px;
+  padding: 18px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+}
+
+.cardTop {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+}
+
+/* A square tile carrying the package's initial, which is what the reference
+   falls back to when no icon has been imported for it. */
+.icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-family: var(--ui-font-display);
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.cardName {
+  min-width: 0;
+}
+
+.cardName h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ao-navy-ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardName p {
+  margin: 3px 0 0;
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
+.category {
+  margin: 14px 0 0;
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.meta dt {
+  color: var(--ao-neutral);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.meta dd {
+  margin: 2px 0 0;
+  color: var(--ao-navy-ink);
+  font-size: 11px;
+}
+
+.cardFoot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 13px;
+  border-top: 1px solid var(--ao-border);
+  margin-top: auto;
+}
+
+.good {
+  color: var(--st-good);
+  font-weight: 600;
+}
+
+.warn {
+  color: var(--st-warn);
+  font-weight: 600;
+}
+
+.empty {
+  padding: 40px 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Footnote --------------------------------------------------------------- */
+
+.footnote {
+  display: flex;
+  gap: var(--ui-space-5);
+  justify-content: space-between;
+  padding-top: 15px;
+  border-top: 1px solid var(--ao-border);
+  margin-top: 25px;
+  color: var(--ao-neutral);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.footnote i {
+  font-style: normal;
+}

@@ -262,6 +262,57 @@ test.describe('signed in as Super Admin', () => {
     await expect(grid().getByText(reference, { exact: false }).first()).toBeVisible();
   });
 
+  test('the software catalogue is a card grid with its five counters', async ({ page }) => {
+    await page.goto('/software');
+    await expect(page.getByRole('heading', { name: 'Software Catalog' })).toBeVisible();
+
+    for (const label of [
+      'All Packages',
+      'Installer Added',
+      'Installer Missing',
+      'Draft Packages',
+      'Publishers',
+    ]) {
+      await expect(page.getByText(label, { exact: true })).toBeVisible();
+    }
+
+    // One card per package, each carrying the four fields the reference shows.
+    const cards = page.locator('article');
+    await expect(cards.first()).toBeVisible();
+    await expect(cards.first().getByText('Version', { exact: true })).toBeVisible();
+    await expect(cards.first().getByText('Platform', { exact: true })).toBeVisible();
+    await expect(cards.first().getByText('Package status', { exact: true })).toBeVisible();
+    await expect(cards.first().getByText('Installer', { exact: true })).toBeVisible();
+  });
+
+  test('a catalogue counter narrows the grid without moving the counters', async ({ page }) => {
+    await page.goto('/software');
+    const all = page.getByRole('button', { name: /All Packages/ });
+    const drafts = page.getByRole('button', { name: /Draft Packages/ });
+    const total = (await all.innerText()).replace(/\D/g, '');
+
+    await drafts.click();
+    await expect(drafts).toHaveAttribute('aria-pressed', 'true');
+
+    // The counters describe the catalogue, so they do not follow the filter.
+    await expect(all).toContainText(total);
+    // Every card left is a draft, and a draft has no installer to deploy.
+    const cards = page.locator('article');
+    await expect(cards.first().getByText('Draft', { exact: true })).toBeVisible();
+    await expect(cards.first().getByRole('button', { name: 'Deploy' })).toBeDisabled();
+  });
+
+  test('searching the catalogue narrows it server-side', async ({ page }) => {
+    await page.goto('/software');
+    const cards = page.locator('article');
+    await expect(cards.first()).toBeVisible();
+    const before = await cards.count();
+
+    await page.getByLabel('Search software or publisher').fill('Chrome');
+    await expect(cards).not.toHaveCount(before);
+    await expect(page.getByRole('heading', { name: 'Google Chrome' })).toBeVisible();
+  });
+
   test('a device opens, and its tabs are deep-linkable', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('table', { name: 'Devices' }).locator('tbody tr').first().click();

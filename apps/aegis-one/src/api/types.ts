@@ -53,8 +53,25 @@ export type SoftwareTitle = {
   category: string;
   latestVersion: string;
   sizeMb: number;
+  platform: string;
+  /** A same-origin path, set once an administrator imports icons. */
+  logoUrl: string | null;
+  installer: 'missing' | 'added';
+  installerSha256: string | null;
+  state: 'draft' | 'published';
+  silentInstallCommand: string;
+  silentUninstallCommand: string;
   installCount: number;
   outdatedCount: number;
+};
+
+/** The five counters above the catalogue. They describe the whole catalogue. */
+export type SoftwareCounts = {
+  all: number;
+  installerAdded: number;
+  installerMissing: number;
+  draft: number;
+  publishers: number;
 };
 
 export type PatchApproval = 'approved' | 'test' | 'review' | 'declined' | 'superseded';

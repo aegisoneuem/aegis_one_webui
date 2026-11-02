@@ -104,14 +104,65 @@ function seedZones(db: Db): void {
   })();
 }
 
+/**
+ * The silent switches each installer kind takes.
+ *
+ * These are the vendors' own documented switches, not invented ones: an MSI
+ * takes /qn, an Inno Setup package /VERYSILENT, NSIS /S. The kind is chosen
+ * from the package's own id so the same title always gets the same pair.
+ */
+const INSTALLER_KINDS: readonly (readonly [string, string, string])[] = [
+  ['msi', 'msiexec /i "{package}" /qn /norestart', 'msiexec /x "{product}" /qn /norestart'],
+  ['inno', '"{package}" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '"{uninstaller}" /VERYSILENT'],
+  ['nsis', '"{package}" /S', '"{uninstaller}" /S'],
+];
+
 function seedSoftware(db: Db): void {
   const insert = db.prepare(
-    `INSERT INTO software (id,title,publisher,category,latest_version,size_mb) VALUES (?,?,?,?,?,?)`,
+    `INSERT INTO software (id,title,publisher,category,latest_version,size_mb,
+                           platform,logo_url,installer,installer_sha256,state,
+                           silent_install,silent_uninstall)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
   db.transaction(() => {
-    for (const s of SOFTWARE)
-      insert.run(s.id, s.title, s.publisher, s.category, s.latestVersion, s.sizeMb);
+    for (const s of SOFTWARE) {
+      /*
+       * Most of the catalogue is ready to deploy and a minority is still
+       * being prepared. The reference's own fixture has every package in
+       * draft with no installer, which leaves three of its five counters
+       * reading the same number; a mix exercises the card's two states.
+       */
+      // Decided from the package's own id rather than the shared random
+      // stream: drawing here would shift every value seeded after it.
+      const ready = Math.abs(hashOf(`${s.id}:ready`)) % 100 < 68;
+      const kind = INSTALLER_KINDS[Math.abs(hashOf(s.id)) % INSTALLER_KINDS.length];
+      insert.run(
+        s.id,
+        s.title,
+        s.publisher,
+        s.category,
+        s.latestVersion,
+        s.sizeMb,
+        // The catalogue is the Windows estate's, as the reference's is.
+        'windows',
+        // Icons are imported by an administrator, not shipped with the
+        // catalogue, so every package starts without one.
+        null,
+        ready ? 'added' : 'missing',
+        ready ? createHash('sha256').update(`${s.id}@${s.latestVersion}`).digest('hex') : null,
+        ready ? 'published' : 'draft',
+        kind?.[1] ?? '',
+        kind?.[2] ?? '',
+      );
+    }
   })();
+}
+
+/** A stable small integer from a string, for choices that must not drift. */
+function hashOf(value: string): number {
+  let h = 0;
+  for (let i = 0; i < value.length; i += 1) h = (h * 31 + value.charCodeAt(i)) | 0;
+  return h;
 }
 
 interface PatchRow {

@@ -400,3 +400,35 @@ table, so a decision never has to wait for a rollup.
 
 A real backend would materialise this the same way, on a schedule. The handover
 note says so.
+
+## D-028 — The approved design is square
+
+Every card, panel, KPI tile, button, input, select and nav item in v129
+computes to `border-radius: 0`. Checked on Overview, Devices, Patches and
+Software, on the containers and on the controls alike. The console's scale was
+4px on controls and 11px on cards, so every restored page had rounded corners
+where the reference has none.
+
+The scale is now zero. It stays declared rather than being deleted so
+components keep referencing `--ui-radius-*` and one change moves them all — a
+console built on this library that wants rounded corners sets three values.
+
+This changes Overview, Devices and Patches, all of which were reviewed with
+rounded corners, so it is called out rather than left to be noticed. It also
+reads on the hard rules' side: "no pill-everything".
+
+## D-029 — Package icons are imported, not shipped
+
+v129's catalogue cards carry real vendor logos, embedded as base64 data URIs.
+They are not ours to redistribute, and shipping them would also imply a
+relationship with each vendor that nothing here establishes.
+
+The reference answers the question itself. Its header carries an **Import
+Icons** action, its `.appicon` class styles a lettered tile for packages with
+no image, and the contract's `SoftwarePackage.logoUrl` is documented as a
+"same-origin path" that is nullable. The icon is customer data an administrator
+imports, not an asset the product ships.
+
+So the restored card renders the monogram tile, every seeded package has
+`logoUrl: null`, and the card uses the image the moment one is imported. If the
+logos should ship after all, that is a licensing decision, not a design one.

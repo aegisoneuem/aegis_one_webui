@@ -17,6 +17,12 @@ const RESERVED = new Set(['q', 'sort', 'order', 'cursor', 'tab']);
 export interface ListController<T> {
   rows: T[];
   total: number;
+  /**
+   * Anything the endpoint returns beside `items` and `page` — the software
+   * catalogue's counters, for instance, which describe the whole catalogue
+   * rather than the page in hand.
+   */
+  envelope: Record<string, unknown>;
   loading: boolean;
   error: { message: string; detail?: string; onRetry: () => void } | null;
 
@@ -175,6 +181,7 @@ export function useListController<T>({
   return {
     rows,
     total,
+    envelope: (data ?? {}) as Record<string, unknown>,
     loading: query.isLoading,
     error: query.error
       ? {

@@ -67,6 +67,34 @@ interface ResourceDef {
    * so a parameter it does not produce still cannot reach SQL.
    */
   derive?: (db: Db, filters: ListQuery['filters'] & object) => void;
+  /**
+   * Extra top-level fields the contract's page envelope carries beside
+   * `items` and `page` — the catalogue counters, for instance, which describe
+   * the whole catalogue rather than the page in hand.
+   */
+  envelope?: (db: Db) => Record<string, unknown>;
+}
+
+/**
+ * The five counters above the software catalogue.
+ *
+ * They describe the catalogue, not the filtered page: the reference shows
+ * them as a fixed row that the search and the filters do not move, because
+ * they are what an administrator is working through.
+ */
+function softwareCounts(db: Db): Record<string, unknown> {
+  return {
+    counts: db
+      .prepare(
+        `SELECT COUNT(*) AS "all",
+                SUM(installer = 'added') AS installerAdded,
+                SUM(installer = 'missing') AS installerMissing,
+                SUM(state = 'draft') AS draft,
+                COUNT(DISTINCT publisher) AS publishers
+         FROM software`,
+      )
+      .get(),
+  };
 }
 
 /**
@@ -109,7 +137,7 @@ function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): voi
 
 const RESOURCES: readonly ResourceDef[] = [
   { path: 'devices', spec: devicesSpec, zoneScoped: true },
-  { path: 'software', spec: softwareSpec },
+  { path: 'software', spec: softwareSpec, envelope: softwareCounts },
   { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
   { path: 'vulnerabilities', spec: vulnerabilitiesSpec },
   { path: 'deployments', spec: deploymentsSpec },
@@ -164,14 +192,18 @@ function safeParse(value: string): unknown {
 
 export function registerResourceRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   for (const resource of RESOURCES) {
-    const { path, spec, zoneScoped, jsonFields, derive } = resource;
+    const { path, spec, zoneScoped, jsonFields, derive, envelope } = resource;
 
     app.get(`${basePath}/${path}`, async (request) => {
       const scope = zoneScoped && request.auth ? zoneScope(request.auth) : undefined;
       const query = toListQuery(request);
       if (derive) derive(db, query.filters ?? {});
       const result = listRows<Record<string, unknown>>(db, spec, query, scope ? { scope } : {});
-      return { items: result.items.map((row) => shapeRow(row, jsonFields)), page: result.page };
+      return {
+        items: result.items.map((row) => shapeRow(row, jsonFields)),
+        page: result.page,
+        ...(envelope ? envelope(db) : {}),
+      };
     });
 
     // One detail route per resource, reading through the same spec so a

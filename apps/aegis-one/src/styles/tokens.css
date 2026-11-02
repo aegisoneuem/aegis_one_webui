@@ -216,10 +216,16 @@
   --ui-brand-tracking: -0.4px;
   --ui-caption-tracking: 1.45px;
 
-  /* 4px on controls, 11–12px on cards. Nothing rounder. */
-  --ui-radius-sm: 4px;
-  --ui-radius-md: 4px;
-  --ui-radius-lg: 11px;
+  /*
+   * Square, because the approved design is. Every card, panel, KPI tile,
+   * button, input, select and nav item in v129 computes to border-radius 0 —
+   * checked on Overview, Devices, Patches and Software. The scale stays
+   * declared so components keep referencing it and one change moves them all.
+   * See docs/decisions.md D-028.
+   */
+  --ui-radius-sm: 0;
+  --ui-radius-md: 0;
+  --ui-radius-lg: 0;
 
   /*
    * v129 is flat: hairline borders, no drop shadows. These stay declared so

@@ -72,9 +72,21 @@ CREATE TABLE software (
   category TEXT NOT NULL,
   latest_version TEXT NOT NULL,
   size_mb INTEGER NOT NULL,
+  platform TEXT NOT NULL DEFAULT 'windows',
+  -- A same-origin path, filled in when an administrator imports icons. The
+  -- catalogue ships without them and the card falls back to a monogram.
+  logo_url TEXT,
+  installer TEXT NOT NULL DEFAULT 'missing',
+  installer_sha256 TEXT,
+  state TEXT NOT NULL DEFAULT 'draft',
+  silent_install TEXT NOT NULL DEFAULT '',
+  silent_uninstall TEXT NOT NULL DEFAULT '',
   install_count INTEGER NOT NULL DEFAULT 0,
   outdated_count INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE INDEX idx_software_state ON software(state, installer);
+CREATE INDEX idx_software_publisher ON software(publisher);
 
 CREATE TABLE device_software (
   device_id TEXT NOT NULL REFERENCES devices(id),

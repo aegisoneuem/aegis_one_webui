@@ -269,10 +269,11 @@ function seedDevices(
 ): { total: number } {
   const insertDevice = db.prepare(`INSERT INTO devices (
     id,hostname,status,os_family,os_name,os_version,os_build,kind,zone_id,zone_name,
-    primary_user,primary_user_name,department,ip,mac,serial,model,cpu,ram_gb,disk_total_gb,disk_free_pct,
+    primary_user,primary_user_name,department,ip,mac,dns_name,dns_server,architecture,manufacturer,last_boot_at,
+    serial,model,cpu,ram_gb,disk_total_gb,disk_free_pct,
     agent_version,last_seen_at,enrolled_at,compliance_pct,pending_patches,critical_vulns,dex_score,
     encrypted,antivirus_ok,firewall_ok,reboot_pending,config_pass_pct
-  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
   const insertSoftware = db.prepare(
     `INSERT INTO device_software (device_id,software_id,version,outdated,installed_at) VALUES (?,?,?,?,?)`,
@@ -325,6 +326,9 @@ function seedDevices(
         Math.min(100, 93 + rng.int(-22, 7) - (zone.id === 'zn-jai-br' ? 9 : 0)),
       );
       const deviceId = `dev-${String(100000 + i)}`;
+      // Hoisted out of the insert's argument list: manufacturer and
+      // architecture are both read off it.
+      const model = isServer ? rng.pick(SERVER_MODELS) : rng.pick(WORKSTATION_MODELS);
 
       // Software, patches and findings for this device, decided from the same
       // stream. They are buffered rather than written straight away: the child
@@ -403,8 +407,17 @@ function seedDevices(
         rng.pick(DEPARTMENTS),
         `10.${20 + (ZONES.indexOf(zone) % 12)}.${rng.int(0, 254)}.${rng.int(2, 254)}`,
         macAddress(rng),
+        `${hostname.toLowerCase()}.corp.aegis.example`,
+        // Each zone resolves against its own relay.
+        `10.${20 + (ZONES.indexOf(zone) % 12)}.0.10`,
+        model.startsWith('Apple') ? 'arm64' : model.startsWith('IBM') ? 'ppc64le' : 'x86_64',
+        // Every catalogue model is "<Manufacturer> <line> <number>", so the
+        // manufacturer is the first token rather than a second invented list.
+        model.split(' ')[0] ?? '',
+        // A reboot cannot be more recent than the last check-in.
+        iso(Math.min(lastSeen, NOW - rng.int(3_600_000, 60 * 86_400_000))),
         `SN${String(4_810_000 + i * 13)}`,
-        isServer ? rng.pick(SERVER_MODELS) : rng.pick(WORKSTATION_MODELS),
+        model,
         isServer
           ? 'Intel Xeon Gold 6430'
           : rng.pick([

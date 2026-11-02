@@ -9,8 +9,15 @@
   display: flex;
   flex-direction: column;
 }
+/*
+ * A flex column, so a page that wants to fill the viewport and scroll its own
+ * grid can say `flex: 1; min-height: 0` and have that resolve. Pages that
+ * simply grow are unaffected: they size to their content and this scrolls.
+ */
 .content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   overflow: auto;
   padding: 20px 24px 32px;
 }

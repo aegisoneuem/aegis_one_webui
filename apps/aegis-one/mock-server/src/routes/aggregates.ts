@@ -480,6 +480,41 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
     ),
   }));
 
+  /**
+   * The four counts above the inventory grid. They answer "how much of the
+   * estate am I looking at", so they follow the same search term the grid
+   * does — a count that ignored the filter would contradict the list under
+   * it — but not its column filters, which are what the user is narrowing
+   * away from.
+   */
+  app.get(`${basePath}/devices/summary`, async (request) => {
+    const scope = zoneScope({ zoneIds: request.auth?.zoneIds ?? [] });
+    const clauses = scope ? [scope.sql] : [];
+    const params: unknown[] = scope ? [...scope.params] : [];
+
+    const q = (request.query as { q?: string }).q?.trim();
+    if (q) {
+      // A % or _ typed into the search box is a literal, not a wildcard, so
+      // it is escaped and the ESCAPE clause tells SQLite how.
+      const cols = ['hostname', 'ip', 'serial', 'primary_user_name', 'model'];
+      clauses.push(`(${cols.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ')})`);
+      const like = `%${q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+      params.push(...cols.map(() => like));
+    }
+
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+    // "all" is a reserved word, so the alias is quoted; the contract names
+    // the field that way and the console reads it by that name.
+    return one(
+      `SELECT COUNT(*) AS "all",
+              SUM(status = 'online') AS online,
+              SUM(status = 'offline') AS offline,
+              COUNT(DISTINCT zone_id) AS locations
+       FROM devices ${where}`,
+      params,
+    );
+  });
+
   app.get(`${basePath}/peercache/summary`, async (request) => {
     const scope = zoneScope({ zoneIds: request.auth?.zoneIds ?? [] });
     const where = scope ? `WHERE ${scope.sql}` : '';

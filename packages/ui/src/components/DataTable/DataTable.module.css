@@ -46,19 +46,24 @@
   font-size: var(--ui-text-sm);
 }
 
+/*
+ * The header's own four tokens. A console that wants the library default
+ * (a sunken grey strip) sets none of them; one whose design calls for an
+ * inverted header sets them and nothing in here has to know the palette.
+ */
 .thead {
   position: sticky;
   top: 0;
   z-index: 2;
   display: grid;
-  background: var(--ui-surface-sunken);
+  background: var(--ui-table-head-bg, var(--ui-surface-sunken));
 }
 
 .headerRow {
   display: flex;
   width: fit-content;
   min-width: 100%;
-  border-bottom: 1px solid var(--ui-border);
+  border-bottom: 1px solid var(--ui-table-head-border, var(--ui-border));
 }
 
 .th {
@@ -67,13 +72,13 @@
   flex: none;
   gap: var(--ui-space-3);
   align-items: center;
-  height: 32px;
+  height: var(--ui-table-head-height, 32px);
   padding: 0 var(--ui-space-5);
-  background: var(--ui-surface-sunken);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-xs);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  background: var(--ui-table-head-bg, var(--ui-surface-sunken));
+  color: var(--ui-table-head-fg, var(--ui-text-muted));
+  font-size: var(--ui-table-head-size, var(--ui-text-xs));
+  font-weight: var(--ui-table-head-weight, 600);
+  letter-spacing: var(--ui-table-head-tracking, 0.02em);
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
@@ -104,7 +109,7 @@
 }
 
 .sortButton:hover {
-  color: var(--ui-text);
+  color: var(--ui-table-head-fg-strong, var(--ui-text));
 }
 
 .sortButton:focus-visible {
@@ -128,7 +133,7 @@
 }
 
 .sorted {
-  color: var(--ui-text);
+  color: var(--ui-table-head-fg-strong, var(--ui-text));
 }
 
 /* Drag handle for reordering: the whole header cell is draggable. */
@@ -228,7 +233,8 @@
 
 .thead .pinned {
   z-index: 3;
-  background: var(--ui-surface-sunken);
+  background: var(--ui-table-head-bg, var(--ui-surface-sunken));
+  box-shadow: 1px 0 0 var(--ui-table-head-border, var(--ui-border));
 }
 
 .row .pinned {

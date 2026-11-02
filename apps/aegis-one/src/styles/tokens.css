@@ -127,6 +127,25 @@
   --ui-nav-active-bg: color-mix(in srgb, var(--ao-brand) 18%, transparent);
   --ui-nav-active-text: var(--ao-brand-hi);
 
+  /*
+   * Grid header. v129 inverts it on every list page it has — the dark sidebar
+   * colour with gold uppercase labels — so the columns read as a band rather
+   * than as a row of faint grey text.
+   *
+   * Header and row heights are the one part that is not global: the reference
+   * runs 41px headers on most grids and 57px on the inventory, and rows from
+   * 57px to 93px depending on what a row carries. A page that needs its own
+   * sets these two on its wrapper, and they inherit down to the table.
+   */
+  --ui-table-head-bg: var(--ao-sidebar);
+  --ui-table-head-fg: var(--ao-brand-hi);
+  --ui-table-head-fg-strong: var(--ao-surface);
+  --ui-table-head-border: var(--ao-sidebar);
+  --ui-table-head-height: 41px;
+  --ui-table-head-size: 11px;
+  --ui-table-head-weight: 650;
+  --ui-table-head-tracking: 0.6px;
+
   /* Status pills */
   --ui-pill-good-fg: var(--st-good);
   --ui-pill-good-bg: var(--st-good-bg);

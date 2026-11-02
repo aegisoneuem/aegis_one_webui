@@ -119,12 +119,54 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByText('50,000 devices', { exact: true })).toHaveCount(0);
     await page.getByLabel('Clear').click();
 
-    await page.getByRole('button', { name: /Compliance/ }).click();
-    await expect(page).toHaveURL(/sort=compliancePct/);
+    // A column the approved grid shows by default; the posture columns are in
+    // the chooser now, which the next assertion covers.
+    await page.getByRole('button', { name: /Last Seen/ }).click();
+    await expect(page).toHaveURL(/sort=lastSeenAt/);
 
     const first = await grid.locator('tbody tr').first().textContent();
     await page.getByRole('button', { name: 'Next' }).click();
     await expect(grid.locator('tbody tr').first()).not.toHaveText(first ?? '');
+  });
+
+  test('Devices shows the approved columns, and hides the rest behind the chooser', async ({
+    page,
+  }) => {
+    await page.goto('/devices');
+    const grid = page.getByRole('table', { name: 'Devices' });
+
+    // The approved grid's own columns, in its own order.
+    for (const header of [
+      'Computer Name',
+      'OS',
+      'IP Address',
+      'Hostname',
+      'MAC Address',
+      'DNS Name',
+      'Location',
+      'User',
+      'Status',
+      'Last Seen',
+    ]) {
+      // Exact, because "OS" is also a prefix of "OS Version".
+      await expect(grid.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
+    }
+
+    // Posture is not on the inventory by default, but it is reachable.
+    await expect(grid.getByRole('columnheader', { name: /Critical CVEs/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Columns' }).click();
+    await expect(page.getByRole('checkbox', { name: 'Critical CVEs' })).toBeVisible();
+  });
+
+  test('Devices counts the estate, and the counts follow the search', async ({ page }) => {
+    await page.goto('/devices');
+    const all = page.getByRole('button', { name: /All Endpoints/ });
+    await expect(all).toContainText('50,000');
+
+    // The strip and the grid must agree: a count that ignored the search
+    // would contradict the list under it.
+    await page.getByLabel('Search devices').fill('MUM-WS-01');
+    await expect(all).not.toContainText('50,000');
   });
 
   test('a device opens, and its tabs are deep-linkable', async ({ page }) => {

@@ -1,5 +1,13 @@
 /* eslint-disable no-restricted-syntax -- Virtualized geometry (row offsets, column widths, spacer height) is measured at runtime and cannot live in a stylesheet. Confined to this file. */
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   columnOrderingFeature,
   columnResizingFeature,
@@ -69,6 +77,11 @@ export interface DataTableProps<T extends RowData> {
   allMatchingSelected?: boolean;
 
   onRowClick?: (row: T) => void;
+  /**
+   * Extra class for a row, so a console can mark state the library has no
+   * opinion about — an unreachable endpoint, a cancelled job.
+   */
+  rowClassName?: (row: T) => string | undefined;
 
   loading?: boolean;
   error?: { message: string; detail?: string; onRetry?: () => void } | null;
@@ -82,6 +95,9 @@ export interface DataTableProps<T extends RowData> {
 }
 
 const SELECT_WIDTH = 36;
+
+/** Used until the real `--ui-row-height` can be read off the mounted table. */
+const DEFAULT_ROW_HEIGHT = 34;
 
 export function buildDefaultView<T extends RowData>(
   columns: readonly DataTableColumn<T>[],
@@ -112,6 +128,7 @@ export function DataTable<T extends RowData>({
   onSelectAllMatching,
   allMatchingSelected = false,
   onRowClick,
+  rowClassName,
   loading = false,
   error = null,
   emptyTitle = 'Nothing matches these filters',
@@ -177,16 +194,37 @@ export function DataTable<T extends RowData>({
   const headers = table.getHeaderGroups()[0]?.headers ?? [];
   const bodyWidth = headers.reduce((sum, h) => sum + h.getSize(), selectable ? SELECT_WIDTH : 0);
 
+  /**
+   * Row height is `--ui-row-height`, and the virtualizer has to agree with
+   * the stylesheet or every row after the first is drawn at the wrong offset.
+   * Reading the token is the only way the two cannot drift: a hard-coded
+   * number here silently breaks the moment a console sets a denser or roomier
+   * table.
+   */
+  const [rowHeight, setRowHeight] = useState(DEFAULT_ROW_HEIGHT);
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const px = Number.parseFloat(getComputedStyle(el).getPropertyValue('--ui-row-height'));
+    if (Number.isFinite(px) && px > 0) setRowHeight(px);
+  }, []);
+
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scroller.current,
-    estimateSize: () => 34,
+    estimateSize: () => rowHeight,
     getItemKey: (index) => {
       const row = rows[index];
       return row ? getRowId(row) : index;
     },
     overscan: 12,
   });
+
+  // The measured height arrives after the first paint, so the offsets already
+  // computed from the fallback have to be thrown away.
+  useEffect(() => {
+    virtualizer.measure();
+  }, [rowHeight, virtualizer]);
 
   const selected = useMemo(() => new Set(selectedIds ?? []), [selectedIds]);
   const pageIds = useMemo(() => rows.map(getRowId), [rows, getRowId]);
@@ -376,6 +414,7 @@ export function DataTable<T extends RowData>({
                       styles.row,
                       isSelected && styles.selected,
                       onRowClick && styles.clickable,
+                      rowClassName?.(row),
                     )}
                     style={{ transform: `translateY(${item.start}px)`, width: bodyWidth }}
                     tabIndex={onRowClick ? 0 : undefined}

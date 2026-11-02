@@ -50,6 +50,8 @@ export interface ResourceListProps<T extends RowData> {
   actions?: ReactNode;
   searchPlaceholder?: string;
   onRowClick?: (row: T) => void;
+  /** Extra class per row, for state the table itself has no opinion about. */
+  rowClassName?: (row: T) => string | undefined;
   selectable?: boolean;
   selectedIds?: readonly string[];
   onSelectedIdsChange?: (ids: string[]) => void;
@@ -96,6 +98,7 @@ export function ResourceList<T extends RowData>({
   actions,
   searchPlaceholder,
   onRowClick,
+  rowClassName,
   selectable = false,
   selectedIds,
   onSelectedIdsChange,
@@ -240,6 +243,7 @@ export function ResourceList<T extends RowData>({
         {...(bulkActions ? { bulkActions } : {})}
         totalMatching={controller.total}
         {...(onRowClick ? { onRowClick } : {})}
+        {...(rowClassName ? { rowClassName } : {})}
         {...(emptyTitle ? { emptyTitle } : {})}
         {...(emptyDescription ? { emptyDescription } : {})}
         className={styles.table}

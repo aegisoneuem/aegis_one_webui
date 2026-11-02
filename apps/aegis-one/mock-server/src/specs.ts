@@ -32,6 +32,16 @@ export const devicesSpec: TableSpec = {
     department: { column: 'department', sortable: true, filters: ['eq', 'in'] },
     ip: { column: 'ip', sortable: true, filters: ['eq', 'like'] },
     mac: { column: 'mac' },
+    /*
+     * Named as the contract's Device schema names them. The older fields
+     * above still carry the mock server's own names; reconciling those means
+     * moving six pages at once, and is tracked in docs/devices-restoration.md.
+     */
+    dnsName: { column: 'dns_name', sortable: true, filters: ['eq', 'like'] },
+    dnsServer: { column: 'dns_server', sortable: true, filters: ['eq'] },
+    architecture: { column: 'architecture', sortable: true, filters: ['eq', 'in'] },
+    manufacturer: { column: 'manufacturer', sortable: true, filters: ['eq', 'in'] },
+    lastBoot: { column: 'last_boot_at', sortable: true, filters: ['gte', 'lte'] },
     serial: { column: 'serial', sortable: true, filters: ['eq', 'like'] },
     model: { column: 'model', sortable: true, filters: ['eq', 'in'] },
     cpu: { column: 'cpu' },

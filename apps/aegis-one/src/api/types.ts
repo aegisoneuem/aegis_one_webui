@@ -22,6 +22,12 @@ export type Device = {
   department: string;
   ip: string;
   mac: string;
+  /** Fully-qualified name, e.g. lnx-blr-131.corp.aegis.example. */
+  dnsName: string;
+  dnsServer: string;
+  architecture: string;
+  manufacturer: string;
+  lastBoot: string;
   serial: string;
   model: string;
   cpu: string;
@@ -315,6 +321,14 @@ export type ActivityItem = {
  * Nothing on the page may read a field that is not here, and nothing is here
  * that the contract does not define.
  */
+/** The four counts above the inventory grid. */
+export type DevicesSummary = {
+  all: number;
+  online: number;
+  offline: number;
+  locations: number;
+};
+
 export type Overview = {
   counts: {
     managedEndpoints: number;

@@ -325,3 +325,38 @@ Two things this cost, both worth knowing before editing these:
 - A pie is the donut's arcs with a stroke wide enough to close the hole, and
   the stroke straddles the radius: `r + strokeWidth / 2` has to land exactly
   on the viewBox radius or the circle is clipped into a square.
+
+## D-024 — The grid header is a token, not a Devices decision
+
+v129 inverts every list page's table header: the dark sidebar colour with gold
+uppercase labels. Patches, Deployments and Device groups all compute to the
+same pair, so it belongs in the `--ui-*` contract rather than in one page's
+stylesheet, and setting it lit up every grid in the console at once.
+
+Header and row _heights_ are not global, because the reference's are not: 41px
+headers on most grids, 57px on the inventory, rows from 57px to 93px by how
+much a row carries. A page that needs its own sets the two custom properties
+on its wrapper and they inherit down to the table.
+
+The virtualizer now reads `--ui-row-height` rather than hard-coding 34. That
+was not optional: the measured height and the stylesheet must agree or every
+row after the first is drawn at the wrong offset, and the token existed to be
+changed.
+
+## D-025 — Twenty columns visible, the rest in the chooser
+
+The approved grid shows twenty inventory columns and labels its chooser
+"Columns 20". That is a count of what is visible: the contract's `Device`
+record also carries compliance, missing patches, critical findings, disk
+encryption and risk, and says the catalogue runs to eighty.
+
+So the restored grid shows the approved twenty in the approved order, and
+keeps the posture columns available but hidden. Deleting them would have made
+an operator leave the inventory to answer "which of these is unencrypted",
+which the old grid could answer and v129 answers from its own filters.
+
+Five columns had no data behind them at all — DNS name, DNS server,
+architecture, manufacturer, last boot. They are seeded now, derived from what
+the fixture already knows rather than invented: the DNS name is the host's own
+name in the demo domain, the manufacturer is the first token of the model, and
+a last boot is never later than the last check-in.

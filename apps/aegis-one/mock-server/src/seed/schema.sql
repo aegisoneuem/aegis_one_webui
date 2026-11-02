@@ -28,6 +28,14 @@ CREATE TABLE devices (
   department TEXT NOT NULL,
   ip TEXT NOT NULL,
   mac TEXT NOT NULL,
+  -- Inventory attributes the contract's Device schema declares and the
+  -- approved grid shows as columns. They were missing, so five of the twenty
+  -- columns had nothing to render.
+  dns_name TEXT NOT NULL DEFAULT '',
+  dns_server TEXT NOT NULL DEFAULT '',
+  architecture TEXT NOT NULL DEFAULT '',
+  manufacturer TEXT NOT NULL DEFAULT '',
+  last_boot_at TEXT NOT NULL DEFAULT '',
   serial TEXT NOT NULL,
   model TEXT NOT NULL,
   cpu TEXT NOT NULL,

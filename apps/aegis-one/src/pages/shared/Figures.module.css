@@ -65,6 +65,12 @@
   min-height: 0;
 }
 
+/* In a one-column panel the legend has no room beside the ring, and its
+   labels start truncating; stacked, each row gets the full width. */
+.donutStack {
+  flex-direction: column;
+}
+
 .donutFig {
   position: relative;
   flex: none;

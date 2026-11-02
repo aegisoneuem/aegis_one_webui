@@ -57,6 +57,8 @@ export type SoftwareTitle = {
   outdatedCount: number;
 };
 
+export type PatchApproval = 'approved' | 'test' | 'review' | 'declined' | 'superseded';
+
 export type Patch = {
   id: string;
   title: string;
@@ -64,11 +66,108 @@ export type Patch = {
   platform: string;
   severity: string;
   category: string;
+  /** Only set for driver-bios, which the Drivers & BIOS tab splits in two. */
+  subcategory: string;
+  /** The publisher, shown in the Vendor column. */
+  source: string;
+  approval: PatchApproval;
+  supersededBy: string | null;
+  ring: string;
+  zeroDay: boolean;
   releasedAt: string;
+  /** Endpoints it applies to and has not reached. The grid's Applicable column. */
+  endpointsMissing: number;
+  /** Endpoints evaluated against it, whatever the outcome. */
   applicableCount: number;
+  /** Endpoints it is installed on. The grid's Remediated column. */
   installedCount: number;
   failedCount: number;
   rebootRequired: boolean;
+};
+
+export type PatchPolicy = {
+  id: string;
+  name: string;
+  content: string;
+  patchCount: number;
+  rollout: string[];
+  computers: number;
+  compliancePct: number;
+  schedule: string;
+  nextRunAt: string | null;
+  status: 'active' | 'suspended' | 'draft';
+};
+
+export type PatchTabStats = {
+  key: string;
+  compliancePct: number;
+  endpointsMissing: number;
+  endpointsTotal: number;
+  criticalUpdates: number;
+  updatesAvailable: number;
+  updatesMissing: number;
+};
+
+export type PatchSummary = {
+  compliancePct: number;
+  missingCritical: number;
+  /** Distinct critical updates still outstanding, which is what the header counts. */
+  criticalUpdates: number;
+  awaitingApproval: number;
+  failedInstalls: number;
+  installed: number;
+  missing: number;
+  devicesTotal: number;
+  devicesMissing: number;
+  criticalDevices: number;
+  averageAgeDays: number;
+  devicesAwaitingRestart: number;
+  vendors: string[];
+  byOsVersion: { label: string; platform: string; compliantPct: number; endpoints: number }[];
+  bySeverity: { critical: number; high: number; medium: number; low: number };
+  byAge: { bucket: string; count: number }[];
+  topMissing: Patch[];
+  devicesNeedingAttention: {
+    deviceId: string;
+    name: string;
+    osVersion: string;
+    critical: number;
+    missing: number;
+  }[];
+  bySource: {
+    source: string;
+    updates: number;
+    missing: number;
+    critical: number;
+    endpointsAffected: number;
+    compliancePct: number;
+  }[];
+  tabs: {
+    platforms: PatchTabStats[];
+    driversBios: {
+      endpointsNeeding: number;
+      endpointsTotal: number;
+      bios: number;
+      drivers: number;
+      awaitingApproval: number;
+    };
+    all: {
+      total: number;
+      applicable: number;
+      remediated: number;
+      failed: number;
+      declined: number;
+      superseded: number;
+      zeroDayCves: number;
+    };
+  };
+  policies: {
+    active: number;
+    total: number;
+    computersCovered: number;
+    computersTotal: number;
+    highlyVulnerable: number;
+  };
 };
 
 export type Vulnerability = {

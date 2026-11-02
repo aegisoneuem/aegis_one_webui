@@ -39,7 +39,8 @@ export const PAGES = [
   { path: '/devices', heading: 'Devices' },
   { path: '/groups', heading: 'Device groups' },
   { path: '/enrollment', heading: 'Enrollment' },
-  { path: '/patches', heading: 'Patches' },
+  // The sidebar says Patches; the approved page's own title is longer.
+  { path: '/patches', heading: 'Patch Management' },
   { path: '/software', heading: 'Software' },
   { path: '/liveops', heading: 'Live Activity' },
   { path: '/deployments', heading: 'Deployments' },

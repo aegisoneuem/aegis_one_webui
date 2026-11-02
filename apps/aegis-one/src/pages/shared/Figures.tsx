@@ -81,7 +81,14 @@ export function Donut({
   centreValue,
   centreLabel,
   pie = false,
-}: FigureProps & { centreValue: string; centreLabel: string; pie?: boolean }) {
+  stack = false,
+}: FigureProps & {
+  centreValue: string;
+  centreLabel: string;
+  pie?: boolean;
+  /** Puts the legend under the ring, for a panel one column wide. */
+  stack?: boolean;
+}) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   /*
    * A pie is the same arcs with a stroke wide enough to close the hole: the
@@ -106,7 +113,7 @@ export function Donut({
   );
 
   return (
-    <div className={styles.donutWrap}>
+    <div className={stack ? `${styles.donutWrap} ${styles.donutStack}` : styles.donutWrap}>
       <div className={styles.donutFig}>
         <svg viewBox="0 0 60 60" className={styles.donutSvg} role="presentation">
           <circle className={styles.track} cx="30" cy="30" r={r} strokeWidth={width} />

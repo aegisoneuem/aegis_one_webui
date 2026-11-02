@@ -1,0 +1,748 @@
+/*
+ * Patch Management — geometry read from design-reference/Aegis-One-Console-v129.html
+ * (the Patches page and its eight tabs). Colours are the approved tokens.
+ */
+
+.page {
+  /* Two lines to a cell — the update's name over its reference, the approval
+     over its ring — so the rows are taller than the library default. */
+  --ui-row-height: 53px;
+  --ui-table-head-height: 41px;
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.heading {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-7);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--ao-brand-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.9px;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 17px;
+  height: 1px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: 9px;
+  align-items: center;
+}
+
+/* Tab strip -------------------------------------------------------------- */
+
+/* The reference draws these as boxed segments across the page rather than as
+   the library's underline strip, and inverts the active one. It lives here
+   because only this page uses it; promoting it to @aegis/ui is a change to the
+   token contract, and no second page has asked for it yet. */
+.tabs {
+  display: grid;
+  flex: none;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-md);
+  margin-bottom: var(--ui-space-5);
+  background: var(--ao-surface);
+  overflow: hidden;
+}
+
+.tab,
+.tabOn {
+  padding: 13px var(--ui-space-4);
+  border: 0;
+  border-right: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-navy);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab:last-child,
+.tabOn:last-child {
+  border-right: 0;
+}
+
+.tab:hover {
+  background: var(--ui-surface-sunken);
+}
+
+.tabOn {
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Sub-tabs on the Patch Policies tab. */
+.subtabs {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  margin-bottom: var(--ui-space-5);
+}
+
+.subtab,
+.subtabOn {
+  padding: 7px 14px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ao-surface);
+  color: var(--ao-navy);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.subtabOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+}
+
+.subtab:focus-visible,
+.subtabOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* KPIs ------------------------------------------------------------------- */
+
+.kpis,
+.kpis7 {
+  display: grid;
+  flex: none;
+  gap: 13px;
+  margin-bottom: var(--ui-space-5);
+}
+
+.kpis {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.kpis7 {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.kpi,
+.kpiActive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  justify-content: center;
+  min-height: 78px;
+  padding: 13px 17px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+}
+
+/* The figure the rest are a fraction of is inverted and underlined in gold. */
+.kpiActive {
+  border-color: var(--ao-sidebar);
+  border-bottom: 3px solid var(--ao-brand);
+  background: var(--ao-sidebar);
+}
+
+.kpiLabel {
+  color: var(--ao-navy);
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.kpiActive .kpiLabel {
+  color: var(--ao-brand-hi);
+}
+
+.kpiValue {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: baseline;
+}
+
+.kpiValue strong {
+  color: var(--ao-navy-ink);
+  font-family: var(--ui-font-display);
+  font-size: 27px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.kpiActive .kpiValue strong {
+  color: var(--ao-surface);
+}
+
+.kpiValue em {
+  color: var(--ao-navy-mid);
+  font-size: 14px;
+  font-style: normal;
+}
+
+.kpiActive .kpiValue em {
+  color: var(--ao-sidebar-text);
+}
+
+.kpiSub {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.kpiActive .kpiSub {
+  color: var(--ao-sidebar-text);
+}
+
+.kpiSkeleton {
+  height: 78px;
+}
+
+.rowSkeleton {
+  height: 56px;
+}
+
+/* Charts ----------------------------------------------------------------- */
+
+.charts {
+  display: grid;
+  flex: none;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--ui-space-5);
+  align-items: stretch;
+  margin-bottom: var(--ui-space-5);
+}
+
+.panel,
+.panelWide,
+.card,
+.cardFill {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+}
+
+.panelBody {
+  flex: 1;
+  padding: 0 18px 18px;
+}
+
+.cardHead {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px;
+}
+
+/* A chart-type select is one word wide; left to grow it squeezes the title
+   onto two lines. */
+.cardHead > select {
+  flex: none;
+  width: 110px;
+}
+
+/* The gold rule to the left of a panel title, as the reference draws it. */
+.cardTitle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 14.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.cardTitle::before {
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.cardLink {
+  border: 0;
+  background: none;
+  color: var(--ao-navy);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cardLink:hover {
+  text-decoration: underline;
+}
+
+.cardLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Summary tables --------------------------------------------------------- */
+
+.tables {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ui-space-5);
+  align-items: start;
+  margin-bottom: var(--ui-space-5);
+}
+
+.mini,
+.policies {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.mini thead th,
+.policies thead th {
+  padding: 11px 16px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.mini tbody th,
+.mini tbody td,
+.policies tbody th,
+.policies tbody td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--ao-border);
+  color: var(--ao-navy-ink);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.mini tbody th b,
+.policies tbody th b,
+.policies tbody td b {
+  display: block;
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+}
+
+.mini tbody th small,
+.policies tbody th small,
+.policies tbody td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ao-neutral);
+  font-size: 11px;
+}
+
+.right {
+  text-align: right !important;
+}
+
+.deviceLink {
+  border: 0;
+  background: none;
+  color: var(--ao-navy);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.deviceLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Policies --------------------------------------------------------------- */
+
+.policyBar {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: flex-end;
+  padding: 15px 18px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.rings {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.ring {
+  padding: 3px 9px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ao-navy);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.notYet {
+  padding: 18px;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+/* Chips ------------------------------------------------------------------ */
+
+.chips {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  padding: 11px 15px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  margin-bottom: var(--ui-space-5);
+  background: var(--ao-surface);
+}
+
+.chipsLabel {
+  margin-right: 8px;
+  color: var(--ao-neutral);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.chip,
+.chipOn {
+  padding: 6px 12px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ao-surface);
+  color: var(--ao-navy);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.chip b,
+.chipOn b {
+  margin-left: 6px;
+  color: var(--ao-neutral);
+  font-variant-numeric: tabular-nums;
+}
+
+.chipOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+}
+
+.chipOn b {
+  color: var(--ao-sidebar-text);
+}
+
+.chip:hover {
+  border-color: var(--ao-brand);
+}
+
+.chip:focus-visible,
+.chipOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Grid toolbar ----------------------------------------------------------- */
+
+/* Only the catalogue grid fills the viewport and scrolls inside itself; the
+   policy and summary cards are as tall as their contents. */
+.cardFill {
+  flex: 1;
+  min-height: 0;
+}
+
+.policyBar input {
+  width: 210px;
+}
+
+.segments {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-sunken);
+}
+
+.seg,
+.segOn {
+  padding: 5px 13px;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--ao-navy);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segOn {
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+}
+
+.seg:focus-visible,
+.segOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.filters {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-4);
+  align-items: flex-end;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+.filter > span {
+  color: var(--ao-neutral);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.table {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Grid cells ------------------------------------------------------------- */
+
+.update {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.update b {
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+}
+
+.update small {
+  color: var(--ao-neutral);
+  font-size: 11px;
+}
+
+.approval {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.approval small {
+  color: var(--ao-neutral);
+  font-size: 11px;
+}
+
+.countLink {
+  color: var(--ao-navy);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* A superseded update is history, not work, so its row reads as past. */
+.stale {
+  color: var(--st-neutral);
+}
+
+/* Severity and approval -------------------------------------------------- */
+
+.sevCritical,
+.sevHigh,
+.sevMedium,
+.sevLow {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.sevCritical i,
+.sevHigh i,
+.sevMedium i,
+.sevLow i {
+  width: 7px;
+  height: 7px;
+  background: currentcolor;
+}
+
+.sevCritical {
+  color: var(--st-bad);
+}
+
+.sevHigh {
+  color: var(--st-warn);
+}
+
+.sevMedium {
+  color: var(--ao-brand-deep);
+}
+
+.sevLow {
+  color: var(--st-info);
+}
+
+.apApproved {
+  color: var(--st-good);
+  font-weight: 600;
+}
+
+.apTest {
+  color: var(--st-info);
+  font-weight: 600;
+}
+
+.apReview {
+  color: var(--st-warn);
+  font-weight: 600;
+}
+
+.apDeclined {
+  color: var(--ao-neutral);
+  font-weight: 600;
+}
+
+.apSuperseded {
+  color: var(--ao-muted);
+  font-weight: 600;
+}
+
+/* Tones ------------------------------------------------------------------ */
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.bad {
+  color: var(--st-bad);
+}
+
+.info {
+  color: var(--st-info);
+}
+
+.alt {
+  color: var(--ao-brand-deep);
+}
+
+.neutral {
+  color: var(--ao-neutral);
+}
+
+/* Footnote --------------------------------------------------------------- */
+
+.footnote {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-5);
+  justify-content: space-between;
+  padding-top: 15px;
+  border-top: 1px solid var(--ao-border);
+  margin-top: 25px;
+  color: var(--ao-neutral);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.footnote i {
+  font-style: normal;
+}

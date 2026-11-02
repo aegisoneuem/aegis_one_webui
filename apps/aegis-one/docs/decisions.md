@@ -360,3 +360,43 @@ architecture, manufacturer, last boot. They are seeded now, derived from what
 the fixture already knows rather than invented: the DNS name is the host's own
 name in the demo domain, the manufacturer is the first token of the model, and
 a last boot is never later than the last check-in.
+
+## D-026 — The primary button is navy, not the gold accent
+
+Every primary button in the console was gold, because `packages/ui` fills the
+primary variant from `--ui-accent-strong` and this console's accent is the
+brand gold. v129's call-to-action is navy: the page header's `Patch critical`
+and the grid's `Deploy` both compute to
+`linear-gradient(#24476b, #1b3a5a 55%, #15304c)`.
+
+An accent and a call-to-action are not always the same colour, so the fill got
+its own token rather than a different accent: `--ui-button-primary-bg`, with
+`-fg` and `-hover` beside it, each falling back to the accent so a console that
+sets none of them is unchanged. This console sets the fill to the approved
+`--ao-navy` — flat, because the hard rules forbid gradients, and because flat
+navy sits inside the range that gradient covers.
+
+This changes Overview and Devices as well. Both were reviewed with the gold
+button, so it is called out rather than left to be noticed.
+
+## D-027 — The patch aggregates are rolled up while seeding
+
+`/patches/summary` has to slice a 530,000-row join five ways — by OS version,
+by tab, by vendor, by severity and by age. Computed on request it took 7.4
+seconds and the browser gave up before it answered. Batching the counts into
+conditional aggregation brought it to 4.7s; indexing the outstanding rows and
+moving the predicate into `WHERE` brought the narrow queries to about 100ms
+each, but the one unavoidable full pass still cost over a second.
+
+Nothing writes to `device_patches` at runtime, so it is sliced once while
+seeding into `patch_cells` (7,100 rows) and `patch_device_counts` (359 rows),
+and the endpoint reads those. The same request now takes 0.55 seconds.
+
+Two things make this safe rather than a stale cache. Both tables carry
+`zone_id`, so a scoped caller's figures are the sum of their own zones' rows —
+valid because a device belongs to exactly one zone. And approval, the one
+thing an operator does change, is still read live from the 200-row `patches`
+table, so a decision never has to wait for a rollup.
+
+A real backend would materialise this the same way, on a schedule. The handover
+note says so.

@@ -648,7 +648,7 @@ export const CVES: readonly CveDef[] = [
     exploited: true,
     publishedDaysAgo: 22,
     affects: 'Windows',
-    fixedBy: 'KB5041585',
+    fixedBy: 'KB5034020',
   },
   {
     id: 'CVE-2026-20644',
@@ -658,7 +658,7 @@ export const CVES: readonly CveDef[] = [
     exploited: true,
     publishedDaysAgo: 41,
     affects: 'Windows',
-    fixedBy: 'KB5040712',
+    fixedBy: 'KB5034050',
   },
   {
     id: 'CVE-2026-19902',
@@ -768,7 +768,7 @@ export const CVES: readonly CveDef[] = [
     exploited: false,
     publishedDaysAgo: 74,
     affects: 'Windows',
-    fixedBy: 'KB5040712',
+    fixedBy: 'KB5034050',
   },
   {
     id: 'CVE-2026-13644',

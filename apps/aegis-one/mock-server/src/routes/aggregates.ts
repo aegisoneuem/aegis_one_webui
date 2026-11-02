@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { TtlCache, zoneScope, type Db } from '@aegis/mock-core';
+import { TtlCache, notFound, zoneScope, type Db } from '@aegis/mock-core';
 import { shapeRow } from './resources';
 
 /**
@@ -514,6 +514,353 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
       params,
     );
   });
+
+  /**
+   * Everything the Patch Management page shows above its grids: the Overview
+   * tab's four counters, three charts and two tables, the per-tab counters,
+   * and the Patch Policies tab's coverage figures.
+   *
+   * It is one call because the page is one page: eight tabs that each fetched
+   * their own counters would make switching tabs a network round trip for
+   * figures the same query already has.
+   */
+  app.get(`${basePath}/patches/summary`, async (request) => {
+    const zoneIds = request.auth?.zoneIds ?? [];
+    return aggregates.get(`patches:${scopeKey(zoneIds)}`, () => buildPatchSummary(zoneIds));
+  });
+
+  app.get(`${basePath}/patch-policies`, async () =>
+    many<Record<string, unknown>>(
+      `SELECT id, name, content, patch_count AS patchCount, rollout, computers,
+              compliance_pct AS compliancePct, schedule, next_run_at AS nextRunAt, status
+       FROM patch_policies ORDER BY name`,
+    ).map((row) => ({
+      ...row,
+      // Stored as one text column because SQLite has no array type.
+      rollout: String(row['rollout'] ?? '')
+        .split(',')
+        .filter(Boolean),
+    })),
+  );
+
+  /** The approval states the Patch schema allows a caller to set. */
+  const APPROVALS = new Set(['approved', 'test', 'review', 'declined']);
+
+  app.put(`${basePath}/patches/:patchId/approval`, async (request, reply) => {
+    const { patchId } = request.params as { patchId: string };
+    const body = request.body as { approval?: string };
+    if (!body?.approval || !APPROVALS.has(body.approval)) {
+      return reply.code(400).send({ title: 'Unknown approval state', status: 400 });
+    }
+    // Supersession is a fact about the catalogue, not a decision an operator
+    // makes, so an update that has been replaced cannot be re-approved.
+    const changed = db
+      .prepare(`UPDATE patches SET approval = ? WHERE id = ? AND approval <> 'superseded'`)
+      .run(body.approval, patchId);
+    if (changed.changes === 0) throw notFound();
+    aggregates.clear();
+    return shapeRow(
+      one<Record<string, unknown>>(
+        `SELECT id, title, kb, severity, platform, category, subcategory, source, approval,
+                superseded_by AS supersededBy, ring, zero_day AS zeroDay,
+                missing_count AS endpointsMissing, installed_count AS remediated,
+                released_at AS releasedAt
+         FROM patches WHERE id = ?`,
+        [patchId],
+      ),
+    );
+  });
+
+  /** The five buckets the Missing Patch Age chart uses, in days since release. */
+  const AGE_BUCKETS = ['0–7 d', '8–14 d', '15–30 d', '31–60 d', '60+ d'] as const;
+
+  interface PatchCell {
+    zoneId: string;
+    osLabel: string;
+    platform: string;
+    tab: string;
+    source: string;
+    severity: string;
+    state: string;
+    pairs: number;
+    ageSum: number;
+    age0: number;
+    age1: number;
+    age2: number;
+    age3: number;
+    age4: number;
+  }
+
+  /**
+   * Everything above the Patch Management grids.
+   *
+   * The device/patch join is half a million rows and the page wants it sliced
+   * five ways, which took seconds to group on request. It is rolled up while
+   * seeding instead — see rollUpPatchCells — so this reads a few hundred rows
+   * and folds them. Nothing writes to device_patches at runtime, so the two
+   * cannot drift; approval, which an operator does change, is read live from
+   * the patches table.
+   */
+  function buildPatchSummary(zoneIds: readonly string[]) {
+    const scope = scoped(zoneIds);
+    const zoneIn = zoneIds.length ? `WHERE zone_id IN (${zoneIds.map(() => '?').join(',')})` : '';
+    const zoneParams = zoneIds.length ? [...zoneIds] : [];
+
+    const cells = many<PatchCell>(
+      `SELECT zone_id AS zoneId, os_label AS osLabel, platform, tab, source, severity, state,
+              pairs, age_sum AS ageSum, age0, age1, age2, age3, age4
+       FROM patch_cells ${zoneIn}`,
+      zoneParams,
+    );
+
+    const counts = many<{
+      dimension: string;
+      key: string;
+      devices: number;
+      criticalDevices: number;
+      updates: number;
+    }>(
+      `SELECT dimension, key, SUM(devices) AS devices,
+              SUM(critical_devices) AS criticalDevices, SUM(updates) AS updates
+       FROM patch_device_counts ${zoneIn} GROUP BY dimension, key`,
+      zoneParams,
+    );
+
+    const countOf = (dimension: string, key: string) =>
+      counts.find((row) => row.dimension === dimension && row.key === key);
+
+    /** Adds one column of the rolled-up cells, over the ones a predicate picks. */
+    const sum = (
+      field: 'pairs' | 'ageSum' | 'age0' | 'age1' | 'age2' | 'age3' | 'age4',
+      pick: (c: PatchCell) => boolean,
+    ): number => cells.reduce((total, c) => (pick(c) ? total + c[field] : total), 0);
+
+    const OPEN = (c: PatchCell) => c.state === 'pending' || c.state === 'failed';
+    const DONE = (c: PatchCell) => c.state === 'installed';
+    const both = (a: (c: PatchCell) => boolean, b: (c: PatchCell) => boolean) => (c: PatchCell) =>
+      a(c) && b(c);
+
+    const installed = sum('pairs', DONE);
+    const missing = sum('pairs', OPEN);
+    const failed = sum('pairs', (c) => c.state === 'failed');
+    const severity = (name: string) =>
+      sum(
+        'pairs',
+        both(OPEN, (c) => c.severity === name),
+      );
+
+    const estate = one<{ total: number; restart: number }>(
+      `SELECT COUNT(*) AS total, SUM(reboot_pending = 1) AS restart FROM devices ${scope.where}`,
+      scope.params,
+    );
+
+    /* Endpoints per OS version is a property of the estate, not of the pairs. */
+    const endpointsByOs = many<{ label: string; n: number }>(
+      `SELECT os_name || ' ' || os_version AS label, COUNT(*) AS n
+       FROM devices ${scope.where} GROUP BY label`,
+      scope.params,
+    );
+
+    const byOsVersion = endpointsByOs
+      // An OS the catalogue carries no updates for has no compliance to
+      // report. Leaving it in would draw it at 0%, which reads as "nothing is
+      // patched" rather than "nothing applies".
+      .filter(({ label }) => sum('pairs', (c) => c.osLabel === label) > 0)
+      .map(({ label, n }) => {
+        const done = sum(
+          'pairs',
+          both(DONE, (c) => c.osLabel === label),
+        );
+        const open = sum(
+          'pairs',
+          both(OPEN, (c) => c.osLabel === label),
+        );
+        return {
+          label,
+          platform: cells.find((c) => c.osLabel === label)?.platform ?? '',
+          compliantPct: pctOf(done, done + open),
+          endpoints: n,
+        };
+      })
+      .sort((a, b) => b.endpoints - a.endpoints);
+
+    const bySource = [...new Set(cells.map((c) => c.source))]
+      .map((source) => {
+        const done = sum(
+          'pairs',
+          both(DONE, (c) => c.source === source),
+        );
+        const open = sum(
+          'pairs',
+          both(OPEN, (c) => c.source === source),
+        );
+        const distinct = countOf('source', source);
+        return {
+          source,
+          updates: distinct?.updates ?? 0,
+          missing: open,
+          critical: sum(
+            'pairs',
+            both(OPEN, (c) => c.source === source && c.severity === 'critical'),
+          ),
+          endpointsAffected: distinct?.devices ?? 0,
+          compliancePct: pctOf(done, done + open),
+        };
+      })
+      .sort((a, b) => b.missing - a.missing);
+
+    /* The worst endpoints, read live: six rows off the outstanding-pairs index. */
+    const scopedDevices = scope.where ? scope.where.replace(/^WHERE /, 'AND d.') : '';
+    const devicesNeedingAttention = many<Record<string, unknown>>(
+      `SELECT d.id AS deviceId, d.hostname AS name, d.os_name || ' ' || d.os_version AS osVersion,
+              SUM(p.severity = 'critical') AS critical, COUNT(*) AS missing
+       FROM device_patches dp
+       JOIN devices d ON d.id = dp.device_id
+       JOIN patches p ON p.id = dp.patch_id
+       WHERE dp.state IN ('pending', 'failed') ${scopedDevices}
+       GROUP BY d.id ORDER BY critical DESC, missing DESC LIMIT 6`,
+      scope.params,
+    );
+
+    /* The catalogue is a couple of hundred rows, so these are read live. */
+    const topMissing = many<Record<string, unknown>>(
+      `SELECT p.id, p.title, p.kb, p.severity, p.platform, p.category, p.source,
+              p.approval, p.missing_count AS endpointsMissing, p.installed_count AS remediated,
+              p.released_at AS releasedAt
+       FROM patches p WHERE p.missing_count > 0
+       ORDER BY CASE p.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                p.missing_count DESC
+       LIMIT 6`,
+    );
+
+    const vendors = many<{ source: string }>(
+      `SELECT DISTINCT source FROM patches WHERE source <> '' ORDER BY source`,
+    ).map((row) => row.source);
+
+    const catalogue = many<{
+      tab: string;
+      available: number;
+      missing: number;
+      bios: number;
+      drivers: number;
+      awaiting: number;
+    }>(
+      `SELECT CASE WHEN category IN ('third-party', 'driver-bios') THEN category ELSE platform END AS tab,
+              SUM(approval <> 'superseded') AS available,
+              SUM(missing_count > 0) AS missing,
+              SUM(subcategory = 'bios') AS bios,
+              SUM(subcategory = 'driver') AS drivers,
+              SUM(approval IN ('review', 'test')) AS awaiting
+       FROM patches GROUP BY tab`,
+    );
+
+    const whole = one<{
+      total: number;
+      declined: number;
+      superseded: number;
+      zeroDay: number;
+      applicable: number;
+      criticalUpdates: number;
+      awaiting: number;
+    }>(
+      `SELECT COUNT(*) AS total,
+              SUM(approval = 'declined') AS declined,
+              SUM(approval = 'superseded') AS superseded,
+              SUM(zero_day = 1) AS zeroDay,
+              SUM(missing_count > 0) AS applicable,
+              SUM(severity = 'critical' AND missing_count > 0) AS criticalUpdates,
+              SUM(approval IN ('review', 'test')) AS awaiting
+       FROM patches`,
+    );
+
+    const policyRow = one<{ active: number; total: number }>(
+      `SELECT SUM(status = 'active') AS active, COUNT(*) AS total FROM patch_policies`,
+    );
+
+    const tabStats = (tab: string) => {
+      const distinct = countOf('tab', tab);
+      const cat = catalogue.find((row) => row.tab === tab);
+      const done = sum(
+        'pairs',
+        both(DONE, (c) => c.tab === tab),
+      );
+      const open = sum(
+        'pairs',
+        both(OPEN, (c) => c.tab === tab),
+      );
+      return {
+        key: tab,
+        compliancePct: pctOf(done, done + open),
+        endpointsMissing: distinct?.devices ?? 0,
+        // Applicability is decided by platform alone, so every endpoint in
+        // scope was evaluated against this tab's updates.
+        endpointsTotal: estate.total,
+        criticalUpdates: distinct?.updates ?? 0,
+        updatesAvailable: cat?.available ?? 0,
+        updatesMissing: cat?.missing ?? 0,
+      };
+    };
+
+    const allDevices = countOf('all', '');
+    const driversDistinct = countOf('tab', 'driver-bios');
+    const driverCatalogue = catalogue.find((row) => row.tab === 'driver-bios');
+
+    return {
+      compliancePct: pctOf(installed, installed + missing),
+      missingCritical: severity('critical'),
+      criticalUpdates: whole.criticalUpdates,
+      awaitingApproval: whole.awaiting,
+      failedInstalls: failed,
+      installed,
+      missing,
+      devicesTotal: estate.total,
+      devicesMissing: allDevices?.devices ?? 0,
+      criticalDevices: allDevices?.criticalDevices ?? 0,
+      averageAgeDays: missing ? Math.round(sum('ageSum', OPEN) / missing) : 0,
+      devicesAwaitingRestart: estate.restart,
+      vendors,
+      byOsVersion,
+      bySeverity: {
+        critical: severity('critical'),
+        high: severity('high'),
+        medium: severity('medium'),
+        low: severity('low'),
+      },
+      byAge: AGE_BUCKETS.map((bucket, i) => ({
+        bucket,
+        count: sum(`age${i}` as 'age0', OPEN),
+      })),
+      topMissing: topMissing.map((row) => shapeRow(row)),
+      devicesNeedingAttention,
+      bySource,
+      tabs: {
+        platforms: ['windows', 'macos', 'linux', 'third-party'].map(tabStats),
+        driversBios: {
+          endpointsNeeding: driversDistinct?.devices ?? 0,
+          endpointsTotal: estate.total,
+          bios: driverCatalogue?.bios ?? 0,
+          drivers: driverCatalogue?.drivers ?? 0,
+          awaitingApproval: driverCatalogue?.awaiting ?? 0,
+        },
+        all: {
+          total: whole.total,
+          applicable: whole.applicable,
+          remediated: installed,
+          failed,
+          declined: whole.declined,
+          superseded: whole.superseded,
+          zeroDayCves: whole.zeroDay,
+        },
+      },
+      policies: {
+        active: policyRow.active,
+        total: policyRow.total,
+        computersCovered: estate.total,
+        computersTotal: estate.total,
+        highlyVulnerable: allDevices?.criticalDevices ?? 0,
+      },
+    };
+  }
 
   app.get(`${basePath}/peercache/summary`, async (request) => {
     const scope = zoneScope({ zoneIds: request.auth?.zoneIds ?? [] });

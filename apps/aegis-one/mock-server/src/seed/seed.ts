@@ -58,6 +58,7 @@ export function seedDatabase({
   seedZones(db);
   seedSoftware(db);
   const patches = seedPatches(db, rng);
+  seedPatchPolicies(db);
   seedVulnerabilities(db);
   onProgress('reference data');
 
@@ -117,124 +118,400 @@ interface PatchRow {
   id: string;
   platform: string;
   severity: string;
+  category: string;
 }
+
+/** The months the update catalogue spans, newest first. */
+const PATCH_MONTHS = [
+  '2026-10',
+  '2026-09',
+  '2026-08',
+  '2026-07',
+  '2026-06',
+  '2026-05',
+  '2026-04',
+  '2026-03',
+] as const;
+
+/** Roughly where in the month an update lands, so the ages spread realistically. */
+const MONTH_DAYS = [6, 36, 67, 97, 128, 158, 189, 219] as const;
+
+interface Series {
+  /** The title for a given month label, e.g. "2026-10 Cumulative Update for …". */
+  title: (month: string) => string;
+  /** The reference for the newest entry; older ones count down from it. */
+  kb: number;
+  platform: string;
+  severity: string;
+  category: string;
+  source: string;
+  /** How many months of history the series carries. */
+  months: number;
+  rebootRequired: boolean;
+}
+
+/**
+ * Windows cumulative updates, one series per servicing branch.
+ *
+ * Each month supersedes the one before it, which is what gives the catalogue
+ * its Superseded count and lets the Approval column say "Superseded by KB…"
+ * rather than leaving the state unexplained.
+ */
+const WINDOWS_LINES: readonly (readonly [string, number])[] = [
+  ['Windows 11 Version 24H2 for x64-based Systems', 5_034_020],
+  ['Windows 11 Version 23H2 for x64-based Systems', 5_034_050],
+  ['Microsoft Server Operating System Version 21H2 (Server 2022)', 5_034_105],
+  ['Windows Server 2019 for x64-based Systems', 5_034_137],
+  ['Windows Server 2016 for x64-based Systems', 5_034_169],
+  ['Windows 10 Version 22H2 for x64-based Systems', 5_034_201],
+];
+
+const OS_SERIES: readonly Series[] = [
+  ...WINDOWS_LINES.map(([label, kb]) => ({
+    title: (month: string) => `${month} Cumulative Update for ${label}`,
+    kb,
+    platform: 'windows',
+    severity: 'critical',
+    category: 'os',
+    source: 'Microsoft Corporation',
+    months: 8,
+    rebootRequired: true,
+  })),
+  {
+    title: (month) => `${month} Cumulative Update for .NET Framework 3.5 and 4.8.1`,
+    kb: 5_034_233,
+    platform: 'windows',
+    severity: 'high',
+    category: 'os',
+    source: 'Microsoft Corporation',
+    months: 8,
+    rebootRequired: true,
+  },
+  {
+    title: (month) => `${month} Servicing Stack Update for Windows`,
+    kb: 5_034_265,
+    platform: 'windows',
+    severity: 'high',
+    category: 'os',
+    source: 'Microsoft Corporation',
+    months: 6,
+    rebootRequired: false,
+  },
+  {
+    title: (month) => `Microsoft Defender Antivirus platform update (${month})`,
+    kb: 5_034_297,
+    platform: 'windows',
+    severity: 'medium',
+    category: 'os',
+    source: 'Microsoft Corporation',
+    months: 8,
+    rebootRequired: false,
+  },
+  {
+    title: (month) => `Windows Malicious Software Removal Tool x64 (${month})`,
+    kb: 5_034_329,
+    platform: 'windows',
+    severity: 'low',
+    category: 'os',
+    source: 'Microsoft Corporation',
+    months: 8,
+    rebootRequired: false,
+  },
+];
+
+/** macOS and Linux ship point releases and advisories rather than monthly rollups. */
+const MAC_RELEASES: readonly (readonly [string, string, string, number])[] = [
+  ['VRF-125', 'macOS 15.7', 'critical', 0],
+  ['VRF-126', 'macOS 15.6.1', 'high', 1],
+  ['VRF-127', 'macOS 15.6', 'high', 2],
+  ['VRF-128', 'macOS 15.5', 'medium', 3],
+  ['VRF-129', 'macOS 14.7.6 (Sonoma)', 'high', 1],
+  ['VRF-130', 'macOS 14.7.5 (Sonoma)', 'medium', 3],
+  ['VRF-131', 'Safari 18.6 security update', 'high', 2],
+  ['VRF-132', 'Xcode Command Line Tools 16.4', 'low', 4],
+];
+
+const LINUX_RELEASES: readonly (readonly [string, string, string, string, number])[] = [
+  ['USN-7860-1', 'sudo security update (USN-7860-1)', 'critical', 'Canonical', 0],
+  [
+    'RHSA-2026:8842',
+    'Red Hat Enterprise Linux security update (RHSA-2026:8842)',
+    'critical',
+    'Red Hat',
+    0,
+  ],
+  [
+    'RHSA-2026:8810',
+    'Red Hat Enterprise Linux security update (RHSA-2026:8810)',
+    'high',
+    'Red Hat',
+    1,
+  ],
+  ['USN-7849-1', 'Linux Kernel security update (USN-7849-1)', 'high', 'Canonical', 1],
+  [
+    'RHSA-2026:7711',
+    'Red Hat Enterprise Linux security update (RHSA-2026:7711)',
+    'medium',
+    'Red Hat',
+    2,
+  ],
+  ['USN-7855-1', 'OpenSSL security update (USN-7855-1)', 'medium', 'Canonical', 2],
+  ['USN-7788-1', 'Linux Kernel security update (USN-7788-1)', 'critical', 'Canonical', 3],
+  ['RHSA-2026:7520', 'openssl security update (RHSA-2026:7520)', 'high', 'Red Hat', 3],
+  ['USN-7122-1', 'Linux kernel vulnerabilities (USN-7122-1)', 'high', 'Canonical', 4],
+  ['USN-7098-2', 'curl vulnerability (USN-7098-2)', 'medium', 'Canonical', 5],
+];
+
+/** Firmware is published per hardware model, so it is its own small catalogue. */
+const FIRMWARE: readonly (readonly [string, string, string, string, string, number])[] = [
+  ['DELL-BIOS-1.22.0', 'Dell Latitude 5440 BIOS 1.22.0', 'critical', 'bios', 'Dell', 0],
+  ['DELL-BIOS-1.28.0', 'Dell Latitude 5450 System BIOS 1.28.0', 'high', 'bios', 'Dell', 1],
+  ['LEN-BIOS-N3VET48W', 'ThinkPad T14 Gen 5 BIOS N3VET48W', 'medium', 'bios', 'Lenovo', 2],
+  ['INTEL-NIC-29.1', 'Intel Ethernet Adapter driver 29.1', 'medium', 'driver', 'Intel', 1],
+  ['INTEL-GFX-31.0', 'Intel Arc and Iris Xe graphics driver 31.0', 'low', 'driver', 'Intel', 2],
+  [
+    'REALTEK-AUD-6.0',
+    'Realtek High Definition Audio driver 6.0.9666',
+    'low',
+    'driver',
+    'Realtek',
+    3,
+  ],
+];
+
+/**
+ * How an update is approved, by what it is.
+ *
+ * OS updates come through the monthly policy already approved; third-party
+ * updates sit in review until someone looks at them; a couple are declined
+ * outright. The rings follow the policies the same seed writes.
+ */
+const APPROVAL_BY_CATEGORY: Record<string, string> = {
+  os: 'approved',
+  'third-party': 'review',
+  'driver-bios': 'review',
+};
+
+/** The two CVEs the fixture marks as exploited before the fix shipped. */
+const ZERO_DAY_KBS = new Set(['USN-7860-1', 'VRF-125']);
 
 function seedPatches(db: Db, rng: Rng): PatchRow[] {
   const rows: PatchRow[] = [];
   const insert = db.prepare(
-    `INSERT INTO patches (id,title,kb,platform,severity,category,released_at,reboot_required) VALUES (?,?,?,?,?,?,?,?)`,
+    `INSERT INTO patches (id,title,kb,platform,severity,category,subcategory,source,approval,superseded_by,ring,zero_day,released_at,reboot_required)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
 
-  const windowsPatches = [
-    [
-      'KB5041585',
-      '2026-10 Cumulative Update for Windows 11, version 24H2',
-      'critical',
-      'Security Update',
-    ],
-    [
-      'KB5040712',
-      '2026-09 Cumulative Update for Windows 11, version 23H2',
-      'critical',
-      'Security Update',
-    ],
-    [
-      'KB5039895',
-      '2026-08 Cumulative Update for Windows 10, version 22H2',
-      'important',
-      'Security Update',
-    ],
-    [
-      'KB5043098',
-      '2026-10 Cumulative Update for Windows Server 2022',
-      'critical',
-      'Security Update',
-    ],
-    [
-      'KB5042881',
-      '2026-10 .NET Framework Security and Quality Rollup',
-      'important',
-      'Security Update',
-    ],
-    [
-      'KB5041940',
-      'Servicing Stack Update for Windows 11, version 24H2',
-      'moderate',
-      'Servicing Stack',
-    ],
-    ['KB5039211', 'Windows Malicious Software Removal Tool', 'low', 'Tool'],
-    [
-      'KB5038901',
-      'Microsoft Defender Antivirus definition update',
-      'important',
-      'Definition Update',
-    ],
-  ] as const;
+  const idOf = (kb: string): string => `pt-${kb.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const ring = (): string =>
+    rng.weighted([
+      ['late', 70],
+      ['broad', 20],
+      ['pilot', 10],
+    ] as const);
 
-  const linuxPatches = [
-    [
-      'RHSA-2026:7741',
-      'Important: kernel security and bug fix update',
-      'important',
-      'Security Update',
-    ],
-    ['RHSA-2026:7520', 'Critical: openssl security update', 'critical', 'Security Update'],
-    ['USN-7122-1', 'Linux kernel vulnerabilities', 'important', 'Security Update'],
-    ['USN-7098-2', 'curl vulnerability', 'moderate', 'Security Update'],
-  ] as const;
-
-  const macPatches = [
-    ['macOS-15.1', 'macOS Sequoia 15.1 Update', 'critical', 'OS Update'],
-    ['macOS-14.7.1', 'macOS Sonoma 14.7.1 Update', 'important', 'OS Update'],
-  ] as const;
-
-  const thirdParty = SOFTWARE.slice(0, 14).map(
-    (s) =>
-      [
-        `TP-${s.id.slice(3).toUpperCase()}`,
-        `${s.title} ${s.latestVersion}`,
-        'important',
-        'Third-Party App',
-      ] as const,
-  );
-
-  const firmware = [
-    ['DELL-BIOS-1.28.0', 'Dell Latitude 5450 System BIOS 1.28.0', 'moderate', 'Driver & BIOS'],
-    ['LEN-BIOS-N3VET48W', 'ThinkPad T14 Gen 5 BIOS N3VET48W', 'moderate', 'Driver & BIOS'],
-    ['INTEL-NIC-29.1', 'Intel Ethernet Adapter driver 29.1', 'low', 'Driver & BIOS'],
-  ] as const;
-
-  const groups: readonly (readonly [
-    readonly (readonly [string, string, string, string])[],
-    string,
-  ])[] = [
-    [windowsPatches, 'Windows'],
-    [linuxPatches, 'Linux'],
-    [macPatches, 'macOS'],
-    [thirdParty, 'Third-Party'],
-    [firmware, 'Firmware'],
-  ];
+  /**
+   * Writes one update. `current` decides whether endpoints are evaluated
+   * against it: a superseded update stays in the catalogue, but no device is
+   * still waiting for it, so it draws no device_patches rows.
+   */
+  const write = (
+    kb: string,
+    title: string,
+    platform: string,
+    severity: string,
+    category: string,
+    subcategory: string,
+    source: string,
+    approval: string,
+    supersededBy: string | null,
+    releasedDaysAgo: number,
+    rebootRequired: boolean,
+    current: boolean,
+  ): void => {
+    const id = idOf(kb);
+    insert.run(
+      id,
+      title,
+      kb,
+      platform,
+      severity,
+      category,
+      subcategory,
+      source,
+      approval,
+      supersededBy,
+      ring(),
+      ZERO_DAY_KBS.has(kb) ? 1 : 0,
+      daysAgo(releasedDaysAgo),
+      rebootRequired ? 1 : 0,
+    );
+    if (current) rows.push({ id, platform, severity, category });
+  };
 
   db.transaction(() => {
-    for (const [list, platform] of groups) {
-      for (const [kb, title, severity, category] of list) {
-        const id = `pt-${kb.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        insert.run(
-          id,
-          title,
+    for (const series of OS_SERIES) {
+      for (let m = 0; m < series.months; m += 1) {
+        const month = PATCH_MONTHS[m] ?? PATCH_MONTHS[PATCH_MONTHS.length - 1] ?? '2026-03';
+        const kb = `KB${series.kb - m}`;
+        const newer = `KB${series.kb - m + 1}`;
+        write(
           kb,
-          platform,
-          severity,
-          category,
-          daysAgo(rng.int(3, 120)),
-          category === 'Security Update' || category === 'OS Update' ? 1 : 0,
+          series.title(month),
+          series.platform,
+          series.severity,
+          series.category,
+          '',
+          series.source,
+          m === 0 ? 'approved' : 'superseded',
+          m === 0 ? null : newer,
+          MONTH_DAYS[m] ?? 219,
+          series.rebootRequired,
+          m === 0,
         );
-        rows.push({ id, platform, severity });
       }
+    }
+
+    for (const [kb, title, severity, monthIndex] of MAC_RELEASES) {
+      write(
+        kb,
+        title,
+        'macos',
+        severity,
+        'os',
+        '',
+        'Apple Inc.',
+        monthIndex === 0 ? 'approved' : 'superseded',
+        monthIndex === 0 ? null : 'VRF-125',
+        MONTH_DAYS[monthIndex] ?? 219,
+        true,
+        monthIndex <= 1,
+      );
+    }
+
+    for (const [kb, title, severity, source, monthIndex] of LINUX_RELEASES) {
+      write(
+        kb,
+        title,
+        'linux',
+        severity,
+        'os',
+        '',
+        source,
+        'approved',
+        null,
+        MONTH_DAYS[monthIndex] ?? 219,
+        true,
+        monthIndex <= 2,
+      );
+    }
+
+    /*
+     * Third-party updates: the newest version of every catalogue title, plus
+     * the two it replaced. The publisher is the software's own, so the Vendor
+     * filter lists real publishers rather than one invented name.
+     */
+    for (const [index, s] of SOFTWARE.entries()) {
+      for (let back = 0; back < 3; back += 1) {
+        const version = back === 0 ? s.latestVersion : agePatchVersion(s.latestVersion, rng);
+        const kb = `VRF-${200 + index * 3 + back}`;
+        write(
+          kb,
+          `${s.title} ${version}`,
+          index % 3 === 0 ? 'windows' : index % 3 === 1 ? 'macos' : 'linux',
+          back === 0 ? (index % 4 === 0 ? 'critical' : 'high') : 'medium',
+          'third-party',
+          '',
+          s.publisher,
+          back === 0 ? (APPROVAL_BY_CATEGORY['third-party'] ?? 'review') : 'superseded',
+          back === 0 ? null : `VRF-${200 + index * 3}`,
+          MONTH_DAYS[back] ?? 219,
+          false,
+          back === 0,
+        );
+      }
+    }
+
+    // Two titles are held back deliberately, so the Declined count is a
+    // decision in the fixture rather than an empty column.
+    for (const kb of ['VRF-200', 'VRF-203']) {
+      db.prepare(`UPDATE patches SET approval = 'declined' WHERE id = ?`).run(idOf(kb));
+    }
+
+    for (const [kb, title, severity, subcategory, source, monthIndex] of FIRMWARE) {
+      write(
+        kb,
+        title,
+        'windows',
+        severity,
+        'driver-bios',
+        subcategory,
+        source,
+        APPROVAL_BY_CATEGORY['driver-bios'] ?? 'review',
+        null,
+        MONTH_DAYS[monthIndex] ?? 219,
+        true,
+        true,
+      );
     }
   })();
 
   return rows;
+}
+
+/**
+ * The patch policies the Patch Policies tab lists.
+ *
+ * `computers` and `compliance_pct` are filled in after the devices exist, so
+ * the figures agree with the estate rather than being written twice.
+ */
+function seedPatchPolicies(db: Db): void {
+  const insert = db.prepare(
+    `INSERT INTO patch_policies (id,name,content,patch_count,rollout,computers,compliance_pct,schedule,next_run_at,status)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`,
+  );
+  const policies: readonly (readonly [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string | null,
+    string,
+  ])[] = [
+    [
+      'pp-windows-monthly',
+      'Windows Monthly Security',
+      'OS · Critical/High',
+      'pilot,broad,late',
+      'Windows · Patch Tuesday + 1 day · 22:00 device time · in maintenance window',
+      '2026-11-11T16:30:00.000Z',
+      'active',
+    ],
+    [
+      'pp-browsers',
+      'Browsers – All OS',
+      'Browser · Critical/High/Medium/Low',
+      'broad',
+      'Any OS · Daily · 12:00 device time',
+      '2026-12-12T06:30:00.000Z',
+      'active',
+    ],
+    [
+      'pp-third-party',
+      'Third-Party Apps Weekly',
+      'Third-party · Critical/High/Medium',
+      'broad',
+      'Any OS · Every Wed · 13:00 device time',
+      null,
+      'suspended',
+    ],
+  ];
+
+  db.transaction(() => {
+    for (const [id, name, content, rollout, schedule, nextRun, status] of policies)
+      insert.run(id, name, content, 0, rollout, 0, 0, schedule, nextRun, status);
+  })();
 }
 
 function seedVulnerabilities(db: Db): void {
@@ -256,6 +533,24 @@ function seedVulnerabilities(db: Db): void {
     }
   })();
 }
+
+/**
+ * Patch lag by operating system, as a multiplier on the outstanding rate.
+ * First match wins, so the more specific patterns come first.
+ */
+const PATCH_LAG: readonly (readonly [RegExp, number])[] = [
+  [/Windows Server 2016/, 5],
+  [/Windows Server 2019/, 3.5],
+  [/Windows Server 2022/, 2.5],
+  [/Windows 10/, 4],
+  [/Windows 11 Enterprise 23H2/, 2],
+  [/Red Hat/, 3],
+  [/Ubuntu 20\.04/, 4.5],
+  [/Ubuntu/, 2],
+  [/Ventura|Monterey/, 3.5],
+  [/macOS|Sonoma/, 1.8],
+  [/AIX/, 6],
+];
 
 const ZONE_WEIGHTS = ZONES.map((z) => [z, z.weight] as const);
 const OS_WEIGHTS = OPERATING_SYSTEMS.map((o) => [o, o.weight] as const);
@@ -347,13 +642,27 @@ function seedDevices(
         softwareRows.push([deviceId, s.id, version, outdated ? 1 : 0, daysAgo(rng.int(5, 600))]);
       }
 
+      /*
+       * How far behind this OS runs. An estate does not patch uniformly:
+       * servers wait for a change window, the older desktop builds are the
+       * ones nobody has got to yet, and the current build is the one the
+       * monthly policy actually reaches. Without this every OS version reads
+       * the same percentage and the Compliance by OS Version chart says
+       * nothing.
+       */
+      const lag = PATCH_LAG.find(([p]) => p.test(`${os.name} ${os.version}`))?.[1] ?? 1;
+
       for (const p of patches) {
-        const applicable =
-          (p.platform === 'Windows' && os.family.startsWith('Windows')) ||
-          (p.platform === 'Linux' && os.family === 'Linux') ||
-          (p.platform === 'macOS' && os.family === 'macOS') ||
-          p.platform === 'Third-Party' ||
-          (p.platform === 'Firmware' && !isServer);
+        // Firmware is published per hardware model, so it reaches workstations
+        // only; everything else follows the platform the update is built for.
+        const family = os.family.startsWith('Windows')
+          ? 'windows'
+          : os.family === 'macOS'
+            ? 'macos'
+            : os.family === 'Linux'
+              ? 'linux'
+              : 'aix';
+        const applicable = p.platform === family && (p.category !== 'driver-bios' || !isServer);
         if (!applicable || !rng.chance(0.45)) continue;
 
         /*
@@ -366,8 +675,8 @@ function seedDevices(
          */
         const state = rng.weighted([
           ['installed', 880],
-          ['pending', 35],
-          ['failed', 8],
+          ['pending', 35 * lag],
+          ['failed', 8 * lag],
           ['not-applicable', 77],
         ] as const);
         if (state === 'pending' || state === 'failed') pendingPatches++;
@@ -504,14 +813,99 @@ function rollUpCounts(db: Db): void {
       install_count = (SELECT COUNT(*) FROM device_software WHERE device_software.software_id = software.id),
       outdated_count = (SELECT COUNT(*) FROM device_software WHERE device_software.software_id = software.id AND outdated = 1);
 
+    /*
+     * applicable_count stays "endpoints this update was evaluated against".
+     * missing_count is the narrower figure the grid's Applicable column means:
+     * endpoints it applies to and has not reached yet. A superseded update has
+     * no device_patches rows at all, so both land on zero — the fixture has no
+     * record of installs that happened before it was replaced.
+     */
     UPDATE patches SET
       applicable_count = (SELECT COUNT(*) FROM device_patches WHERE device_patches.patch_id = patches.id),
+      missing_count = (SELECT COUNT(*) FROM device_patches WHERE device_patches.patch_id = patches.id AND state IN ('pending', 'failed')),
       installed_count = (SELECT COUNT(*) FROM device_patches WHERE device_patches.patch_id = patches.id AND state = 'installed'),
       failed_count = (SELECT COUNT(*) FROM device_patches WHERE device_patches.patch_id = patches.id AND state = 'failed');
+
+    /* Policy coverage, once the estate exists. */
+    UPDATE patch_policies SET
+      patch_count = (SELECT COUNT(*) FROM patches WHERE patches.approval <> 'superseded'
+                       AND (patch_policies.id <> 'pp-windows-monthly' OR patches.platform = 'windows')
+                       AND (patch_policies.id <> 'pp-third-party' OR patches.category = 'third-party')),
+      computers = (SELECT COUNT(*) FROM devices
+                     WHERE patch_policies.id <> 'pp-windows-monthly' OR devices.os_family LIKE 'Windows%'),
+      compliance_pct = (SELECT CAST(ROUND(100.0 * SUM(pending_patches = 0) / COUNT(*)) AS INTEGER) FROM devices
+                     WHERE patch_policies.id <> 'pp-windows-monthly' OR devices.os_family LIKE 'Windows%');
 
     UPDATE vulnerabilities SET
       affected_count = (SELECT COUNT(*) FROM device_vulnerabilities WHERE device_vulnerabilities.vulnerability_id = vulnerabilities.id AND state = 'open'),
       remediated_count = (SELECT COUNT(*) FROM device_vulnerabilities WHERE device_vulnerabilities.vulnerability_id = vulnerabilities.id AND state = 'remediated');
+  `);
+
+  rollUpPatchCells(db);
+}
+
+/**
+ * Pre-computes the Patch Management aggregates.
+ *
+ * Grouping the device/patch join on request cost seconds, because it is half
+ * a million rows and the page wants it sliced five ways. Nothing writes to
+ * device_patches at runtime, so it is sliced once here instead.
+ *
+ * Ages are measured against the seed's own clock rather than the wall clock,
+ * which is also what makes a screenshot of the age chart reproducible.
+ */
+function rollUpPatchCells(db: Db): void {
+  const today = NOW / 86_400_000 + 2_440_587.5;
+  const OPEN = `dp.state IN ('pending', 'failed')`;
+  const AGE = `(${today} - julianday(p.released_at))`;
+  const TAB = `CASE WHEN p.category IN ('third-party', 'driver-bios') THEN p.category ELSE p.platform END`;
+  const JOIN = `FROM device_patches dp
+                JOIN devices d ON d.id = dp.device_id
+                JOIN patches p ON p.id = dp.patch_id`;
+  const BUCKETS = [
+    [0, 7],
+    [8, 14],
+    [15, 30],
+    [31, 60],
+    [61, 100_000],
+  ];
+
+  db.exec(`
+    INSERT INTO patch_cells
+    SELECT d.zone_id,
+           d.os_name || ' ' || d.os_version,
+           LOWER(REPLACE(d.os_family, ' Server', '')),
+           ${TAB},
+           p.source,
+           p.severity,
+           dp.state,
+           COUNT(*),
+           SUM(CASE WHEN ${OPEN} THEN ${AGE} ELSE 0 END),
+           ${BUCKETS.map(([from, to]) => `SUM(${OPEN} AND ${AGE} BETWEEN ${from} AND ${to})`).join(
+             ',\n           ',
+           )}
+    ${JOIN}
+    GROUP BY 1, 2, 3, 4, 5, 6, 7;
+
+    /* Endpoints with anything outstanding, and of those the ones with a critical. */
+    INSERT INTO patch_device_counts
+    SELECT zone_id, 'all', '', COUNT(*), SUM(crit > 0), 0 FROM (
+      SELECT d.zone_id AS zone_id, dp.device_id, SUM(p.severity = 'critical') AS crit
+      ${JOIN} WHERE ${OPEN} GROUP BY d.zone_id, dp.device_id)
+    GROUP BY zone_id;
+
+    INSERT INTO patch_device_counts
+    SELECT d.zone_id, 'tab', ${TAB},
+           COUNT(DISTINCT dp.device_id), 0,
+           COUNT(DISTINCT CASE WHEN p.severity = 'critical' THEN p.id END)
+    ${JOIN} WHERE ${OPEN} GROUP BY d.zone_id, ${TAB};
+
+    INSERT INTO patch_device_counts
+    SELECT d.zone_id, 'source', p.source,
+           COUNT(DISTINCT dp.device_id), 0, COUNT(DISTINCT p.id)
+    ${JOIN} WHERE ${OPEN} GROUP BY d.zone_id, p.source;
+
+    ANALYZE;
   `);
 }
 
@@ -603,12 +997,12 @@ function seedDeployments(db: Db, rng: Rng): void {
 
   const plans: readonly (readonly [string, string, string])[] = [
     ['Google Chrome 142.0 — broad ring', 'install-software', 'Google Chrome 142.0.7204.92'],
-    ['October security rollup — pilot', 'deploy-patches', 'KB5041585'],
-    ['October security rollup — broad', 'deploy-patches', 'KB5041585'],
+    ['October security rollup — pilot', 'deploy-patches', 'KB5034020'],
+    ['October security rollup — broad', 'deploy-patches', 'KB5034020'],
     ['CrowdStrike sensor 7.20 upgrade', 'update-software', 'CrowdStrike Falcon Sensor 7.20.19507'],
     ['Remove TeamViewer from Finance', 'uninstall-software', 'TeamViewer 15.58.4'],
     ['Disk cleanup script — low disk group', 'collect-logs', 'cleanup-temp.ps1'],
-    ['RHEL 9 kernel update', 'deploy-patches', 'RHSA-2026:7741'],
+    ['RHEL 9 kernel update', 'deploy-patches', 'RHSA-2026:8842'],
     ['macOS Sequoia 15.1', 'update-software', 'macOS Sequoia 15.1'],
     ['Adobe Acrobat Reader 24.4', 'install-software', 'Adobe Acrobat Reader 24.4.20272'],
     ['BIOS 1.28.0 — Latitude 5450', 'deploy-patches', 'DELL-BIOS-1.28.0'],

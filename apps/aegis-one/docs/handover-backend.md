@@ -259,6 +259,24 @@ you.
    counts are in the tens of thousands.
 9. **Patch severity vocabulary.** The contract's `missingBySeverity` buckets
    are critical / high / medium / low; patch vendors publish critical /
-   important / moderate / low. We map the middle two in the aggregate. Decide
-   which vocabulary is canonical, and make the import normalise to it rather
-   than leaving every reader to guess.
+   important / moderate / low. The fixture now normalises on import, so the
+   aggregate no longer maps them. Confirm that is where you want it done, and
+   that the contract's four are canonical.
+10. **`/patches/summary` is a materialised view, not a query.** Slicing the
+    device/patch join five ways on request took 7.4 seconds over 530,000 rows
+    here, and the browser abandoned it. We roll it up at seed time into two
+    small tables keyed by zone (see decisions.md D-027). At your scale this
+    wants to be a real materialised view refreshed on a schedule, or an
+    incremental rollup written as patch state changes. Decide which, and how
+    fresh the figures have to be — the Overview tolerates minutes.
+11. **Patch policies are read-only.** The contract declares `GET
+/patch-policies` and nothing else. The approved design has New Policy, an
+    Open detail view, run-now and suspend, and a Global Settings pane of
+    estate-wide defaults (maintenance windows, restart behaviour, bandwidth
+    limits). All of that needs endpoints before it can be built.
+12. **Supersession history.** The contract now carries `approval: superseded`
+    and `supersededBy`, which the catalogue needs. What it cannot express is
+    how many endpoints had a superseded update installed before it was
+    replaced — v129 shows that figure. Either the per-device patch record
+    keeps history, or the Remediated column reads zero for superseded rows,
+    which is what it does here.

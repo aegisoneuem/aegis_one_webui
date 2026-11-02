@@ -31,15 +31,18 @@
 }
 
 /* Variants */
+/* The primary fill is its own token: a console's accent and its call-to-action
+   are not always the same colour. Each falls back to the accent, so a console
+   that sets none of them is unchanged. */
 .primary {
-  background: var(--ui-accent-strong);
-  border-color: var(--ui-accent-strong);
-  color: var(--ui-surface);
+  background: var(--ui-button-primary-bg, var(--ui-accent-strong));
+  border-color: var(--ui-button-primary-bg, var(--ui-accent-strong));
+  color: var(--ui-button-primary-fg, var(--ui-surface));
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--ui-accent-hover);
-  border-color: var(--ui-accent-hover);
+  background: var(--ui-button-primary-hover, var(--ui-accent-hover));
+  border-color: var(--ui-button-primary-hover, var(--ui-accent-hover));
 }
 
 .secondary {

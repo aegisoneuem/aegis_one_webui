@@ -95,6 +95,16 @@
   --ui-accent-soft: var(--accent-soft);
   --ui-highlight: var(--ao-brand-hi);
 
+  /*
+   * The approved design's call-to-action is navy, not the gold accent: every
+   * primary button in v129 — the page header's and the grid's Deploy alike —
+   * computes to a linear-gradient from #24476b to #15304c. Gradients are out
+   * under the hard rules, so this is the flat approved navy, which sits inside
+   * that range. See docs/decisions.md D-026.
+   */
+  --ui-button-primary-bg: var(--ao-navy);
+  --ui-button-primary-hover: var(--ao-navy-ink);
+
   --ui-bg: var(--ao-bg);
   --ui-surface: var(--ao-surface);
   --ui-border: var(--ao-border);

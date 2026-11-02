@@ -61,12 +61,56 @@ interface ResourceDef {
   zoneScoped?: boolean;
   /** Fields parsed back from JSON text columns before they go out. */
   jsonFields?: readonly string[];
+  /**
+   * Rewrites query parameters the contract declares in the caller's words into
+   * the filters the column allowlist understands. It runs before `listRows`,
+   * so a parameter it does not produce still cannot reach SQL.
+   */
+  derive?: (db: Db, filters: ListQuery['filters'] & object) => void;
+}
+
+/**
+ * The Patches grid's own parameters.
+ *
+ * `vendor` is the contract's name for `source`; `releasedAfter` is a lower
+ * bound on a date; `osVersion` is the only one that is not a column at all —
+ * it asks for the updates outstanding on endpoints running that version, which
+ * is a join, so it is resolved to a list of ids first.
+ */
+function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): void {
+  // A repeated parameter arrives as an array; these three each name one value.
+  const first = (key: string): string | undefined => {
+    const raw = filters[key];
+    // Cleared rather than deleted: the allowlist ignores an unknown key, and
+    // an empty value is already treated as "not filtered".
+    filters[key] = undefined;
+    return Array.isArray(raw) ? raw[0] : raw;
+  };
+  const vendor = first('vendor');
+  const releasedAfter = first('releasedAfter');
+  const osVersion = first('osVersion');
+
+  if (vendor) filters['source'] = vendor;
+  if (releasedAfter) filters['releasedAt.gte'] = releasedAfter;
+  if (!osVersion) return;
+
+  const ids = db
+    .prepare(
+      `SELECT DISTINCT dp.patch_id AS id
+         FROM device_patches dp JOIN devices d ON d.id = dp.device_id
+        WHERE d.os_name || ' ' || d.os_version = ? AND dp.state IN ('pending', 'failed')`,
+    )
+    .all(osVersion) as { id: string }[];
+
+  // An empty list has to stay a filter that matches nothing. Leaving it off
+  // would quietly widen the result to the whole catalogue.
+  filters['id'] = ids.length ? ids.map((row) => row.id).join(',') : '\u0000none';
 }
 
 const RESOURCES: readonly ResourceDef[] = [
   { path: 'devices', spec: devicesSpec, zoneScoped: true },
   { path: 'software', spec: softwareSpec },
-  { path: 'patches', spec: patchesSpec },
+  { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
   { path: 'vulnerabilities', spec: vulnerabilitiesSpec },
   { path: 'deployments', spec: deploymentsSpec },
   { path: 'liveops/script-jobs', spec: liveJobsSpec },
@@ -90,6 +134,7 @@ const BOOLEAN_FIELDS = new Set([
   'exploited',
   'peerCache',
   'rebootRequired',
+  'zeroDay',
   'wakeOfflineFirst',
   'emailed',
   'custom',
@@ -119,16 +164,13 @@ function safeParse(value: string): unknown {
 
 export function registerResourceRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   for (const resource of RESOURCES) {
-    const { path, spec, zoneScoped, jsonFields } = resource;
+    const { path, spec, zoneScoped, jsonFields, derive } = resource;
 
     app.get(`${basePath}/${path}`, async (request) => {
       const scope = zoneScoped && request.auth ? zoneScope(request.auth) : undefined;
-      const result = listRows<Record<string, unknown>>(
-        db,
-        spec,
-        toListQuery(request),
-        scope ? { scope } : {},
-      );
+      const query = toListQuery(request);
+      if (derive) derive(db, query.filters ?? {});
+      const result = listRows<Record<string, unknown>>(db, spec, query, scope ? { scope } : {});
       return { items: result.items.map((row) => shapeRow(row, jsonFields)), page: result.page };
     });
 

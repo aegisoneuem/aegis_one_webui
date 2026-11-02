@@ -90,11 +90,40 @@ export const patchesSpec: TableSpec = {
     platform: { column: 'platform', sortable: true, filters: ['eq', 'in'] },
     severity: { column: 'severity', sortable: true, filters: ['eq', 'in'] },
     category: { column: 'category', sortable: true, filters: ['eq', 'in'] },
+    // The contract's names, for the columns added with the restored page.
+    subcategory: { column: 'subcategory', sortable: true, filters: ['eq', 'in'] },
+    source: { column: 'source', sortable: true, filters: ['eq', 'in'] },
+    approval: { column: 'approval', sortable: true, filters: ['eq', 'in'] },
+    supersededBy: { column: 'superseded_by' },
+    ring: { column: 'ring', sortable: true, filters: ['eq', 'in'] },
+    zeroDay: { column: 'zero_day', filters: ['eq'] },
     releasedAt: { column: 'released_at', sortable: true, filters: ['gte', 'lte'] },
+    // applicableCount counts every endpoint evaluated; endpointsMissing is the
+    // narrower figure the grid's Applicable column means.
     applicableCount: { column: 'applicable_count', sortable: true },
+    endpointsMissing: { column: 'missing_count', sortable: true, filters: ['gte'] },
     installedCount: { column: 'installed_count', sortable: true },
     failedCount: { column: 'failed_count', sortable: true, filters: ['gte'] },
     rebootRequired: { column: 'reboot_required', filters: ['eq'] },
+  },
+};
+
+export const patchPoliciesSpec: TableSpec = {
+  table: 'patch_policies',
+  idColumn: 'id',
+  searchColumns: ['name', 'content'],
+  defaultSort: { field: 'name', desc: false },
+  columns: {
+    id,
+    name: { column: 'name', sortable: true, filters: ['like'] },
+    content: { column: 'content' },
+    patchCount: { column: 'patch_count', sortable: true },
+    rollout: { column: 'rollout' },
+    computers: { column: 'computers', sortable: true },
+    compliancePct: { column: 'compliance_pct', sortable: true },
+    schedule: { column: 'schedule' },
+    nextRunAt: { column: 'next_run_at', sortable: true },
+    status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
   },
 };
 

@@ -898,6 +898,31 @@ paths:
           - test
           - review
           - declined
+          - superseded
+      - name: subcategory
+        in: query
+        schema:
+          type: string
+          enum:
+          - bios
+          - driver
+      - name: vendor
+        in: query
+        description: Matches Patch.source.
+        schema:
+          type: string
+          maxLength: 128
+      - name: osVersion
+        in: query
+        description: Narrows to updates outstanding on endpoints running this OS version.
+        schema:
+          type: string
+          maxLength: 64
+      - name: releasedAfter
+        in: query
+        schema:
+          type: string
+          format: date
       responses:
         '200':
           description: Patches
@@ -3986,8 +4011,15 @@ components:
           - os
           - third-party
           - driver-bios
+        subcategory:
+          type: string
+          description: Only meaningful for driver-bios, which the Drivers & BIOS tab splits in two.
+          enum:
+          - bios
+          - driver
         source:
           type: string
+          description: The publisher the update comes from, shown in the Vendor column.
         approval:
           type: string
           enum:
@@ -3995,8 +4027,28 @@ components:
           - test
           - review
           - declined
+          - superseded
+        supersededBy:
+          type:
+          - string
+          - 'null'
+          description: The update that replaced this one, when approval is superseded.
+        ring:
+          type: string
+          description: The rollout ring the approval applies to.
+          enum:
+          - pilot
+          - broad
+          - late
+        zeroDay:
+          type: boolean
+          description: Fixes a CVE that was exploited before the update shipped.
         endpointsMissing:
           type: integer
+          description: Endpoints the update applies to and is not yet installed on.
+        remediated:
+          type: integer
+          description: Endpoints the update is already installed on.
         releasedAt:
           type: string
           format: date
@@ -4028,6 +4080,9 @@ components:
         content:
           type: string
           description: Platform, source and severities, for example Windows OS Critical/High.
+        patchCount:
+          type: integer
+          description: Updates the policy currently covers.
         rollout:
           type: array
           items:
@@ -4059,23 +4114,61 @@ components:
       required:
       - compliancePct
       - missingCritical
+      - criticalUpdates
       - awaitingApproval
       - failedInstalls
+      - installed
+      - missing
+      - devicesTotal
+      - devicesMissing
+      - criticalDevices
+      - averageAgeDays
+      - devicesAwaitingRestart
       - byOsVersion
       - bySeverity
       - byAge
       - topMissing
       - devicesNeedingAttention
       - bySource
+      - vendors
+      - tabs
+      - policies
       properties:
         compliancePct:
           type: integer
         missingCritical:
           type: integer
+          description: Outstanding device-and-update pairs at critical severity.
+        criticalUpdates:
+          type: integer
+          description: Distinct critical updates still outstanding somewhere.
         awaitingApproval:
           type: integer
         failedInstalls:
           type: integer
+        installed:
+          type: integer
+          description: Device-and-update pairs already installed, across the estate.
+        missing:
+          type: integer
+          description: Device-and-update pairs still outstanding.
+        devicesTotal:
+          type: integer
+        devicesMissing:
+          type: integer
+        criticalDevices:
+          type: integer
+          description: Devices missing at least one critical update.
+        averageAgeDays:
+          type: integer
+          description: Mean days since release, over the outstanding updates.
+        devicesAwaitingRestart:
+          type: integer
+        vendors:
+          type: array
+          description: Distinct publishers, for the Vendor filter.
+          items:
+            type: string
         byOsVersion:
           type: array
           items:
@@ -4084,11 +4177,126 @@ components:
             required:
             - label
             - compliantPct
+            - endpoints
             properties:
               label:
                 type: string
+              platform:
+                $ref: '#/components/schemas/PlatformFamily'
               compliantPct:
                 type: integer
+              endpoints:
+                type: integer
+        tabs:
+          type: object
+          description: The per-tab counters the platform, Drivers & BIOS and All Patches tabs show.
+          additionalProperties: false
+          required:
+          - platforms
+          - driversBios
+          - all
+          properties:
+            platforms:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - key
+                - compliancePct
+                - endpointsMissing
+                - endpointsTotal
+                - criticalUpdates
+                - updatesAvailable
+                - updatesMissing
+                properties:
+                  key:
+                    type: string
+                    enum:
+                    - windows
+                    - macos
+                    - linux
+                    - third-party
+                  compliancePct:
+                    type: integer
+                  endpointsMissing:
+                    type: integer
+                  endpointsTotal:
+                    type: integer
+                  criticalUpdates:
+                    type: integer
+                  updatesAvailable:
+                    type: integer
+                  updatesMissing:
+                    type: integer
+            driversBios:
+              type: object
+              additionalProperties: false
+              required:
+              - endpointsNeeding
+              - endpointsTotal
+              - bios
+              - drivers
+              - awaitingApproval
+              properties:
+                endpointsNeeding:
+                  type: integer
+                endpointsTotal:
+                  type: integer
+                bios:
+                  type: integer
+                drivers:
+                  type: integer
+                awaitingApproval:
+                  type: integer
+            all:
+              type: object
+              additionalProperties: false
+              required:
+              - total
+              - applicable
+              - remediated
+              - failed
+              - declined
+              - superseded
+              - zeroDayCves
+              properties:
+                total:
+                  type: integer
+                applicable:
+                  type: integer
+                remediated:
+                  type: integer
+                failed:
+                  type: integer
+                declined:
+                  type: integer
+                superseded:
+                  type: integer
+                zeroDayCves:
+                  type: integer
+        policies:
+          type: object
+          description: The counters above the Patch Policies tab.
+          additionalProperties: false
+          required:
+          - active
+          - total
+          - computersCovered
+          - computersTotal
+          - highlyVulnerable
+          properties:
+            active:
+              type: integer
+            total:
+              type: integer
+            computersCovered:
+              type: integer
+            computersTotal:
+              type: integer
+            highlyVulnerable:
+              type: integer
+              description: Devices with at least one critical outstanding update.
         bySeverity:
           type: object
           additionalProperties: false

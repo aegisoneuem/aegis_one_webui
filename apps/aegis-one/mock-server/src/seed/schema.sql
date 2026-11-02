@@ -95,10 +95,34 @@ CREATE TABLE patches (
   severity TEXT NOT NULL,
   category TEXT NOT NULL,
   released_at TEXT NOT NULL,
+  subcategory TEXT NOT NULL DEFAULT '',
+  source TEXT NOT NULL DEFAULT '',
+  approval TEXT NOT NULL DEFAULT 'review',
+  superseded_by TEXT,
+  ring TEXT NOT NULL DEFAULT 'late',
+  zero_day INTEGER NOT NULL DEFAULT 0,
   applicable_count INTEGER NOT NULL DEFAULT 0,
+  missing_count INTEGER NOT NULL DEFAULT 0,
   installed_count INTEGER NOT NULL DEFAULT 0,
   failed_count INTEGER NOT NULL DEFAULT 0,
   reboot_required INTEGER NOT NULL
+);
+
+CREATE INDEX idx_patches_approval ON patches(approval);
+CREATE INDEX idx_patches_source ON patches(source);
+
+-- Patch policies: the schedules that decide which updates reach which rings.
+CREATE TABLE patch_policies (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  patch_count INTEGER NOT NULL DEFAULT 0,
+  rollout TEXT NOT NULL,
+  computers INTEGER NOT NULL DEFAULT 0,
+  compliance_pct INTEGER NOT NULL DEFAULT 0,
+  schedule TEXT NOT NULL,
+  next_run_at TEXT,
+  status TEXT NOT NULL
 );
 
 CREATE TABLE device_patches (
@@ -110,6 +134,53 @@ CREATE TABLE device_patches (
 );
 
 CREATE INDEX idx_devpatch_patch ON device_patches(patch_id, state);
+
+-- The patch aggregates read the outstanding rows far more often than the rest,
+-- and they are under a tenth of the table. Leading with state turns those from
+-- a scan of every pair into a scan of the ones still to do.
+CREATE INDEX idx_devpatch_open ON device_patches(state, patch_id, device_id);
+
+/*
+ * Materialised patch aggregates.
+ *
+ * device_patches is half a million rows and nothing at runtime writes to it,
+ * so the figures Patch Management reads are rolled up once while seeding.
+ * Grouping that join on request took seconds; these two tables are a few
+ * hundred rows between them. Both carry zone_id, because counts for a
+ * zone-scoped caller are the sum of their own zones' rows and a device
+ * belongs to exactly one zone.
+ */
+CREATE TABLE patch_cells (
+  zone_id TEXT NOT NULL,
+  os_label TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  tab TEXT NOT NULL,
+  source TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  state TEXT NOT NULL,
+  pairs INTEGER NOT NULL,
+  age_sum REAL NOT NULL,
+  age0 INTEGER NOT NULL,
+  age1 INTEGER NOT NULL,
+  age2 INTEGER NOT NULL,
+  age3 INTEGER NOT NULL,
+  age4 INTEGER NOT NULL
+);
+
+CREATE INDEX idx_patch_cells_zone ON patch_cells(zone_id);
+
+-- Distinct endpoint and update counts, which cannot be added up from the
+-- cells above: one endpoint appears in many of them.
+CREATE TABLE patch_device_counts (
+  zone_id TEXT NOT NULL,
+  dimension TEXT NOT NULL,
+  key TEXT NOT NULL,
+  devices INTEGER NOT NULL,
+  critical_devices INTEGER NOT NULL,
+  updates INTEGER NOT NULL
+);
+
+CREATE INDEX idx_patch_device_counts ON patch_device_counts(dimension, zone_id);
 
 CREATE TABLE vulnerabilities (
   id TEXT PRIMARY KEY,

@@ -169,6 +169,99 @@ test.describe('signed in as Super Admin', () => {
     await expect(all).not.toContainText('50,000');
   });
 
+  test('Patch Management opens on its dashboard, with all eight tabs', async ({ page }) => {
+    await page.goto('/patches');
+    await expect(page.getByRole('heading', { name: 'Patch Management' })).toBeVisible();
+
+    for (const label of [
+      'Overview',
+      'Patch Policies',
+      'Windows',
+      'macOS',
+      'Linux',
+      'Third-Party Apps',
+      'Drivers & BIOS',
+      'All Patches',
+    ]) {
+      await expect(page.getByRole('tab', { name: label, exact: true })).toBeVisible();
+    }
+
+    // The approved Overview tab: four counters, three charts, two tables.
+    for (const heading of [
+      'Compliance by OS Version',
+      'Missing by Severity',
+      'Missing Patch Age',
+      'Top Missing Patches',
+      'Devices Needing Attention',
+    ]) {
+      await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    }
+    await expect(page.getByText('Average Patch Age')).toBeVisible();
+  });
+
+  test('a patch tab is a link, and carries its own columns and counters', async ({ page }) => {
+    await page.goto('/patches?tab=windows');
+
+    // Restored from the URL, not from a click: the tab is deep-linkable.
+    await expect(page.getByRole('tab', { name: 'Windows', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(page.getByText('Windows Compliance')).toBeVisible();
+
+    const grid = page.getByRole('table', { name: 'Windows OS Updates' });
+    for (const header of ['Update', 'Vendor', 'Severity', 'Released', 'Applicable', 'Remediated']) {
+      await expect(grid.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
+    }
+
+    // Drivers & BIOS counts installs rather than remediations, and splits the
+    // catalogue by type instead of naming a vendor.
+    await page.getByRole('tab', { name: 'Drivers & BIOS' }).click();
+    const drivers = page.getByRole('table', { name: 'Drivers & BIOS' });
+    await expect(
+      drivers.getByRole('columnheader', { name: 'Installed', exact: true }),
+    ).toBeVisible();
+    await expect(drivers.getByRole('columnheader', { name: 'Type', exact: true })).toBeVisible();
+  });
+
+  test('the patch grid filters by severity and by OS version', async ({ page }) => {
+    await page.goto('/patches?tab=windows');
+    const grid = page.getByRole('table', { name: 'Windows OS Updates' });
+    const rows = grid.locator('tbody tr');
+    const all = await rows.count();
+
+    await page.getByRole('button', { name: 'Critical', exact: true }).click();
+    await expect(page).toHaveURL(/severity=critical/);
+    await expect(rows).not.toHaveCount(all);
+
+    // The OS-version chips narrow to the updates outstanding on that build,
+    // which is a join the server does — not a filter applied to this page.
+    await page.getByRole('button', { name: 'All Severities' }).click();
+    await page.getByRole('button', { name: /Windows Server 2016/ }).click();
+    await expect(page).toHaveURL(/osVersion=/);
+  });
+
+  test('declining an update changes its state on the server', async ({ page }) => {
+    const url = '/patches?tab=third-party&approval=review';
+    const grid = () => page.getByRole('table', { name: 'Third-Party Application Updates' });
+
+    await page.goto(url);
+    const first = grid().locator('tbody tr').first();
+    await expect(first).toBeVisible();
+    // The grid is virtualised, so counting rows counts the window rather than
+    // the result. The update's own reference is what the assertion follows.
+    const reference = (await first.locator('small').first().innerText()).split(' ·')[0] ?? '';
+    expect(reference).toMatch(/^VRF-/);
+
+    await first.getByRole('button', { name: '…' }).click();
+    await page.getByRole('menuitem', { name: 'Decline' }).click();
+
+    // Loaded again, so it has moved because the server says so — not because
+    // the page dropped it from a list it was holding.
+    await page.goto('/patches?tab=third-party&approval=declined');
+    await expect(grid().getByText(reference, { exact: false }).first()).toBeVisible();
+  });
+
   test('a device opens, and its tabs are deep-linkable', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('table', { name: 'Devices' }).locator('tbody tr').first().click();

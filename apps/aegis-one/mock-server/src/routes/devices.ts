@@ -92,8 +92,14 @@ export function registerDeviceRoutes(app: FastifyInstance, db: Db, basePath: str
 
     const jobs = db
       .prepare(
-        `SELECT r.job_id AS jobId, j.name, j.kind, r.state, r.exit_code AS exitCode,
-                r.duration_ms AS durationMs, r.finished_at AS finishedAt
+        // live_jobs now carries the contract's column names; this endpoint's
+        // own shape is one row per job that touched THIS endpoint, so it
+        // keeps the per-endpoint status and derives the duration from the
+        // two timestamps rather than storing it.
+        `SELECT r.job_id AS jobId, j.title AS name, j.kind, r.status AS state,
+                r.exit_code AS exitCode, r.finished_at AS finishedAt,
+                CAST((julianday(r.finished_at) - julianday(r.started_at)) * 86400000 AS INTEGER)
+                  AS durationMs
          FROM live_job_results r JOIN live_jobs j ON j.id = r.job_id
          WHERE r.device_id = ? ORDER BY r.finished_at DESC LIMIT 25`,
       )

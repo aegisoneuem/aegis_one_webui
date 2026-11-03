@@ -127,6 +127,67 @@ function shapeDeployment(row: Record<string, unknown>): Record<string, unknown> 
   };
 }
 
+/**
+ * The contract keeps a job's seven per-endpoint figures in one `counts`
+ * object. The table keeps them as columns, because a column is what a sort
+ * can reach and what a counter can be totalled from in SQL.
+ */
+function shapeLiveJob(row: Record<string, unknown>): Record<string, unknown> {
+  const { queued, running, succeeded, failed, timedOut, offline, cancelled, ...rest } = row;
+  const counts = { queued, running, succeeded, failed, timedOut, offline, cancelled };
+  const present = Object.values(counts).some((v) => v !== undefined);
+  return present ? { ...rest, counts } : rest;
+}
+
+/** The five counters above the Log Collection grid, over every bundle stored. */
+function logStats(db: Db): Record<string, unknown> {
+  const stats = db
+    .prepare(
+      `SELECT COUNT(*) AS bundlesStored,
+              COUNT(DISTINCT device_id) AS hostsCovered,
+              SUM(status IN ('failed', 'waiting')) AS failedOrWaiting,
+              CAST(COALESCE(SUM(size_bytes), 0) / 1048576 AS INTEGER) AS storageUsedMb
+         FROM log_bundles`,
+    )
+    .get() as Record<string, unknown>;
+
+  const next = db
+    .prepare(`SELECT MIN(next_run_at) AS nextScheduled FROM log_schedules WHERE enabled = 1`)
+    .get() as { nextScheduled: string | null };
+
+  return { stats: { ...stats, nextScheduled: next.nextScheduled } };
+}
+
+/**
+ * The Log Collection grid's own parameters: an age bucket rather than a date,
+ * and a log type that lives inside a JSON array rather than in a column.
+ */
+function deriveLogFilters(_db: Db, filters: ListQuery['filters'] & object): void {
+  const first = (key: string): string | undefined => {
+    const raw = filters[key];
+    filters[key] = undefined;
+    return Array.isArray(raw) ? raw[0] : raw;
+  };
+  const collected = first('collected');
+  const logType = first('logType');
+
+  const days = collected === '24h' ? 1 : collected === '7d' ? 7 : collected === '30d' ? 30 : 0;
+  if (days > 0) {
+    filters['collectedAt.gte'] = new Date(Date.now() - days * 86_400_000).toISOString();
+  }
+  // Quoted, so "agent" cannot also match "agent-extra" were one added later.
+  if (logType) filters['fileTypes.like'] = `"${logType}"`;
+}
+
+/**
+ * `/liveops/audit` is the Live Activity trail, not the whole console's: the
+ * contract calls it "audit trail of Live Activity submissions", and the
+ * Administration page serves the rest from `/audit` over the same table.
+ */
+function deriveLiveAuditFilters(_db: Db, filters: ListQuery['filters'] & object): void {
+  filters['action.like'] = 'liveops.';
+}
+
 function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): void {
   // A repeated parameter arrives as an array; these three each name one value.
   const first = (key: string): string | undefined => {
@@ -163,12 +224,18 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
   { path: 'vulnerabilities', spec: vulnerabilitiesSpec },
   { path: 'deployments', spec: deploymentsSpec, shape: shapeDeployment },
-  { path: 'liveops/script-jobs', spec: liveJobsSpec },
+  { path: 'liveops/script-jobs', spec: liveJobsSpec, shape: shapeLiveJob },
   { path: 'profiles/checks', spec: configChecksSpec },
   { path: 'sites', spec: zonesSpec },
   { path: 'peercache/peers', spec: peersSpec, zoneScoped: true },
-  { path: 'liveops/logs', spec: logBundlesSpec },
-  { path: 'liveops/audit', spec: auditSpec },
+  {
+    path: 'liveops/logs',
+    spec: logBundlesSpec,
+    jsonFields: ['fileTypes'],
+    derive: deriveLogFilters,
+    envelope: logStats,
+  },
+  { path: 'liveops/audit', spec: auditSpec, derive: deriveLiveAuditFilters },
   { path: 'reports', spec: reportsSpec },
   { path: 'integrations', spec: integrationsSpec },
   { path: 'admin/users', spec: usersSpec, jsonFields: ['zoneIds'] },

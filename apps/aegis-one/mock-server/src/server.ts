@@ -19,6 +19,7 @@ import { registerActionRoutes } from './routes/actions';
 import { registerAggregateRoutes } from './routes/aggregates';
 import { registerEnrollmentRoutes } from './routes/enrollment';
 import { registerGroupRoutes } from './routes/groups';
+import { registerLiveOpsRoutes } from './routes/liveops';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../../..');
@@ -137,6 +138,7 @@ export async function start(): Promise<void> {
   registerActionRoutes(app, db, BASE_PATH);
   registerGroupRoutes(app, db, BASE_PATH);
   registerEnrollmentRoutes(app, db, BASE_PATH, AGENT_VERSIONS[0]);
+  registerLiveOpsRoutes(app, db, BASE_PATH);
   // Last, so its generic `/:id` detail routes cannot shadow a specific one
   // such as `/devices/facets`.
   registerResourceRoutes(app, db, BASE_PATH);

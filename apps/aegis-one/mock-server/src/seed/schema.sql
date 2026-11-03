@@ -302,34 +302,77 @@ CREATE TABLE deployment_results (
 
 -- Remote script execution. A job is submitted, polled and read back; there is
 -- no session, socket or interactive channel anywhere in this schema.
+-- Columns are the contract's LiveJob. The seven counters are its `counts`
+-- object flattened, which is what the Task Results grid totals.
 CREATE TABLE live_jobs (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  title TEXT NOT NULL,
   kind TEXT NOT NULL,
-  language TEXT,
+  script_language TEXT,
   script TEXT,
-  reason TEXT,
+  change_ref TEXT,
   status TEXT NOT NULL,
   target_count INTEGER NOT NULL,
-  completed INTEGER NOT NULL,
-  failed INTEGER NOT NULL,
-  created_at TEXT NOT NULL,
-  created_by TEXT NOT NULL,
+  queued INTEGER NOT NULL DEFAULT 0,
+  running INTEGER NOT NULL DEFAULT 0,
+  succeeded INTEGER NOT NULL DEFAULT 0,
+  failed INTEGER NOT NULL DEFAULT 0,
+  timed_out INTEGER NOT NULL DEFAULT 0,
+  offline INTEGER NOT NULL DEFAULT 0,
+  cancelled INTEGER NOT NULL DEFAULT 0,
+  submitted_at TEXT NOT NULL,
+  submitted_by TEXT NOT NULL,
   finished_at TEXT,
-  output_limit_kb INTEGER NOT NULL DEFAULT 256
+  timeout_seconds INTEGER NOT NULL DEFAULT 300,
+  output_limit_kb INTEGER NOT NULL DEFAULT 64
 );
+CREATE INDEX idx_live_jobs_submitted ON live_jobs(submitted_at DESC);
 
+-- One row per endpoint a job reached: the ten columns of the Task Results grid.
 CREATE TABLE live_job_results (
   job_id TEXT NOT NULL REFERENCES live_jobs(id),
   device_id TEXT NOT NULL REFERENCES devices(id),
-  hostname TEXT NOT NULL,
-  state TEXT NOT NULL,
+  device_name TEXT NOT NULL,
+  connection TEXT NOT NULL,
+  action_id TEXT NOT NULL,
+  action_type TEXT NOT NULL,
+  status TEXT NOT NULL,
   exit_code INTEGER,
+  reason TEXT NOT NULL DEFAULT '',
+  detail TEXT NOT NULL DEFAULT '',
   stdout TEXT,
   stderr TEXT,
-  duration_ms INTEGER,
+  queued_at TEXT NOT NULL,
+  started_at TEXT,
   finished_at TEXT,
   PRIMARY KEY (job_id, device_id)
+);
+
+-- Scheduled log collections, and the one row of Storage & Mail settings.
+CREATE TABLE log_schedules (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  sources TEXT NOT NULL,
+  targets TEXT NOT NULL,
+  cadence TEXT NOT NULL,
+  runs INTEGER NOT NULL DEFAULT 0,
+  delivery TEXT NOT NULL DEFAULT 'store-only',
+  next_run_at TEXT NOT NULL,
+  last_run_at TEXT,
+  enabled INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE log_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  retention_days INTEGER NOT NULL,
+  email_bundles INTEGER NOT NULL,
+  recipients TEXT NOT NULL DEFAULT '',
+  root_path TEXT NOT NULL,
+  folder_layout TEXT NOT NULL,
+  file_name_pattern TEXT NOT NULL,
+  max_bundle_size_mb INTEGER NOT NULL,
+  send_as TEXT NOT NULL,
+  attachment_limit_mb INTEGER NOT NULL
 );
 
 CREATE TABLE log_bundles (

@@ -180,25 +180,29 @@ export const deploymentsSpec: TableSpec = {
   },
 };
 
+/** Field names are the contract's LiveJob; the seven counters nest into `counts`. */
 export const liveJobsSpec: TableSpec = {
   table: 'live_jobs',
   idColumn: 'id',
-  searchColumns: ['name'],
-  defaultSort: { field: 'createdAt', desc: true },
+  searchColumns: ['title'],
+  defaultSort: { field: 'submittedAt', desc: true },
   columns: {
     id,
-    name: { column: 'name', sortable: true, filters: ['like'] },
+    title: { column: 'title', sortable: true, filters: ['like'] },
     kind: { column: 'kind', sortable: true, filters: ['eq', 'in'] },
-    language: { column: 'language', filters: ['eq', 'in'] },
-    reason: { column: 'reason' },
+    scriptLanguage: { column: 'script_language', filters: ['eq', 'in'] },
+    changeRef: { column: 'change_ref' },
     status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
     targetCount: { column: 'target_count', sortable: true },
-    completed: { column: 'completed', sortable: true },
+    queued: { column: 'queued' },
+    running: { column: 'running' },
+    succeeded: { column: 'succeeded', sortable: true },
     failed: { column: 'failed', sortable: true, filters: ['gte'] },
-    createdAt: { column: 'created_at', sortable: true, filters: ['gte', 'lte'] },
-    createdBy: { column: 'created_by', sortable: true, filters: ['eq', 'in'] },
-    finishedAt: { column: 'finished_at', sortable: true },
-    outputLimitKb: { column: 'output_limit_kb' },
+    timedOut: { column: 'timed_out' },
+    offline: { column: 'offline' },
+    cancelled: { column: 'cancelled' },
+    submittedAt: { column: 'submitted_at', sortable: true, filters: ['gte', 'lte'] },
+    submittedBy: { column: 'submitted_by', sortable: true, filters: ['eq', 'in'] },
   },
 };
 
@@ -288,7 +292,7 @@ export const auditSpec: TableSpec = {
     at: { column: 'at', sortable: true, filters: ['gte', 'lte'] },
     actor: { column: 'actor', sortable: true, filters: ['eq', 'in'] },
     actorRole: { column: 'actor_role', sortable: true, filters: ['eq', 'in'] },
-    action: { column: 'action', sortable: true, filters: ['eq', 'in'] },
+    action: { column: 'action', sortable: true, filters: ['eq', 'in', 'like'] },
     objectType: { column: 'object_type', sortable: true, filters: ['eq', 'in'] },
     objectId: { column: 'object_id', filters: ['eq'] },
     outcome: { column: 'outcome', sortable: true, filters: ['eq', 'in'] },
@@ -306,7 +310,8 @@ export const logBundlesSpec: TableSpec = {
     id,
     deviceId: { column: 'device_id', filters: ['eq'] },
     hostname: { column: 'hostname', sortable: true, filters: ['like'] },
-    fileTypes: { column: 'file_types' },
+    // JSON text, so a log-type filter is a substring match on the array.
+    fileTypes: { column: 'file_types', filters: ['like'] },
     status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
     sizeBytes: { column: 'size_bytes', sortable: true },
     collectedAt: { column: 'collected_at', sortable: true, filters: ['gte', 'lte'] },

@@ -121,6 +121,7 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       name?: string;
       changeRef?: string;
       targets?: TargetSelection;
+      timeoutSeconds?: number;
       outputLimitKb?: number;
       liveData?: { fields: string[] };
       script?: { language: string; body: string };
@@ -143,8 +144,11 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
     const now = new Date().toISOString();
 
     db.prepare(
-      `INSERT INTO live_jobs (id,name,kind,language,script,reason,status,target_count,completed,failed,created_at,created_by,output_limit_kb)
-       VALUES (?,?,?,?,?,?,'queued',?,0,0,?,?,?)`,
+      `INSERT INTO live_jobs
+         (id,title,kind,script_language,script,change_ref,status,target_count,
+          queued,running,succeeded,failed,timed_out,offline,cancelled,
+          submitted_at,submitted_by,timeout_seconds,output_limit_kb)
+       VALUES (?,?,?,?,?,?,'queued',?,?,0,0,0,0,0,0,?,?,?,?)`,
     ).run(
       jobId,
       body.name,
@@ -155,9 +159,12 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       body.script?.body ?? null,
       body.changeRef ?? null,
       targets.length,
+      // Nothing has run yet, so every target is queued.
+      targets.length,
       now,
       request.auth?.email ?? 'unknown',
-      Math.min(body.outputLimitKb ?? 256, 256),
+      Math.min(Math.max(body.timeoutSeconds ?? 300, 5), 3600),
+      Math.min(Math.max(body.outputLimitKb ?? 64, 1), 256),
     );
 
     db.prepare(
@@ -177,9 +184,28 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
     );
 
     request.log.info({ event: 'liveops.submit', jobId, targets: targets.length }, 'job queued');
-    return reply
-      .status(201)
-      .send({ id: jobId, status: 'queued', targetCount: targets.length, createdAt: now });
+    // The contract's LiveJob, so the console can show the new row without
+    // fetching it back.
+    return reply.status(202).send({
+      id: jobId,
+      title: body.name,
+      kind: body.kind,
+      status: 'queued',
+      targetCount: targets.length,
+      counts: {
+        queued: targets.length,
+        running: 0,
+        succeeded: 0,
+        failed: 0,
+        timedOut: 0,
+        offline: 0,
+        cancelled: 0,
+      },
+      submittedBy: request.auth?.email ?? 'unknown',
+      submittedAt: now,
+      ...(body.changeRef ? { changeRef: body.changeRef } : {}),
+      ...(body.script?.language ? { scriptLanguage: body.script.language } : {}),
+    });
   });
 
   app.get(`${basePath}/liveops/script-jobs/:jobId/results`, async (request) => {
@@ -189,11 +215,14 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
 
     const query = toListQuery(request);
     const limit = Math.min(Number(query.limit) || 50, 200);
+    // Exactly the fields the contract's LiveJobResult declares.
     const rows = db
       .prepare(
-        `SELECT device_id AS deviceId, hostname, state, exit_code AS exitCode, stdout, stderr,
-                duration_ms AS durationMs, finished_at AS finishedAt
-         FROM live_job_results WHERE job_id = ? ORDER BY hostname LIMIT ?`,
+        `SELECT device_id AS deviceId, device_name AS deviceName, connection,
+                action_id AS actionId, action_type AS actionType, status,
+                exit_code AS exitCode, reason, detail, stdout, stderr,
+                queued_at AS queuedAt, started_at AS startedAt, finished_at AS finishedAt
+         FROM live_job_results WHERE job_id = ? ORDER BY device_name LIMIT ?`,
       )
       .all(jobId, limit) as Record<string, unknown>[];
 

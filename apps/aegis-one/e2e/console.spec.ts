@@ -532,15 +532,41 @@ test.describe('signed in as Super Admin', () => {
     await expect(page).toHaveURL(/\/deployments\/dep-/);
   });
 
-  test('Live Activity submits a script job and never offers a session', async ({ page }) => {
+  test('Live Activity opens on the approved console: five tabs, three operations', async ({
+    page,
+  }) => {
     await page.goto('/liveops');
 
-    await page.getByLabel('Task name').fill('Verify firewall profiles');
-    await page.getByLabel('Aegis Zone').selectOption({ index: 1 });
-    await page.getByLabel('Script').fill('Get-NetFirewallProfile | Select-Object Name, Enabled');
-    await page.getByRole('button', { name: 'Submit job' }).click();
+    for (const tab of ['Console', 'Log Collection', 'Task Results', 'Task History', 'Audit Trail'])
+      await expect(page.getByRole('tab', { name: new RegExp('^' + tab) })).toBeVisible();
 
-    await expect(page.getByRole('status').filter({ hasText: 'Job submitted' })).toBeVisible();
+    for (const mode of ['Live Data', 'Run Script', 'Collect Logs'])
+      await expect(page.getByRole('button', { name: new RegExp('^' + mode) })).toBeVisible();
+
+    // Live Data is the operation the reference opens on, and its eight fields
+    // are the checklist.
+    await expect(page.getByRole('heading', { name: 'Configure Request' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Data to Request' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: /Hostname/ })).toBeChecked();
+    await expect(page.getByRole('heading', { name: 'Select Targets' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Review Request' })).toBeVisible();
+  });
+
+  test('Live Activity switches operation and submits, never offering a session', async ({
+    page,
+  }) => {
+    await page.goto('/liveops');
+
+    await page.getByRole('button', { name: /^Run Script/ }).click();
+    await expect(page.getByLabel('Script Runtime')).toBeVisible();
+    await expect(page.getByLabel('Custom Script')).toHaveValue(/Get-CimInstance/);
+
+    await page.getByLabel('Task Name').fill('Verify firewall profiles');
+    // A group is a target the server resolves, so the browser never sends ids.
+    await page.getByLabel('Add Device Group').selectOption({ index: 1 });
+    await page.getByRole('button', { name: 'Review Request' }).click();
+
+    await expect(page.getByRole('status').filter({ hasText: 'Request submitted' })).toBeVisible();
 
     // Rule 4: nothing anywhere on this page offers interactive access.
     const body = (await page.locator('body').innerText()).toLowerCase();
@@ -555,6 +581,40 @@ test.describe('signed in as Super Admin', () => {
     ]) {
       expect(body, `"${banned}" must not appear in Live Activity`).not.toContain(banned);
     }
+  });
+
+  test('Live Activity opens a task from history into the per-endpoint grid', async ({ page }) => {
+    await page.goto('/liveops?tab=history');
+    await expect(page.getByRole('heading', { name: 'Investigation History' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Endpoint Health Investigation' }).click();
+    await expect(page).toHaveURL(/tab=results/);
+    await expect(
+      page.getByRole('heading', { name: 'Endpoint Health Investigation' }),
+    ).toBeVisible();
+
+    for (const column of ['Device Name', 'Connection', 'Action Type', 'Exit Code', 'Timestamps'])
+      await expect(page.getByRole('columnheader', { name: column })).toBeVisible();
+  });
+
+  test('Log Collection counts what is stored and filters by log type', async ({ page }) => {
+    await page.goto('/liveops?tab=logs');
+
+    for (const counter of [
+      'Bundles Stored',
+      'Hosts Covered',
+      'Failed or Waiting',
+      'Storage Used',
+      'Next Scheduled',
+    ])
+      await expect(page.getByText(counter, { exact: true })).toBeVisible();
+
+    await page.getByLabel('Log Type').selectOption('security');
+    await expect(page.getByRole('cell', { name: /Security/ }).first()).toBeVisible();
+
+    // Storage & Mail keeps the root path a placeholder: a real one names a server.
+    await page.getByRole('tab', { name: 'Storage & Mail' }).click();
+    await expect(page.getByText('<ROOT_SERVER>')).toBeVisible();
   });
 
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {

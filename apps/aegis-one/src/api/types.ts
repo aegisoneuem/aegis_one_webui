@@ -232,31 +232,52 @@ export type DeploymentsSummary = {
   pausedOrCancelled: number;
 };
 
+export type LiveJobKind = 'live-data' | 'script' | 'log-collection';
+
+export type JobStatus =
+  'queued' | 'running' | 'completed' | 'completed-with-failures' | 'failed' | 'cancelled';
+
+export type EndpointJobStatus =
+  'queued' | 'running' | 'succeeded' | 'failed' | 'timed-out' | 'cancelled' | 'offline';
+
+/** The contract's LiveJob. */
 export type LiveJob = {
   id: string;
-  name: string;
-  kind: string;
-  language: string | null;
-  reason: string | null;
-  status: string;
+  title?: string;
+  kind: LiveJobKind;
+  status: JobStatus;
   targetCount: number;
-  completed: number;
-  failed: number;
-  createdAt: string;
-  createdBy: string;
-  finishedAt: string | null;
-  outputLimitKb: number;
+  counts: {
+    queued?: number;
+    running?: number;
+    succeeded?: number;
+    failed?: number;
+    timedOut?: number;
+    offline?: number;
+    cancelled?: number;
+  };
+  submittedBy: string;
+  submittedAt: string;
+  changeRef?: string | null;
+  scriptLanguage?: string;
 };
 
+/** One endpoint's row in the Task Results grid. */
 export type LiveJobResult = {
   deviceId: string;
-  hostname: string;
-  state: string;
-  exitCode: number | null;
-  stdout: string | null;
-  stderr: string | null;
-  durationMs: number | null;
-  finishedAt: string | null;
+  deviceName: string;
+  status: EndpointJobStatus;
+  connection?: 'online' | 'offline';
+  actionId?: string;
+  actionType?: 'LIVE_QUERY' | 'RUN_SCRIPT' | 'COLLECT_LOGS';
+  exitCode?: number | null;
+  reason?: string;
+  detail?: string;
+  stdout?: string | null;
+  stderr?: string | null;
+  queuedAt?: string;
+  startedAt?: string | null;
+  finishedAt?: string | null;
 };
 
 /** The contract's Group: a node in the tree, with its rolled-up figures. */
@@ -353,11 +374,45 @@ export type LogBundle = {
   id: string;
   deviceId: string;
   hostname: string;
-  fileTypes: string;
-  status: string;
+  fileTypes: string[];
+  status: 'uploaded' | 'waiting' | 'failed' | 'skipped';
   sizeBytes: number;
   collectedAt: string;
   emailed: boolean;
+};
+
+/** The five counters above the Log Collection grid. */
+export type LogStats = {
+  bundlesStored: number;
+  hostsCovered: number;
+  failedOrWaiting: number;
+  storageUsedMb: number;
+  nextScheduled: string | null;
+};
+
+export type LogSchedule = {
+  id: string;
+  name: string;
+  sources: string[];
+  targets: { deviceIds?: string[]; groupIds?: string[]; zone?: string };
+  cadence: 'daily' | 'weekly' | 'monthly';
+  runs?: number;
+  delivery?: 'store-only' | 'email-link' | 'email-attachment';
+  nextRunAt: string;
+  lastRunAt?: string | null;
+  enabled: boolean;
+};
+
+export type LogSettings = {
+  retentionDays: number;
+  emailBundles: boolean;
+  recipients?: string[];
+  rootPath?: string;
+  folderLayout?: 'date-hostname' | 'hostname-date';
+  fileNamePattern?: string;
+  maxBundleSizeMb?: number;
+  sendAs?: 'link' | 'attachment-when-small';
+  attachmentLimitMb?: number;
 };
 
 export type Report = {

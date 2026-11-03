@@ -492,3 +492,38 @@ The names and the one-line descriptions are the reference's own copy, read out
 of it rather than written here. They are served by the API rather than carried
 in the page, because a capability appearing or disappearing is a server fact —
 a console that hard-codes four methods cannot ever show a fifth.
+
+## D-033 — A job's seven counters are the tally of its own rows
+
+The contract's `LiveJob` carries a `counts` object with seven per-endpoint
+figures beside `targetCount`. The old seed drew `completed` and `failed` from
+a random distribution and materialised an unrelated sample of result rows, so
+the figure the console showed and the rows behind it disagreed by design.
+
+Now every target of a seeded job has a materialised row in
+`live_job_results`, and the seven counters are computed from those rows as
+they are written. `targetCount` therefore equals the sum of the counters, and
+opening a task shows exactly the endpoints its counters counted. The price is
+smaller jobs — 18 to 120 endpoints rather than up to 820 — which is the right
+trade: a figure that cannot be checked against its own detail is worse than a
+small one that can.
+
+## D-034 — An offline endpoint is queued, not a separate status
+
+`EndpointJobStatus` has both `queued` and `offline`. The approved design shows
+an offline endpoint as **QUEUED** with its Connection column reading Offline
+and the reason "Device offline · runs at next check-in" — because nothing has
+failed: the request is waiting for the agent.
+
+So `offline` is kept for the case it actually names, an agent that did not
+answer while the endpoint is not reporting as offline either, and the common
+case reads as the reference draws it. Connection is a separate column because
+it is a fact about the endpoint, not about the job.
+
+## D-035 — Storage & Mail is read-only in this build
+
+v129's Storage & Mail panel has a Save Settings button. `PUT
+/liveops/log-settings` is declared in the contract and unserved, so the
+restored panel renders the settings and says so rather than offering a save
+that would do nothing. The root path stays `\<ROOT_SERVER>\AegisLogs`: a real
+one names a server, and this is a seeded estate.

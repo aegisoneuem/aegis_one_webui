@@ -71,6 +71,7 @@ export function seedDatabase({
   seedDeployments(db, rng);
   seedLiveJobs(db, rng);
   seedLogBundles(db, rng);
+  seedLogSettings(db);
   seedPeers(db, rng);
   seedIntegrations(db, rng);
   seedUsersAndRoles(db, rng);
@@ -1351,38 +1352,40 @@ function rollUpTargetPreviews(db: Db): void {
 }
 
 /**
- * Remote script execution jobs.
+ * Live Activity jobs.
  *
  * Submitted, polled, and read back per endpoint. Nothing here is a session:
  * there is no channel to attach to and no way to send a second command to a
  * running job.
+ *
+ * Column names, the seven counters and the per-endpoint columns are the
+ * contract's LiveJob and LiveJobResult.
  */
 function seedLiveJobs(db: Db, rng: Rng): void {
   const insertJob = db.prepare(`INSERT INTO live_jobs
-    (id,name,kind,language,script,reason,status,target_count,completed,failed,created_at,created_by,finished_at,output_limit_kb)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    (id,title,kind,script_language,script,change_ref,status,target_count,
+     queued,running,succeeded,failed,timed_out,offline,cancelled,
+     submitted_at,submitted_by,finished_at,timeout_seconds,output_limit_kb)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
   const insertResult = db.prepare(`INSERT INTO live_job_results
-    (job_id,device_id,hostname,state,exit_code,stdout,stderr,duration_ms,finished_at) VALUES (?,?,?,?,?,?,?,?,?)`);
+    (job_id,device_id,device_name,connection,action_id,action_type,status,exit_code,
+     reason,detail,stdout,stderr,queued_at,started_at,finished_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
   const jobs: readonly (readonly [
     string,
     'live-data' | 'script' | 'log-collection',
-    string,
-    string,
+    string | null,
+    string | null,
   ])[] = [
-    [
-      'Check pending restart — Mumbai HQ',
-      'live-data',
-      'powershell',
-      '# live data query: pending restart, uptime, disk',
-    ],
+    ['Endpoint Health Investigation', 'live-data', null, null],
     [
       'Clear Windows Update cache',
       'script',
       'powershell',
       'Stop-Service wuauserv\nRemove-Item "$env:SystemRoot\\SoftwareDistribution\\Download\\*" -Recurse -Force\nStart-Service wuauserv',
     ],
-    ['Collect agent logs — failed patch group', 'log-collection', null as unknown as string, ''],
+    ['Agent Diagnostic Collection', 'log-collection', null, null],
     [
       'Report installed certificates',
       'script',
@@ -1395,83 +1398,183 @@ function seedLiveJobs(db: Db, rng: Rng): void {
       'shell',
       'journalctl --vacuum-size=200M && df -h /var',
     ],
+    ['Inventory refresh — Jaipur Branch', 'live-data', null, null],
+    ['Collect crash dumps — Engineering', 'log-collection', null, null],
     [
-      'Inventory refresh — Jaipur Branch',
-      'live-data',
-      'powershell',
-      '# live data query: inventory',
-    ],
-    ['Collect crash dumps — Engineering', 'log-collection', null as unknown as string, ''],
-    [
-      'Verify firewall profiles',
+      'Inventory Script Validation',
       'script',
       'powershell',
-      'Get-NetFirewallProfile | Select-Object Name, Enabled',
+      'Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, LastBootUpTime | ConvertTo-Json',
     ],
   ];
 
-  const devices = db.prepare(`SELECT id, hostname FROM devices LIMIT 400`).all() as {
-    id: string;
-    hostname: string;
-  }[];
+  /** The agent's own name for the command, which the grid shows verbatim. */
+  const ACTION_TYPE = {
+    'live-data': 'LIVE_QUERY',
+    script: 'RUN_SCRIPT',
+    'log-collection': 'COLLECT_LOGS',
+  } as const;
+
+  /** Why a row reads as it does: a few words, then the same in a sentence. */
+  const EXPLAIN: Record<string, readonly [string, string]> = {
+    succeeded: ['Output returned', 'Output returned and stored against this endpoint.'],
+    failed: [
+      'Command exited non-zero',
+      'The command ran and exited with a non-zero code. Output is kept for review.',
+    ],
+    'timed-out': [
+      'No result before the timeout',
+      'The agent accepted the command but returned nothing before the job timeout elapsed.',
+    ],
+    offline: [
+      'Agent unreachable',
+      'The agent did not answer and the endpoint is not reporting as offline either.',
+    ],
+    queued: [
+      'Device offline · runs at next check-in',
+      'Endpoint is offline. The request stays queued and runs when the agent next checks in.',
+    ],
+    running: ['In progress', 'The agent has accepted the command and is running it.'],
+    cancelled: ['Cancelled before start', 'The job was cancelled before this endpoint began.'],
+  };
+
+  const devices = db
+    .prepare(`SELECT id, hostname, status FROM devices ORDER BY rowid LIMIT 400`)
+    .all() as { id: string; hostname: string; status: string }[];
 
   db.transaction(() => {
-    jobs.forEach(([name, kind, language, script], i) => {
-      const targets = rng.int(18, 820);
+    jobs.forEach(([title, kind, language, script], i) => {
+      // Every target gets a materialised row, so the Targets column, the seven
+      // counters and the rows behind them are one set of figures.
+      const targets = rng.int(18, 120);
       const status = rng.weighted([
-        ['completed', 56],
-        ['running', 22],
+        ['completed', 50],
+        ['running', 20],
         ['queued', 10],
+        ['completed-with-failures', 8],
         ['failed', 6],
         ['cancelled', 6],
       ] as const);
-      const completed =
-        status === 'queued' ? 0 : status === 'running' ? Math.round(targets * rng.next()) : targets;
-      const failed = Math.round(completed * (status === 'failed' ? 0.64 : rng.next() * 0.09));
-      const created = rng.recentMs(NOW, 14);
+      const submitted = rng.recentMs(NOW, 14);
       const jobId = `job-${String(2000 + i)}`;
 
-      insertJob.run(
-        jobId,
-        name,
-        kind,
-        kind === 'log-collection' ? null : language,
-        kind === 'log-collection' ? null : script,
-        rng.chance(0.5) ? 'INC-0092144' : null,
-        status,
-        targets,
-        completed,
-        failed,
-        iso(created),
-        rng.pick(['r.deshpande', 'a.iyer', 'n.banerjee']),
-        status === 'completed' || status === 'failed'
-          ? iso(created + rng.int(20, 900) * 1000)
-          : null,
-        256,
-      );
+      // The per-endpoint rows are drawn up first and inserted after the job,
+      // because the job's counters are their tally: the figure the console
+      // shows and the rows behind it cannot disagree.
+      const counts: Record<string, number> = {
+        queued: 0,
+        running: 0,
+        succeeded: 0,
+        failed: 0,
+        'timed-out': 0,
+        offline: 0,
+        cancelled: 0,
+      };
 
-      if (status === 'queued') return;
-      for (const device of devices.slice(0, Math.min(targets, rng.int(20, 120)))) {
-        const state = rng.weighted([
-          ['succeeded', 84],
-          ['failed', 8],
-          ['timed-out', 4],
-          ['unreachable', 4],
-        ] as const);
-        insertResult.run(
+      const sample = status === 'queued' ? [] : devices.slice(0, targets);
+      const resultRows: unknown[][] = [];
+      sample.forEach((device, n) => {
+        const offline = device.status !== 'online';
+        // The approved page shows an offline endpoint as QUEUED with an
+        // offline connection, not as a separate status: the request has not
+        // failed, it is waiting for the agent to check in.
+        const resultStatus = offline
+          ? 'queued'
+          : status === 'cancelled'
+            ? 'cancelled'
+            : status === 'running' && rng.chance(0.35)
+              ? 'running'
+              : rng.weighted([
+                  ['succeeded', status === 'failed' ? 10 : 86],
+                  ['failed', status === 'failed' ? 80 : 9],
+                  ['timed-out', 5],
+                ] as const);
+        counts[resultStatus] = (counts[resultStatus] ?? 0) + 1;
+
+        const explain = EXPLAIN[resultStatus] ?? ['', ''];
+        const started =
+          resultStatus === 'queued' || resultStatus === 'cancelled'
+            ? null
+            : submitted + rng.int(1, 60) * 1000;
+        const finished =
+          started !== null && resultStatus !== 'running' ? started + rng.int(240, 42_000) : null;
+
+        resultRows.push([
           jobId,
           device.id,
           device.hostname,
-          state,
-          state === 'succeeded' ? 0 : state === 'failed' ? rng.pick([1, 2, 1603]) : null,
-          state === 'succeeded' ? sampleStdout(kind, rng) : null,
-          state === 'failed' ? 'Access is denied. (0x80070005)' : null,
-          rng.int(240, 42_000),
-          iso(rng.recentMs(NOW, 14)),
-        );
-      }
+          offline ? 'offline' : 'online',
+          // The agent's own id for this endpoint's copy of the command.
+          `${ACTION_TYPE[kind].split('_')[0]}-${jobId.slice(4)}-C${String(n + 1).padStart(3, '0')}`,
+          ACTION_TYPE[kind],
+          resultStatus,
+          resultStatus === 'succeeded'
+            ? 0
+            : resultStatus === 'failed'
+              ? rng.pick([1, 2, 1603])
+              : null,
+          explain[0],
+          explain[1],
+          resultStatus === 'succeeded' ? sampleStdout(kind, rng) : null,
+          resultStatus === 'failed' ? 'Access is denied. (0x80070005)' : null,
+          iso(submitted),
+          started === null ? null : iso(started),
+          finished === null ? null : iso(finished),
+        ]);
+      });
+
+      insertJob.run(
+        jobId,
+        title,
+        kind,
+        language,
+        script,
+        rng.chance(0.5) ? 'INC-0092144' : null,
+        status,
+        targets,
+        (counts['queued'] ?? 0) + Math.max(0, targets - sample.length),
+        counts['running'] ?? 0,
+        counts['succeeded'] ?? 0,
+        counts['failed'] ?? 0,
+        counts['timed-out'] ?? 0,
+        counts['offline'] ?? 0,
+        counts['cancelled'] ?? 0,
+        iso(submitted),
+        rng.pick(['r.deshpande', 'a.iyer', 'n.banerjee']),
+        status === 'queued' || status === 'running'
+          ? null
+          : iso(submitted + rng.int(20, 900) * 1000),
+        300,
+        64,
+      );
+
+      for (const row of resultRows) insertResult.run(...row);
     });
   })();
+}
+
+/**
+ * Storage and mail settings for collected logs. One row, read from v129's
+ * Storage & Mail panel; the root path stays a placeholder because a real one
+ * names a server.
+ */
+function seedLogSettings(db: Db): void {
+  db.prepare(
+    `INSERT INTO log_settings
+      (id,retention_days,email_bundles,recipients,root_path,folder_layout,
+       file_name_pattern,max_bundle_size_mb,send_as,attachment_limit_mb)
+     VALUES (1,?,?,?,?,?,?,?,?,?)`,
+  ).run(
+    90,
+    1,
+    'endpoint-ops@example.internal',
+    '\\\\<ROOT_SERVER>\\AegisLogs',
+    'date-hostname',
+    '{hostname}_{type}_{yyyyMMdd-HHmm}.zip',
+    200,
+    'link',
+    10,
+  );
 }
 
 function sampleStdout(kind: string, rng: Rng): string {

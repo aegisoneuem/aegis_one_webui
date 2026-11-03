@@ -333,3 +333,32 @@ you.
     The approved page has a Create Token action; it is rendered and disabled.
     Note the one-time-secret contract: whatever serves the POST must return
     the secret once and store only its hash, which is what the seed does.
+22. **Log settings are richer in the approved design than in the contract.**
+    `LogSettings` had `retentionDays`, `emailBundles` and `recipients`; v129's
+    Storage & Mail panel also sets a root path, a folder layout, a file-name
+    pattern, a max bundle size, a send-as mode and an attachment limit. All
+    six were added to `LogSettings`. `PUT /liveops/log-settings` is still
+    unserved, so the panel is read-only (decisions.md D-035).
+23. **`LogSchedule` lacked four of the Schedules grid's columns.** Runs,
+    Delivery, Last Run and Enabled were added. Nothing serves
+    `POST /liveops/log-schedules` or the delete, and nothing seeds a schedule,
+    so the grid is empty and "Next Scheduled" reads "—" — which is what the
+    reference shows too. A real schedule needs a runner, and the runner is
+    what decides whether `runs` and `lastRunAt` are stored or derived.
+24. **`DeviceDiagnostics.recentJobs` is declared as `LiveJob[]` and is not.**
+    `/devices/{deviceId}/diagnostics` returns one row per job that touched
+    *this* endpoint, carrying that endpoint's own status, exit code and
+    duration — which is what the device page needs and a `LiveJob` cannot
+    express. Either the schema should become a per-endpoint shape (a
+    `LiveJobResult` plus the job's title and kind) or the endpoint should
+    return jobs and the page should fetch results per job. This predates the
+    Live Activity work; the query was only renamed to the new columns.
+25. **Three Live Activity writes are declared and unserved.**
+    `POST /liveops/log-schedules`, `DELETE /liveops/log-schedules/{scheduleId}`
+    and `PUT /liveops/log-settings`. The approved page has New Schedule,
+    Collect Now and Save Settings; none is rendered as a working control.
+26. **Cancel is served but the approved page's Cancel Task does not call it.**
+    `DELETE /liveops/script-jobs/{jobId}` works and returns 204; the contract
+    says it returns the job after cancellation. The button is rendered and
+    permission-gated, and wiring it is held until the response shape is
+    settled — a 204 gives the console nothing to re-render from.

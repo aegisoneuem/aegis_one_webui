@@ -152,16 +152,18 @@ const run = async () => {
 
   // --- Aggregates ----------------------------------------------------------
   const overview = await fetch(`${API}/overview`, { headers: authed(token) }).then((r) => r.json());
+  // The Overview restoration moved these into the contract's `Overview`:
+  // `counts`, `health` and `patchCompliance`, not endpoints/posture/byZone.
   check(
     'overview counts 50,000 endpoints',
-    overview.endpoints.total === 50000,
-    String(overview.endpoints.total),
+    overview.counts.managedEndpoints === 50000,
+    String(overview.counts.managedEndpoints),
   );
-  check('overview computes posture', typeof overview.posture.compliancePct === 'number');
+  check('overview scores estate health', typeof overview.health.score === 'number');
   check(
-    'overview breaks down by zone',
-    overview.byZone.length === 9,
-    String(overview.byZone.length),
+    'overview breaks patch compliance down by OS',
+    overview.patchCompliance.byOs.length > 0,
+    String(overview.patchCompliance.byOs.length),
   );
 
   const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
@@ -221,8 +223,10 @@ const run = async () => {
   });
   const job = await withCsrf.json();
   check(
+    // 202, not 201: the contract says accepted-for-later, because the agent
+    // runs the payload when it next checks in.
     'script job is accepted with a CSRF header',
-    withCsrf.status === 201,
+    withCsrf.status === 202,
     `HTTP ${withCsrf.status}`,
   );
   check(

@@ -4699,6 +4699,34 @@ components:
           type: object
           additionalProperties: true
           description: Structured rows for live-data queries.
+        connection:
+          description: Whether the agent was reachable when the job reached this endpoint.
+          type: string
+          enum:
+          - online
+          - offline
+        actionId:
+          description: The per-endpoint command id, so an endpoint's work can be traced in its own agent log.
+          type: string
+          maxLength: 64
+        actionType:
+          description: The command the agent was given, which is the job kind as the agent names it.
+          type: string
+          enum:
+          - LIVE_QUERY
+          - RUN_SCRIPT
+          - COLLECT_LOGS
+        queuedAt:
+          type: string
+          format: date-time
+        reason:
+          description: Why the endpoint is in this state, in a few words.
+          type: string
+          maxLength: 160
+        detail:
+          description: The same in a sentence, for the row that needs explaining.
+          type: string
+          maxLength: 400
     LiveJobResultPage:
       type: object
       additionalProperties: false
@@ -6805,12 +6833,31 @@ components:
         required:
         - id
         - nextRunAt
+        - enabled
         properties:
           id:
             type: string
           nextRunAt:
             type: string
             format: date-time
+          lastRunAt:
+            type:
+            - string
+            - 'null'
+            format: date-time
+          runs:
+            description: How many times this schedule has collected.
+            type: integer
+            minimum: 0
+          delivery:
+            description: What happens to a bundle once it is stored.
+            type: string
+            enum:
+            - store-only
+            - email-link
+            - email-attachment
+          enabled:
+            type: boolean
     LogSettings:
       type: object
       additionalProperties: false
@@ -6830,6 +6877,32 @@ components:
           items:
             type: string
             format: email
+        rootPath:
+          description: Where bundles are stored on the root server - a UNC path, a drive path or a POSIX path.
+          type: string
+          maxLength: 260
+        folderLayout:
+          type: string
+          enum:
+          - date-hostname
+          - hostname-date
+        fileNamePattern:
+          description: 'Tokens: {hostname} {type} {yyyyMMdd-HHmm}.'
+          type: string
+          maxLength: 160
+        maxBundleSizeMb:
+          type: integer
+          minimum: 1
+          maximum: 2048
+        sendAs:
+          type: string
+          enum:
+          - link
+          - attachment-when-small
+        attachmentLimitMb:
+          type: integer
+          minimum: 1
+          maximum: 100
     RoleInput:
       type: object
       additionalProperties: false

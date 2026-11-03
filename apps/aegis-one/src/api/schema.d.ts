@@ -2058,8 +2058,15 @@ export interface components {
         };
         EnrollmentSummary: {
             enrolled: number;
+            /** @description Enrolled endpoints checking in right now. */
+            online: number;
             onLatestAgent: number;
+            /** @description The newest agent release the estate is measured against. */
+            latestAgentVersion: string;
             activeTokens: number;
+            /** @description Active, expired and revoked together. */
+            totalTokens: number;
+            /** @description Enrolled but not seen for seven days or more. */
             notCheckingIn: number;
             byPlatform: {
                 windows?: number;
@@ -2071,6 +2078,14 @@ export interface components {
                 macos?: string;
                 linux?: string;
             };
+            /** @description The ways an endpoint can be enrolled, and the state of each. */
+            methods: {
+                id: string;
+                name: string;
+                description: string;
+                /** @enum {string} */
+                state: "ready" | "configured" | "available" | "not-configured";
+            }[];
         };
         EnrollmentTokenInput: {
             name: string;
@@ -2104,10 +2119,28 @@ export interface components {
             platform: components["schemas"]["PlatformFamily"];
             /** @enum {string} */
             category: "os" | "third-party" | "driver-bios";
+            /**
+             * @description Only meaningful for driver-bios, which the Drivers & BIOS tab splits in two.
+             * @enum {string}
+             */
+            subcategory?: "bios" | "driver";
+            /** @description The publisher the update comes from, shown in the Vendor column. */
             source?: string;
             /** @enum {string} */
-            approval: "approved" | "test" | "review" | "declined";
+            approval: "approved" | "test" | "review" | "declined" | "superseded";
+            /** @description The update that replaced this one, when approval is superseded. */
+            supersededBy?: string | null;
+            /**
+             * @description The rollout ring the approval applies to.
+             * @enum {string}
+             */
+            ring?: "pilot" | "broad" | "late";
+            /** @description Fixes a CVE that was exploited before the update shipped. */
+            zeroDay?: boolean;
+            /** @description Endpoints the update applies to and is not yet installed on. */
             endpointsMissing: number;
+            /** @description Endpoints the update is already installed on. */
+            remediated?: number;
             /** Format: date */
             releasedAt?: string;
         };
@@ -2120,6 +2153,8 @@ export interface components {
             name: string;
             /** @description Platform, source and severities, for example Windows OS Critical/High. */
             content?: string;
+            /** @description Updates the policy currently covers. */
+            patchCount?: number;
             rollout?: ("pilot" | "broad" | "late")[];
             computers?: number;
             compliancePct?: number;
@@ -2131,13 +2166,69 @@ export interface components {
         };
         PatchSummary: {
             compliancePct: number;
+            /** @description Outstanding device-and-update pairs at critical severity. */
             missingCritical: number;
+            /** @description Distinct critical updates still outstanding somewhere. */
+            criticalUpdates: number;
             awaitingApproval: number;
             failedInstalls: number;
+            /** @description Device-and-update pairs already installed, across the estate. */
+            installed: number;
+            /** @description Device-and-update pairs still outstanding. */
+            missing: number;
+            devicesTotal: number;
+            devicesMissing: number;
+            /** @description Devices missing at least one critical update. */
+            criticalDevices: number;
+            /** @description Mean days since release, over the outstanding updates. */
+            averageAgeDays: number;
+            devicesAwaitingRestart: number;
+            /** @description Distinct publishers, for the Vendor filter. */
+            vendors: string[];
             byOsVersion: {
                 label: string;
+                platform?: components["schemas"]["PlatformFamily"];
                 compliantPct: number;
+                endpoints: number;
             }[];
+            /** @description The per-tab counters the platform, Drivers & BIOS and All Patches tabs show. */
+            tabs: {
+                platforms: {
+                    /** @enum {string} */
+                    key: "windows" | "macos" | "linux" | "third-party";
+                    compliancePct: number;
+                    endpointsMissing: number;
+                    endpointsTotal: number;
+                    criticalUpdates: number;
+                    updatesAvailable: number;
+                    updatesMissing: number;
+                }[];
+                driversBios: {
+                    endpointsNeeding: number;
+                    endpointsTotal: number;
+                    bios: number;
+                    drivers: number;
+                    awaitingApproval: number;
+                };
+                all: {
+                    total: number;
+                    applicable: number;
+                    remediated: number;
+                    failed: number;
+                    declined: number;
+                    superseded: number;
+                    zeroDayCves: number;
+                };
+            };
+            /** @description The counters above the Patch Policies tab. */
+            policies: {
+                active: number;
+                total: number;
+                computersCovered: number;
+                computersTotal: number;
+                /** @description Devices with at least one critical outstanding update. */
+                highlyVulnerable: number;
+            };
             bySeverity: {
                 critical?: number;
                 high?: number;
@@ -2267,6 +2358,24 @@ export interface components {
             data?: {
                 [key: string]: unknown;
             };
+            /**
+             * @description Whether the agent was reachable when the job reached this endpoint.
+             * @enum {string}
+             */
+            connection?: "online" | "offline";
+            /** @description The per-endpoint command id, so an endpoint's work can be traced in its own agent log. */
+            actionId?: string;
+            /**
+             * @description The command the agent was given, which is the job kind as the agent names it.
+             * @enum {string}
+             */
+            actionType?: "LIVE_QUERY" | "RUN_SCRIPT" | "COLLECT_LOGS";
+            /** Format: date-time */
+            queuedAt?: string;
+            /** @description Why the endpoint is in this state, in a few words. */
+            reason?: string;
+            /** @description The same in a sentence, for the row that needs explaining. */
+            detail?: string;
         };
         LiveJobResultPage: {
             items: components["schemas"]["LiveJobResult"][];
@@ -2983,11 +3092,31 @@ export interface components {
             id: string;
             /** Format: date-time */
             nextRunAt: string;
+            /** Format: date-time */
+            lastRunAt?: string | null;
+            /** @description How many times this schedule has collected. */
+            runs?: number;
+            /**
+             * @description What happens to a bundle once it is stored.
+             * @enum {string}
+             */
+            delivery?: "store-only" | "email-link" | "email-attachment";
+            enabled: boolean;
         };
         LogSettings: {
             retentionDays: number;
             emailBundles: boolean;
             recipients?: string[];
+            /** @description Where bundles are stored on the root server - a UNC path, a drive path or a POSIX path. */
+            rootPath?: string;
+            /** @enum {string} */
+            folderLayout?: "date-hostname" | "hostname-date";
+            /** @description Tokens: {hostname} {type} {yyyyMMdd-HHmm}. */
+            fileNamePattern?: string;
+            maxBundleSizeMb?: number;
+            /** @enum {string} */
+            sendAs?: "link" | "attachment-when-small";
+            attachmentLimitMb?: number;
         };
         RoleInput: {
             name: string;
@@ -3879,7 +4008,13 @@ export interface operations {
                 platform?: components["schemas"]["PlatformFamily"];
                 category?: "os" | "third-party" | "driver-bios";
                 severity?: components["schemas"]["Severity"];
-                approval?: "approved" | "test" | "review" | "declined";
+                approval?: "approved" | "test" | "review" | "declined" | "superseded";
+                subcategory?: "bios" | "driver";
+                /** @description Matches Patch.source. */
+                vendor?: string;
+                /** @description Narrows to updates outstanding on endpoints running this OS version. */
+                osVersion?: string;
+                releasedAfter?: string;
             };
             header?: never;
             path?: never;

@@ -299,3 +299,25 @@ you.
     inside `Deployment`'s `schedule` / `network` / `options` objects, which are
     open. That is a change to make when the detail page is restored, and it is
     listed here so it is not lost.
+16. **A group's patches and software.** The approved Device Groups detail pane
+    has Patches and Software tabs beside Members. Nothing in the contract
+    aggregates either per group: `/patches/summary` is estate-wide and
+    `/software` is the catalogue. Both tabs want an endpoint of their own —
+    probably `/groups/{groupId}/patches` and `/groups/{groupId}/software`,
+    each returning counts plus a list. They are rendered disabled until then.
+17. **Per-device patch exemption.** The reference's group member grid ends
+    with a Manage column whose only action is "Exempt". No schema expresses a
+    device being exempt from an update, and no endpoint sets one. If exemption
+    is a product concept it needs a field on `Device` or a join of its own,
+    plus the endpoint that grants and revokes it.
+18. **Dynamic group membership at scale.** We materialise it at seed time
+    (decisions.md D-031). A real dynamic group is a saved query whose
+    membership changes as devices do, so the server has to decide between
+    evaluating the rule on every read, keeping an index refreshed on a
+    schedule, or maintaining membership incrementally as device attributes
+    change. The five per-group figures make that choice visible: they are
+    counted from membership, so whatever staleness membership has, they have.
+19. **Four group writes are declared and unserved.** `POST /groups`,
+    `PATCH /groups/{groupId}`, `POST /groups/import` (text/csv) and
+    `POST /groups/directory-sync` (returns a `Job`). The approved design has a
+    control for each; all four are rendered and disabled.

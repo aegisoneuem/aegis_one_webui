@@ -452,3 +452,23 @@ records — is kept and extended to say why a running action shows fewer results
 than computers. If a real deployment can be an "example" (a saved preview that
 never executes), that is an API change to propose rather than a design to
 restore: see handover-backend.md question 13.
+
+## D-031 — Group membership is materialised, not stated
+
+The fixture used to give each group a `member_count` and no members. Three
+things read that number and disagreed with each other: the grid showed it, the
+contract's `/groups/{id}/members` had nothing to return, and `resolveTargets`
+carried the comment "Groups are fixture metadata rather than materialised
+membership" and resolved a group target to no devices at all.
+
+Every group now carries a SQL predicate over `devices`, evaluated once at seed
+time into `group_members`. The five figures a group shows — members, online,
+offline, missing patches, sub-groups — are counted from that table, so the
+member grid and the figures above it cannot drift apart, and a deployment
+aimed at a group reaches the endpoints the group says it has.
+
+It costs about 250,000 rows for sixteen groups over 50,000 devices, and one
+`UPDATE` with five correlated subqueries to roll up. At real scale a dynamic
+group's membership is a query the server runs, not a table it keeps; the
+rollup here stands in for that, as D-027 does for the patch summary. See
+handover-backend.md 18.

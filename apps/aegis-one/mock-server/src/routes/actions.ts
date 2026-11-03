@@ -60,14 +60,16 @@ function resolveTargets(db: Db, selection: TargetSelection, zoneIds: readonly st
   }
 
   if (selection.groupIds?.length) {
-    // Groups are fixture metadata rather than materialised membership, so a
-    // group target resolves to its zone-visible devices up to its stated size.
-    const sizes = db
-      .prepare(
-        `SELECT member_count FROM device_groups WHERE id IN (${selection.groupIds.map(() => '?').join(',')})`,
-      )
-      .all(...selection.groupIds) as { member_count: number }[];
-    if (sizes.length === 0) throw notFound('No such group.');
+    // Group membership is materialised, so a group target resolves to the
+    // devices that are actually in it rather than to a stated size.
+    const placeholders = selection.groupIds.map(() => '?').join(',');
+    const known = db
+      .prepare(`SELECT COUNT(*) AS n FROM device_groups WHERE id IN (${placeholders})`)
+      .get(...selection.groupIds) as { n: number };
+    if (known.n === 0) throw notFound('No such group.');
+
+    clauses.push(`id IN (SELECT device_id FROM group_members WHERE group_id IN (${placeholders}))`);
+    params.push(...selection.groupIds);
   }
 
   // The filter is the console's own query string, re-run here against the

@@ -313,6 +313,72 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('heading', { name: 'Google Chrome' })).toBeVisible();
   });
 
+  test('Device groups is a tree beside the selected group', async ({ page }) => {
+    await page.goto('/groups');
+    await expect(page.getByRole('heading', { name: 'Device Groups' })).toBeVisible();
+
+    for (const label of ['Groups', 'Sub-Groups', 'Endpoints Grouped', 'Not Grouped']) {
+      await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+    }
+
+    // The first group is selected, and its five figures sit over the tabs.
+    await expect(page.getByRole('heading', { name: 'Windows Workstations' })).toBeVisible();
+    // "Members 32,761", not "Membership".
+    await expect(page.getByRole('tab', { name: /^Members \d/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const rows = page.getByRole('table', { name: 'Group members' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+  });
+
+  test('selecting a group swaps the pane, and the selection is in the URL', async ({ page }) => {
+    await page.goto('/groups');
+    await page.getByRole('button', { name: /^Security Gaps/ }).click();
+
+    await expect(page).toHaveURL(/group=grp-gaps/);
+    await expect(page.getByRole('heading', { name: 'Security Gaps' })).toBeVisible();
+
+    // The selection survives a cold load, which is the point of the URL.
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Security Gaps' })).toBeVisible();
+  });
+
+  test("a group's figures agree with its member grid", async ({ page }) => {
+    await page.goto('/groups?group=grp-macos');
+    const online = page.getByRole('group', { name: 'Member filter' }).getByRole('button', {
+      name: /^Online/,
+    });
+    await expect(online).toBeVisible();
+
+    await online.click();
+    await expect(online).toHaveAttribute('aria-pressed', 'true');
+
+    const rows = page.getByRole('table', { name: 'Group members' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    for (const row of await rows.allInnerTexts()) expect(row).toContain('Online');
+  });
+
+  test("a group's other tabs read the contract's GroupDetail", async ({ page }) => {
+    await page.goto('/groups?group=grp-win-ws');
+
+    await page.getByRole('tab', { name: 'Membership' }).click();
+    await expect(page.getByText('osFamily is Windows and kind is workstation')).toBeVisible();
+
+    await page.getByRole('tab', { name: /^Sub-Groups/ }).click();
+    await expect(page.getByRole('button', { name: /Windows 11/ }).last()).toBeVisible();
+
+    await page.getByRole('tab', { name: /^Policies/ }).click();
+    await expect(page.getByText('Windows Baseline 2026.1')).toBeVisible();
+
+    await page.getByRole('tab', { name: /^History/ }).click();
+    await expect(page.getByText('group.create')).toBeVisible();
+
+    // Declared in the contract, served by nothing — disabled, not invented.
+    await expect(page.getByRole('tab', { name: 'Patches' })).toBeDisabled();
+    await expect(page.getByRole('tab', { name: 'Software' })).toBeDisabled();
+  });
+
   test('Deployments shows its six counters over a grid of actions', async ({ page }) => {
     await page.goto('/deployments');
     await expect(page.getByRole('heading', { name: 'Deployments' })).toBeVisible();

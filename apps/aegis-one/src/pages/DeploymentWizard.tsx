@@ -111,7 +111,8 @@ export default function DeploymentWizard() {
   const { data: groups } = useQuery({
     queryKey: ['/groups', 'wizard'],
     queryFn: ({ signal }) =>
-      api.get<Page<DeviceGroup>>('/groups', { limit: 100, fields: 'id,name,memberCount' }, signal),
+      // /groups returns the whole tree and a summary, not a page.
+      api.get<{ items: DeviceGroup[] }>('/groups', {}, signal),
   });
   const { data: zones } = useQuery({
     queryKey: ['/sites', 'wizard'],
@@ -125,7 +126,7 @@ export default function DeploymentWizard() {
 
   /** Indicative only; the server resolves the real set when the action is created. */
   const estimatedTargets =
-    state.deviceIds.length || selectedGroup?.memberCount || selectedZone?.deviceCount || 0;
+    state.deviceIds.length || selectedGroup?.members || selectedZone?.deviceCount || 0;
 
   const stepState = useMemo(() => {
     const contentDone = Boolean(state.name.trim()) && Boolean(state.packageId);
@@ -302,7 +303,7 @@ export default function DeploymentWizard() {
                     placeholder="No group"
                     options={(groups?.items ?? []).map((g) => ({
                       value: g.id,
-                      label: `${g.name} (${num(g.memberCount)})`,
+                      label: `${g.name} (${num(g.members)})`,
                     }))}
                     value={state.groupId}
                     onChange={(e) => set('groupId', e.target.value)}

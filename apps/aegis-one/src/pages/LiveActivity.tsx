@@ -116,7 +116,8 @@ function RunTab({ canRun }: { canRun: boolean }) {
   const { data: groups } = useQuery({
     queryKey: ['/groups', 'liveops'],
     queryFn: ({ signal }) =>
-      api.get<Page<DeviceGroup>>('/groups', { limit: 100, fields: 'id,name,memberCount' }, signal),
+      // /groups returns the whole tree and a summary, not a page.
+      api.get<{ items: DeviceGroup[] }>('/groups', {}, signal),
   });
   const { data: zones } = useQuery({
     queryKey: ['/sites', 'liveops'],
@@ -126,7 +127,7 @@ function RunTab({ canRun }: { canRun: boolean }) {
 
   const targetCount =
     deviceIds.length ||
-    groups?.items.find((g) => g.id === groupId)?.memberCount ||
+    groups?.items.find((g) => g.id === groupId)?.members ||
     zones?.items.find((z) => z.id === zone)?.deviceCount ||
     0;
 
@@ -225,7 +226,7 @@ function RunTab({ canRun }: { canRun: boolean }) {
               placeholder="No group"
               options={(groups?.items ?? []).map((g) => ({
                 value: g.id,
-                label: `${g.name} (${num(g.memberCount)})`,
+                label: `${g.name} (${num(g.members)})`,
               }))}
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}

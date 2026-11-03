@@ -66,7 +66,7 @@ export function seedDatabase({
   onProgress(`${deviceCount.toLocaleString('en-IN')} devices`);
 
   rollUpCounts(db);
-  seedGroups(db, rng, deviceCount);
+  seedGroups(db, rng);
   seedConfigChecks(db, rng, deviceCount);
   seedDeployments(db, rng);
   seedLiveJobs(db, rng);
@@ -960,53 +960,220 @@ function rollUpPatchCells(db: Db): void {
   `);
 }
 
-function seedGroups(db: Db, rng: Rng, deviceCount: number): void {
+/**
+ * The group tree, and the membership behind it.
+ *
+ * A group is a node: `parent` names its parent, and `where` is the predicate
+ * that decides membership. Dynamic groups are evaluated once here against the
+ * real device rows, so the member list, the five per-group figures and a
+ * deployment's resolved targets all read the same table instead of agreeing
+ * by coincidence.
+ *
+ * The shape follows the approved design — a platform tree, two more platform
+ * groups, one tree per major zone, a static ring and a posture group —
+ * against this estate's own zones.
+ */
+interface GroupDef {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: 'static' | 'dynamic';
+  readonly parent?: string;
+  /** The membership rule in words, which the detail pane shows verbatim. */
+  readonly rule: string;
+  /** The same rule as SQL over `devices`. */
+  readonly where: string;
+  readonly policies?: readonly string[];
+}
+
+/**
+ * One tree per zone that carries a peer cache, each with the first /24 of its
+ * own range beneath it. Device addresses are 10.(20 + zoneIndex).x.y, so the
+ * subnet is a real predicate rather than a label.
+ */
+function zoneGroups(): GroupDef[] {
+  const out: GroupDef[] = [];
+  for (const name of ['Mumbai HQ', 'Delhi Branch', 'Bengaluru Campus', 'Jaipur Branch']) {
+    const zone = ZONES.find((z) => z.name === name);
+    if (!zone) continue;
+    const slug = zone.id.replace(/^zn-/, '');
+    const prefix = `10.${20 + (ZONES.indexOf(zone) % 12)}.0.`;
+    const quoted = `'${zone.name.replace(/'/g, "''")}'`;
+    out.push(
+      {
+        id: `grp-${slug}`,
+        name: zone.name,
+        kind: 'dynamic',
+        rule: `zoneName is ${zone.name}`,
+        where: `zone_name = ${quoted}`,
+      },
+      {
+        id: `grp-${slug}-net`,
+        name: `Subnet ${prefix}0/24`,
+        kind: 'dynamic',
+        parent: `grp-${slug}`,
+        rule: `zoneName is ${zone.name} and ip is within ${prefix}0/24`,
+        where: `zone_name = ${quoted} AND ip LIKE '${prefix}%'`,
+      },
+    );
+  }
+  return out;
+}
+
+const GROUPS: readonly GroupDef[] = [
+  {
+    id: 'grp-win-ws',
+    name: 'Windows Workstations',
+    kind: 'dynamic',
+    rule: 'osFamily is Windows and kind is workstation',
+    where: `os_family = 'Windows' AND kind = 'workstation'`,
+    policies: ['Windows Baseline 2026.1', 'Monthly Patch Ring — Broad'],
+  },
+  {
+    id: 'grp-win-11',
+    name: 'Windows 11',
+    kind: 'dynamic',
+    parent: 'grp-win-ws',
+    rule: 'osFamily is Windows, kind is workstation and osName starts with Windows 11',
+    where: `os_family = 'Windows' AND kind = 'workstation' AND os_name LIKE 'Windows 11%'`,
+    policies: ['Windows Baseline 2026.1'],
+  },
+  {
+    id: 'grp-win-10',
+    name: 'Windows 10',
+    kind: 'dynamic',
+    parent: 'grp-win-ws',
+    rule: 'osFamily is Windows, kind is workstation and osName starts with Windows 10',
+    where: `os_family = 'Windows' AND kind = 'workstation' AND os_name LIKE 'Windows 10%'`,
+    policies: ['Windows Baseline 2026.1', 'End-of-life OS watch'],
+  },
+  {
+    id: 'grp-finance',
+    name: 'Finance',
+    kind: 'dynamic',
+    parent: 'grp-win-ws',
+    rule: 'osFamily is Windows, kind is workstation and department is Finance',
+    where: `os_family = 'Windows' AND kind = 'workstation' AND department = 'Finance'`,
+    policies: ['Finance data handling', 'Windows Baseline 2026.1'],
+  },
+  {
+    id: 'grp-macos',
+    name: 'macOS Fleet',
+    kind: 'dynamic',
+    rule: 'osFamily is macOS',
+    where: `os_family = 'macOS'`,
+    policies: ['macOS Baseline 2026.1'],
+  },
+  {
+    id: 'grp-linux',
+    name: 'Linux Endpoints',
+    kind: 'dynamic',
+    rule: 'osFamily is Linux',
+    where: `os_family = 'Linux'`,
+    policies: ['Linux Baseline 2026.1'],
+  },
+  ...zoneGroups(),
+  {
+    id: 'grp-pilot',
+    name: 'Pilot Ring',
+    kind: 'static',
+    rule: 'Members chosen individually',
+    // Every 125th row, which spreads the ring across the whole estate rather
+    // than taking one zone's worth off the top.
+    where: `rowid % 125 = 0`,
+    policies: ['Monthly Patch Ring — Pilot'],
+  },
+  {
+    id: 'grp-gaps',
+    name: 'Security Gaps',
+    kind: 'dynamic',
+    rule: 'encrypted is false or criticalVulns is above 0',
+    where: `(encrypted = 0 OR critical_vulns > 0)`,
+  },
+];
+
+function seedGroups(db: Db, rng: Rng): void {
   const insert = db.prepare(
-    `INSERT INTO device_groups (id,name,kind,rule,member_count,created_at,created_by) VALUES (?,?,?,?,?,?,?)`,
+    `INSERT INTO device_groups (id,name,kind,parent_id,rule,policies,created_at,created_by)
+     VALUES (?,?,?,?,?,?,?,?)`,
   );
-  const groups: readonly (readonly [string, 'rule' | 'static', string | null, number])[] = [
-    [
-      'All Windows workstations',
-      'rule',
-      'os_family = "Windows" AND kind = "workstation"',
-      Math.round(deviceCount * 0.66),
-    ],
-    ['All servers', 'rule', 'kind = "server"', Math.round(deviceCount * 0.17)],
-    [
-      'Mumbai HQ — Finance',
-      'rule',
-      'zone_name = "Mumbai HQ" AND department = "Finance"',
-      Math.round(deviceCount * 0.03),
-    ],
-    ['Pilot ring', 'static', null, 412],
-    [
-      'Broad ring',
-      'rule',
-      'NOT in Pilot ring AND NOT in Late ring',
-      Math.round(deviceCount * 0.78),
-    ],
-    ['Late ring — production servers', 'static', null, 1180],
-    ['Low disk (< 10% free)', 'rule', 'disk_free_pct < 10', Math.round(deviceCount * 0.06)],
-    ['Unencrypted endpoints', 'rule', 'encrypted = false', Math.round(deviceCount * 0.09)],
-    ['Agent below 7.4', 'rule', 'agent_version < "7.4.0"', Math.round(deviceCount * 0.16)],
-    ['Executive laptops', 'static', null, 84],
-    ['Jaipur Branch — all', 'rule', 'zone_name = "Jaipur Branch"', Math.round(deviceCount * 0.08)],
-    ['Linux build agents', 'rule', 'os_family = "Linux" AND department = "Engineering"', 346],
-  ];
+  const audit = db.prepare(
+    `INSERT INTO audit_log (id,at,actor,actor_role,action,object_type,object_id,outcome,ip,detail)
+     VALUES (?,?,?,?,?,'group',?,'success',?,?)`,
+  );
+  const addr = (): string => `10.${rng.int(20, 32)}.0.${rng.int(2, 254)}`;
 
   db.transaction(() => {
-    groups.forEach(([name, kind, rule, members], i) => {
+    GROUPS.forEach((g, i) => {
+      const actor = rng.pick(['r.deshpande', 'a.iyer', 's.kulkarni']);
+      const createdAt = daysAgo(rng.int(30, 700));
       insert.run(
-        `grp-${String(i + 1).padStart(3, '0')}`,
-        name,
-        kind,
-        rule,
-        members,
-        daysAgo(rng.int(30, 700)),
-        rng.pick(['r.deshpande', 'a.iyer', 's.kulkarni']),
+        g.id,
+        g.name,
+        g.kind,
+        g.parent ?? null,
+        g.rule,
+        (g.policies ?? []).join('\n'),
+        createdAt,
+        actor,
       );
+
+      // The detail pane's History tab reads the audit log, so a group nobody
+      // has touched since it was made still shows its own creation.
+      audit.run(
+        `aud-grp-${String(i).padStart(3, '0')}-a`,
+        createdAt,
+        actor,
+        'admin',
+        'group.create',
+        g.id,
+        addr(),
+        `${g.kind} group`,
+      );
+      if (g.kind === 'dynamic' && rng.chance(0.4)) {
+        audit.run(
+          `aud-grp-${String(i).padStart(3, '0')}-b`,
+          daysAgo(rng.int(1, 29)),
+          rng.pick(['r.deshpande', 'a.iyer']),
+          'admin',
+          'group.update',
+          g.id,
+          addr(),
+          'membership rule edited',
+        );
+      }
     });
+
+    for (const g of GROUPS) {
+      db.prepare(
+        `INSERT INTO group_members (group_id, device_id) SELECT ?, id FROM devices WHERE ${g.where}`,
+      ).run(g.id);
+    }
   })();
+
+  rollUpGroups(db);
+}
+
+/**
+ * The five figures a group shows, counted from its materialised membership.
+ *
+ * Correlated subqueries rather than a query per group: SQLite runs this once
+ * over sixteen rows, and the alternative is sixteen round trips that each
+ * scan the same quarter of a million membership rows.
+ */
+function rollUpGroups(db: Db): void {
+  db.exec(`
+    UPDATE device_groups SET
+      members = (SELECT COUNT(*) FROM group_members m
+                  WHERE m.group_id = device_groups.id),
+      online = (SELECT COUNT(*) FROM group_members m JOIN devices d ON d.id = m.device_id
+                 WHERE m.group_id = device_groups.id AND d.status = 'online'),
+      offline = (SELECT COUNT(*) FROM group_members m JOIN devices d ON d.id = m.device_id
+                  WHERE m.group_id = device_groups.id AND d.status <> 'online'),
+      missing_patches = (SELECT COUNT(*) FROM group_members m JOIN devices d ON d.id = m.device_id
+                          WHERE m.group_id = device_groups.id AND d.pending_patches > 0),
+      sub_groups = (SELECT COUNT(*) FROM device_groups c WHERE c.parent_id = device_groups.id);
+    ANALYZE;
+  `);
 }
 
 function seedConfigChecks(db: Db, rng: Rng, deviceCount: number): void {

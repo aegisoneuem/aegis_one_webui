@@ -259,14 +259,46 @@ export type LiveJobResult = {
   finishedAt: string | null;
 };
 
+/** The contract's Group: a node in the tree, with its rolled-up figures. */
 export type DeviceGroup = {
   id: string;
   name: string;
-  kind: string;
+  kind: 'static' | 'dynamic';
+  parentId: string | null;
+  members: number;
+  online: number;
+  offline: number;
+  missingPatches: number;
+  subGroups: number;
+};
+
+/** The contract's GroupsSummary — the four counters above the tree. */
+export type GroupsSummary = {
+  groups: number;
+  subGroups: number;
+  grouped: number;
+  notGrouped: number;
+};
+
+/**
+ * The contract's AuditEntry. Narrower than the console's own audit row, which
+ * the Administration log reads: this is what an object's own history shows.
+ */
+export type GroupHistoryEntry = {
+  id: string;
+  at: string;
+  actor: string;
+  action: string;
+  target: string;
+  ip?: string;
+  outcome?: string;
+};
+
+/** The contract's GroupDetail: a Group plus what the detail pane's tabs read. */
+export type GroupDetail = DeviceGroup & {
   rule: string | null;
-  memberCount: number;
-  createdAt: string;
-  createdBy: string;
+  policies: string[];
+  history: GroupHistoryEntry[];
 };
 
 export type ConfigCheck = {

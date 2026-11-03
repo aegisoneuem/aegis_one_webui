@@ -1,0 +1,604 @@
+/*
+ * Device Groups — geometry read from design-reference/Aegis-One-Console-v129.html
+ * (the Device Groups page). Colours are the approved tokens.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.heading {
+  display: flex;
+  gap: var(--ui-space-7);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--ao-brand-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.9px;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 17px;
+  height: 1px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: 9px;
+  align-items: center;
+}
+
+/* Estate counters -------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 13px;
+  margin-bottom: var(--ui-space-7);
+}
+
+.kpi,
+.kpiDark {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 84px;
+  padding: 14px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+/* The reference inverts the first tile — the estate's own figure. */
+.kpiDark {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+}
+
+.kpiLabel {
+  color: var(--ao-navy-mid);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.kpiDark .kpiLabel {
+  color: var(--ao-brand-hi);
+}
+
+.kpiValue {
+  color: var(--ao-navy);
+  font-family: var(--ui-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.kpiDark .kpiValue {
+  color: var(--ao-surface);
+}
+
+.kpiSuffix {
+  margin-left: 7px;
+  color: var(--ao-muted);
+  font-size: 19px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.kpiSkeleton {
+  height: 84px;
+}
+
+/* Split ------------------------------------------------------------------ */
+
+.split {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--ui-space-6);
+  align-items: start;
+}
+
+/* Tree ------------------------------------------------------------------- */
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  max-height: 1280px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.treeHead {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.treeHead b {
+  color: var(--ao-navy-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.allComputers {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  padding: 9px 12px 9px 10px;
+  border-bottom: 1px solid var(--ao-border);
+  color: var(--ao-sidebar);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.treeList {
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.treeItem,
+.treeItemOn {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  width: 100%;
+  padding: 9px 12px 9px 10px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* The selected group is inverted, with the gold rule the sidebar uses. */
+.treeItemOn {
+  border-left-color: var(--ao-brand-hi);
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.treeItem:hover {
+  background: var(--ui-surface-hover);
+}
+
+.treeItem:focus-visible,
+.treeItemOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* A child is indented rather than drawn with a connector, as in v129. */
+.treeChild {
+  padding-left: 32px;
+}
+
+.treeName {
+  flex: 1;
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* D for dynamic, S for static — the reference's own one-letter badge. */
+.treeKind {
+  flex: none;
+  padding: 2px 4px;
+  border: 1px solid var(--ao-navy-mid);
+  color: var(--ao-navy-mid);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 10px;
+}
+
+.treeItemOn .treeKind {
+  border-color: var(--ao-sidebar-text);
+  color: var(--ao-sidebar-text);
+}
+
+.treeCount {
+  flex: none;
+  min-width: 22px;
+  color: var(--ao-navy);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.treeItemOn .treeCount {
+  color: var(--ao-brand-hi);
+}
+
+.treeSkeleton {
+  height: 38px;
+  margin: 0 10px 2px;
+}
+
+/* Detail pane ------------------------------------------------------------ */
+
+.main {
+  min-width: 0;
+  padding: 20px 24px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.paneHead {
+  display: flex;
+  gap: var(--ui-space-6);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.paneTitle {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: center;
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.tag {
+  color: var(--ao-navy-mid);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.46px;
+  text-transform: uppercase;
+}
+
+.paneActions {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-4);
+}
+
+.paneSkeleton {
+  height: 420px;
+}
+
+/* The five figures ------------------------------------------------------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--ao-border);
+  margin: var(--ui-space-6) 0;
+}
+
+.stat,
+.statDark {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  padding: 12px 16px;
+}
+
+/* The reference inverts the first one, which is the group's own total. */
+.statDark {
+  background: var(--ao-sidebar);
+}
+
+.stat + .stat,
+.stat + .statDark {
+  border-left: 1px solid var(--ao-border);
+}
+
+.statLabel {
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.statDark .statLabel {
+  color: var(--ao-brand-hi);
+}
+
+.statValue {
+  color: var(--ao-navy);
+  font-family: var(--ui-font-display);
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 26px;
+}
+
+.statDark .statValue {
+  color: var(--ao-surface);
+}
+
+/* Tabs ------------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  border: 1px solid var(--ao-border);
+  margin-bottom: var(--ui-space-6);
+  background: var(--ao-surface);
+}
+
+.tab,
+.tabOn {
+  display: flex;
+  flex: 1;
+  gap: var(--ui-space-4);
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.tabOn {
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.tab:not(:disabled):hover {
+  background: var(--ui-surface-hover);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.tabCount {
+  min-width: 16px;
+  padding: 0 4px;
+  background: var(--ao-brand-hi);
+  color: var(--ao-sidebar);
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Member tools ----------------------------------------------------------- */
+
+.tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.segmented {
+  display: flex;
+  flex: none;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.seg,
+.segOn {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.segOn {
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.seg:hover {
+  background: var(--ui-surface-hover);
+}
+
+.seg:focus-visible,
+.segOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.seg b,
+.segOn b {
+  font-variant-numeric: tabular-nums;
+}
+
+.toolSearch {
+  flex: none;
+  width: 320px;
+}
+
+/* Member grid ------------------------------------------------------------ */
+
+.table {
+  --ui-row-height: 65px;
+  --ui-table-head-height: 41px;
+}
+
+.deviceName {
+  color: var(--st-info);
+  font-weight: 650;
+}
+
+.mono {
+  color: var(--ao-sidebar);
+  font-family: var(--ui-font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* Other tabs ------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.card:hover {
+  border-color: var(--ao-brand);
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.cardName {
+  color: var(--ao-navy-ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.cardMeta {
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ui-space-6);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--ao-neutral);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 4px 0 0;
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+}
+
+.list,
+.history {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.list li {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ao-border);
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.history li {
+  display: grid;
+  grid-template-columns: 190px 1fr 160px;
+  gap: var(--ui-space-5);
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ao-border);
+  font-size: 13px;
+}
+
+.historyAt {
+  color: var(--ao-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.historyAction {
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+}
+
+.historyActor {
+  color: var(--ao-muted);
+}
+
+/* Tones ------------------------------------------------------------------ */
+
+.good {
+  color: var(--st-good);
+  font-weight: 700;
+}
+
+.bad {
+  color: var(--st-bad);
+  font-weight: 700;
+}
+
+.warn {
+  color: var(--st-warn);
+  font-weight: 700;
+}
+
+.empty {
+  padding: 40px 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+  text-align: center;
+}

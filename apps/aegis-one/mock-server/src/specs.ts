@@ -202,6 +202,7 @@ export const liveJobsSpec: TableSpec = {
   },
 };
 
+/** Field names are the contract's Group and GroupDetail. */
 export const groupsSpec: TableSpec = {
   table: 'device_groups',
   idColumn: 'id',
@@ -211,8 +212,14 @@ export const groupsSpec: TableSpec = {
     id,
     name: { column: 'name', sortable: true, filters: ['like'] },
     kind: { column: 'kind', sortable: true, filters: ['eq', 'in'] },
+    parentId: { column: 'parent_id', filters: ['eq'] },
     rule: { column: 'rule' },
-    memberCount: { column: 'member_count', sortable: true, filters: ['gte', 'lte'] },
+    policies: { column: 'policies' },
+    members: { column: 'members', sortable: true, filters: ['gte', 'lte'] },
+    online: { column: 'online', sortable: true },
+    offline: { column: 'offline', sortable: true },
+    missingPatches: { column: 'missing_patches', sortable: true },
+    subGroups: { column: 'sub_groups', sortable: true },
     createdAt: { column: 'created_at', sortable: true },
     createdBy: { column: 'created_by', sortable: true, filters: ['eq'] },
   },

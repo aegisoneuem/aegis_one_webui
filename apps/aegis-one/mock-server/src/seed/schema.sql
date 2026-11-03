@@ -217,15 +217,40 @@ CREATE TABLE device_vulnerabilities (
 
 CREATE INDEX idx_devvuln_vuln ON device_vulnerabilities(vulnerability_id, state);
 
+-- Column names follow the contract's Group and GroupDetail. A group is a
+-- node in a tree: parent_id is null at the top, and the five figures below
+-- are rolled up from real membership rather than stated.
 CREATE TABLE device_groups (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   kind TEXT NOT NULL,
+  parent_id TEXT REFERENCES device_groups(id),
   rule TEXT,
-  member_count INTEGER NOT NULL,
+  -- The policies applied to the group, one per line. SQLite has no array
+  -- type and the contract declares a list of names, not of objects.
+  policies TEXT NOT NULL DEFAULT '',
+  members INTEGER NOT NULL DEFAULT 0,
+  online INTEGER NOT NULL DEFAULT 0,
+  offline INTEGER NOT NULL DEFAULT 0,
+  missing_patches INTEGER NOT NULL DEFAULT 0,
+  sub_groups INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   created_by TEXT NOT NULL
 );
+
+CREATE INDEX idx_device_groups_parent ON device_groups(parent_id);
+
+-- Membership is materialised. A dynamic group's rule is evaluated once at
+-- seed time, so the member list, the per-group figures and a deployment's
+-- resolved targets all come from the same rows rather than from three
+-- separate guesses.
+CREATE TABLE group_members (
+  group_id TEXT NOT NULL REFERENCES device_groups(id),
+  device_id TEXT NOT NULL REFERENCES devices(id),
+  PRIMARY KEY (group_id, device_id)
+);
+
+CREATE INDEX idx_group_members_device ON group_members(device_id);
 
 CREATE TABLE config_checks (
   id TEXT PRIMARY KEY,

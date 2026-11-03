@@ -313,6 +313,50 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('heading', { name: 'Google Chrome' })).toBeVisible();
   });
 
+  test('Enrollment shows its counters, methods and token grid', async ({ page }) => {
+    await page.goto('/enrollment');
+    await expect(page.getByRole('heading', { name: 'Enrollment', exact: true })).toBeVisible();
+
+    for (const label of [
+      'Enrolled Endpoints',
+      'On Latest Agent',
+      'Active Tokens',
+      'Not Checking in',
+    ]) {
+      await expect(page.getByText(label, { exact: true })).toBeVisible();
+    }
+
+    // The four ways in, each with the state the server computed.
+    for (const method of [
+      'Agent Installer',
+      'Directory Auto-Enroll',
+      'Imaging & VDI',
+      'Bulk Import',
+    ]) {
+      await expect(page.getByText(method, { exact: true })).toBeVisible();
+    }
+    // An identity integration is connected in the fixture.
+    await expect(page.getByText('Configured', { exact: true })).toBeVisible();
+
+    const rows = page.locator('table tbody tr');
+    await expect(rows.first()).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Target Group' })).toBeVisible();
+  });
+
+  test('the install command switches platform and never shows a real token', async ({ page }) => {
+    await page.goto('/enrollment');
+    const code = page.locator('pre');
+    await expect(code).toContainText('msiexec');
+    await expect(code).toContainText('<ENROLLMENT_TOKEN>');
+
+    await page.getByRole('button', { name: 'Linux', exact: true }).click();
+    await expect(code).toContainText('dpkg');
+    await expect(code).toContainText('<ENROLLMENT_TOKEN>');
+
+    // Whatever the platform, no token prefix or secret reaches the screen.
+    await expect(page.locator('body')).not.toContainText('enr_');
+  });
+
   test('Device groups is a tree beside the selected group', async ({ page }) => {
     await page.goto('/groups');
     await expect(page.getByRole('heading', { name: 'Device Groups' })).toBeVisible();

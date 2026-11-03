@@ -384,23 +384,3 @@ export const apiTokensSpec: TableSpec = {
     revokedAt: { column: 'revoked_at', filters: ['eq'] },
   },
 };
-
-export const enrollmentTokensSpec: TableSpec = {
-  table: 'enrollment_tokens',
-  idColumn: 'id',
-  searchColumns: ['name'],
-  defaultSort: { field: 'createdAt', desc: true },
-  columns: {
-    id,
-    name: { column: 'name', sortable: true, filters: ['like'] },
-    platform: { column: 'platform', sortable: true, filters: ['eq', 'in'] },
-    zoneId: { column: 'zone_id', filters: ['eq', 'in'] },
-    prefix: { column: 'prefix' },
-    uses: { column: 'uses', sortable: true },
-    maxUses: { column: 'max_uses' },
-    expiresAt: { column: 'expires_at', sortable: true },
-    createdAt: { column: 'created_at', sortable: true },
-    createdBy: { column: 'created_by', filters: ['eq'] },
-    revokedAt: { column: 'revoked_at', filters: ['eq'] },
-  },
-};

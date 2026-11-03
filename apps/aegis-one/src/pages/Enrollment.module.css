@@ -1,0 +1,439 @@
+/*
+ * Enrollment — geometry read from design-reference/Aegis-One-Console-v129.html
+ * (the Enrollment page). Colours are the approved tokens.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.heading {
+  display: flex;
+  gap: var(--ui-space-7);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--ao-brand-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.9px;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 17px;
+  height: 1px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: 9px;
+  align-items: center;
+}
+
+/* Counters --------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 13px;
+  margin-bottom: var(--ui-space-7);
+}
+
+.kpi,
+.kpiDark {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 84px;
+  padding: 14px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+/* The reference inverts the first tile — the estate's own figure. */
+.kpiDark {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+}
+
+.kpiLabel {
+  color: var(--ao-navy-mid);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.kpiDark .kpiLabel {
+  color: var(--ao-brand-hi);
+}
+
+.kpiValue {
+  color: var(--ao-navy);
+  font-family: var(--ui-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.kpiDark .kpiValue {
+  color: var(--ao-surface);
+}
+
+.kpiSuffix {
+  margin-left: 7px;
+  color: var(--ao-muted);
+  font-size: 19px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.kpiCaption {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.kpiDark .kpiCaption {
+  color: var(--ao-sidebar-text);
+}
+
+/* The one figure that asks for attention rather than reporting. */
+.amber {
+  color: var(--ao-warning);
+}
+
+.kpiSkeleton {
+  height: 84px;
+}
+
+/* Panels ----------------------------------------------------------------- */
+
+/* The reference runs these 59 / 41 with a 20px gutter. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 59fr) minmax(0, 41fr);
+  gap: var(--ui-space-7);
+  align-items: start;
+  margin-bottom: var(--ui-space-7);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ao-border);
+  margin-bottom: var(--ui-space-7);
+  background: var(--ao-surface);
+}
+
+.split .panel {
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.panelHead {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 21px 22px 12px;
+}
+
+/* Every panel title in v129 carries a gold rule down its left edge. */
+.panelTitle {
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 20px;
+}
+
+.panelSkeleton {
+  height: 180px;
+  margin: 0 22px 22px;
+}
+
+/* Enrollment methods ----------------------------------------------------- */
+
+.methods {
+  padding: 0 22px 8px;
+}
+
+.method {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px;
+  gap: var(--ui-space-6);
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.method:last-child {
+  border-bottom: 0;
+}
+
+.method b {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ao-navy);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.method p {
+  margin: 0;
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+  line-height: 18.75px;
+}
+
+/* Platform bars ---------------------------------------------------------- */
+
+.bars {
+  padding: 6px 22px 14px;
+}
+
+.plot {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ui-space-6);
+  align-items: end;
+  height: 176px;
+  padding-top: 24px;
+  border-bottom: 1px solid var(--ao-neutral);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 0;
+  height: 100%;
+}
+
+.columnValue {
+  margin-bottom: 4px;
+  color: var(--ao-navy);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The bar is the rest of the column once the value label has taken its
+   line. Positioned, so the svg takes that box rather than its own intrinsic
+   1:100 ratio, which would run it down the page. */
+.columnBox {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 56px;
+}
+
+.columnTrack {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: var(--ui-series-2);
+}
+
+.axis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ui-space-6);
+  margin-top: var(--ui-space-4);
+  color: var(--ao-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Install command -------------------------------------------------------- */
+
+.commandHead {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 21px 22px 12px;
+}
+
+.segmented {
+  display: flex;
+  flex: none;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.seg,
+.segOn {
+  min-height: 32px;
+  padding: 8px 14px;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.segOn {
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.seg:hover {
+  background: var(--ui-surface-hover);
+}
+
+.seg:focus-visible,
+.segOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.code {
+  padding: 14px 16px;
+  margin: 0 22px 12px;
+  background: var(--ao-navy-ink);
+  color: var(--ao-border);
+  font-family: var(--ui-font-mono);
+  font-size: 12.5px;
+  line-height: 18.125px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.commandRow {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  padding: 0 22px 20px;
+}
+
+.muted {
+  color: var(--ao-muted);
+  font-size: 12.5px;
+  line-height: 18.125px;
+}
+
+/* Tokens ----------------------------------------------------------------- */
+
+.tableHead {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 12px 16px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--ao-border);
+  color: var(--ao-text);
+  font-size: 13px;
+  line-height: 20.8px;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table td b {
+  color: var(--ao-navy);
+  font-weight: 650;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Tones ------------------------------------------------------------------ */
+
+.good {
+  color: var(--st-good);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.info {
+  color: var(--st-info);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.bad {
+  color: var(--st-bad);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.method .muted,
+.table .muted {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.empty {
+  padding: 40px 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+  text-align: center;
+}

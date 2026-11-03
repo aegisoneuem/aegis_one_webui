@@ -10,12 +10,14 @@ import {
   type IdpStore,
   type MockUser,
 } from '@aegis/mock-core';
+import { AGENT_VERSIONS } from './seed/catalog';
 import { DEFAULT_DEVICE_COUNT, DEFAULT_SEED, seedDatabase } from './seed/seed';
 import { registerAuthRoutes } from './routes/auth';
 import { registerResourceRoutes } from './routes/resources';
 import { registerDeviceRoutes } from './routes/devices';
 import { registerActionRoutes } from './routes/actions';
 import { registerAggregateRoutes } from './routes/aggregates';
+import { registerEnrollmentRoutes } from './routes/enrollment';
 import { registerGroupRoutes } from './routes/groups';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -134,6 +136,7 @@ export async function start(): Promise<void> {
   registerDeviceRoutes(app, db, BASE_PATH);
   registerActionRoutes(app, db, BASE_PATH);
   registerGroupRoutes(app, db, BASE_PATH);
+  registerEnrollmentRoutes(app, db, BASE_PATH, AGENT_VERSIONS[0]);
   // Last, so its generic `/:id` detail routes cannot shadow a specific one
   // such as `/devices/facets`.
   registerResourceRoutes(app, db, BASE_PATH);

@@ -1707,24 +1707,49 @@ function seedTokens(db: Db, rng: Rng): void {
   })();
 
   const insertEnrol = db.prepare(`INSERT INTO enrollment_tokens
-    (id,name,platform,zone_id,prefix,token_hash,uses,max_uses,expires_at,created_at,created_by,revoked_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`);
+    (id,name,platform,zone_id,target_group_id,prefix,token_hash,uses,max_uses,expires_at,created_at,created_by,revoked_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+
+  /*
+   * A token names the group an endpoint joins on first check-in, so each one
+   * points at a group that exists. The reference's own three tokens have all
+   * expired, which leaves its Active Tokens counter reading zero and never
+   * exercises the other two states; ours carries one of each.
+   */
+  const enrolments: readonly (readonly [
+    string,
+    string,
+    string,
+    'active' | 'expired' | 'revoked',
+  ])[] = [
+    ['Branch laptops — standard build', 'windows', 'grp-win-ws', 'active'],
+    ['Mac onboarding', 'macos', 'grp-macos', 'active'],
+    ['Linux build agents', 'linux', 'grp-linux', 'active'],
+    ['Q3 imaging batch', 'windows', 'grp-win-10', 'expired'],
+    ['Contractor laptops — withdrawn', 'windows', 'grp-pilot', 'revoked'],
+  ];
+
   db.transaction(() => {
-    ZONES.slice(0, 5).forEach((zone, i) => {
+    enrolments.forEach(([name, platform, groupId, state], i) => {
       const secret = `enr_${randomUUID().replace(/-/g, '')}`;
+      // The zone column predates the contract's EnrollmentToken, which names
+      // a group rather than a zone. It is kept and filled round-robin.
+      const zone = ZONES[i % ZONES.length];
+      if (!zone) return;
       insertEnrol.run(
         `enr-${String(800 + i)}`,
-        `${zone.name} — standard build`,
-        rng.pick(['windows', 'linux', 'macos']),
+        name,
+        platform,
         zone.id,
+        groupId,
         secret.slice(0, 11),
         createHash('sha256').update(secret).digest('hex'),
         rng.int(4, 1840),
         rng.chance(0.5) ? 5000 : null,
-        iso(NOW + rng.int(10, 180) * 86_400_000),
-        daysAgo(rng.int(10, 400)),
+        state === 'expired' ? daysAgo(rng.int(5, 60)) : iso(NOW + rng.int(10, 180) * 86_400_000),
+        daysAgo(rng.int(70, 400)),
         'r.deshpande',
-        null,
+        state === 'revoked' ? daysAgo(rng.int(1, 40)) : null,
       );
     });
   })();

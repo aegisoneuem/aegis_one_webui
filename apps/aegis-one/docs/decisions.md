@@ -472,3 +472,23 @@ It costs about 250,000 rows for sixteen groups over 50,000 devices, and one
 group's membership is a query the server runs, not a table it keeps; the
 rollup here stands in for that, as D-027 does for the patch summary. See
 handover-backend.md 18.
+
+## D-032 — Enrollment methods are product capabilities, with one real state
+
+v129's Enrollment page has a panel of four ways an endpoint can join — Agent
+Installer, Directory Auto-Enroll, Imaging & VDI, Bulk Import — each with a
+state badge. Nothing in the contract carried it, so `EnrollmentSummary` gains
+a `methods` array.
+
+Only one of the four states is a fact about an estate. **Directory
+Auto-Enroll** reads `configured` when an identity integration is connected and
+`not-configured` otherwise, which the server derives from `integrations`. The
+other three are fixed, and that is honest rather than lazy: the agent
+installer always works wherever tokens exist, Imaging & VDI is a documented
+path with nothing to configure, and nothing in this build accepts a CSV of
+serial numbers.
+
+The names and the one-line descriptions are the reference's own copy, read out
+of it rather than written here. They are served by the API rather than carried
+in the page, because a capability appearing or disappearing is a server fact —
+a console that hard-codes four methods cannot ever show a fifth.

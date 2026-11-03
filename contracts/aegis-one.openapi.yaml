@@ -3880,20 +3880,34 @@ components:
       additionalProperties: false
       required:
       - enrolled
+      - online
       - onLatestAgent
+      - latestAgentVersion
       - activeTokens
+      - totalTokens
       - notCheckingIn
       - byPlatform
       - installCommands
+      - methods
       properties:
         enrolled:
           type: integer
+        online:
+          type: integer
+          description: Enrolled endpoints checking in right now.
         onLatestAgent:
           type: integer
+        latestAgentVersion:
+          type: string
+          description: The newest agent release the estate is measured against.
         activeTokens:
           type: integer
+        totalTokens:
+          type: integer
+          description: Active, expired and revoked together.
         notCheckingIn:
           type: integer
+          description: Enrolled but not seen for seven days or more.
         byPlatform:
           type: object
           additionalProperties: false
@@ -3914,6 +3928,31 @@ components:
               type: string
             linux:
               type: string
+        methods:
+          description: The ways an endpoint can be enrolled, and the state of each.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - name
+            - description
+            - state
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              state:
+                type: string
+                enum:
+                - ready
+                - configured
+                - available
+                - not-configured
     EnrollmentTokenInput:
       type: object
       additionalProperties: false

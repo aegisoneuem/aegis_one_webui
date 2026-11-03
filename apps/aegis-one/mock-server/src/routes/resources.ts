@@ -13,7 +13,6 @@ import {
   configChecksSpec,
   deploymentsSpec,
   devicesSpec,
-  enrollmentTokensSpec,
   integrationsSpec,
   liveJobsSpec,
   logBundlesSpec,
@@ -174,7 +173,6 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'integrations', spec: integrationsSpec },
   { path: 'admin/users', spec: usersSpec, jsonFields: ['zoneIds'] },
   { path: 'admin/tokens', spec: apiTokensSpec, jsonFields: ['scopes'] },
-  { path: 'enrollment/tokens', spec: enrollmentTokensSpec },
 ];
 
 /** SQLite has no boolean, so 0/1 columns come back as numbers. */

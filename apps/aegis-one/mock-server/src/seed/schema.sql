@@ -443,11 +443,15 @@ CREATE TABLE reports (
   custom INTEGER NOT NULL DEFAULT 0
 );
 
+-- A token names the group an endpoint joins on first check-in, which is what
+-- the contract's EnrollmentToken carries and what the approved grid shows.
+-- The secret itself is never stored, only its hash and its prefix.
 CREATE TABLE enrollment_tokens (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   platform TEXT NOT NULL,
   zone_id TEXT NOT NULL REFERENCES zones(id),
+  target_group_id TEXT REFERENCES device_groups(id),
   prefix TEXT NOT NULL,
   token_hash TEXT NOT NULL,
   uses INTEGER NOT NULL DEFAULT 0,

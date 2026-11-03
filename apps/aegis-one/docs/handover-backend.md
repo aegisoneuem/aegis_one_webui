@@ -321,3 +321,15 @@ you.
     `PATCH /groups/{groupId}`, `POST /groups/import` (text/csv) and
     `POST /groups/directory-sync` (returns a `Job`). The approved design has a
     control for each; all four are rendered and disabled.
+20. **`byPlatform` has three keys and the estate has four platforms.** The
+    Enrollment chart declares windows, macos and linux. This estate also runs
+    AIX, so the bars total 43,008 against 50,000 enrolled and the chart cannot
+    be read as a breakdown of the whole. Either add the remaining platforms,
+    add an `other` bucket, or state that the chart covers the three managed
+    desktop platforms only.
+21. **Two enrollment writes are declared and unserved.**
+    `POST /enrollment/tokens` (returns `EnrollmentTokenCreated`, the only time
+    the secret is ever returned) and `DELETE /enrollment/tokens/{tokenId}`.
+    The approved page has a Create Token action; it is rendered and disabled.
+    Note the one-time-secret contract: whatever serves the POST must return
+    the secret once and store only its hash, which is what the seed does.

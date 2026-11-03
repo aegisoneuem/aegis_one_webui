@@ -403,18 +403,38 @@ export type ApiToken = {
   revokedAt: string | null;
 };
 
+/** The contract's EnrollmentToken. The secret is never returned after creation. */
 export type EnrollmentToken = {
   id: string;
   name: string;
-  platform: string;
-  zoneId: string;
-  prefix: string;
+  targetGroup: string | null;
+  createdAt: string;
+  expiresAt: string;
   uses: number;
   maxUses: number | null;
-  expiresAt: string;
-  createdAt: string;
-  createdBy: string;
-  revokedAt: string | null;
+  status: 'active' | 'expired' | 'revoked';
+};
+
+/** One of the four ways an endpoint can be enrolled, and where it stands. */
+export type EnrollmentMethod = {
+  id: string;
+  name: string;
+  description: string;
+  state: 'ready' | 'configured' | 'available' | 'not-configured';
+};
+
+/** The contract's EnrollmentSummary: the four counters, the split and the commands. */
+export type EnrollmentSummary = {
+  enrolled: number;
+  online: number;
+  onLatestAgent: number;
+  latestAgentVersion: string;
+  activeTokens: number;
+  totalTokens: number;
+  notCheckingIn: number;
+  byPlatform: { windows: number; macos: number; linux: number };
+  installCommands: { windows: string; macos: string; linux: string };
+  methods: EnrollmentMethod[];
 };
 
 export type RoleDefinition = {

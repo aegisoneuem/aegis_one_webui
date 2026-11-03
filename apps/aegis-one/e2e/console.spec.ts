@@ -313,6 +313,62 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('heading', { name: 'Google Chrome' })).toBeVisible();
   });
 
+  test('Deployments shows its six counters over a grid of actions', async ({ page }) => {
+    await page.goto('/deployments');
+    await expect(page.getByRole('heading', { name: 'Deployments' })).toBeVisible();
+
+    // By role, because two of these labels are also status words in the grid.
+    for (const label of [
+      'All Actions',
+      'Active / waiting',
+      'Scheduled',
+      'Completed',
+      'With Failures',
+      'Paused / cancelled',
+    ]) {
+      await expect(page.getByRole('button', { name: new RegExp(`^${label}`) })).toBeVisible();
+    }
+
+    const rows = page.getByRole('table', { name: 'Deployments' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    // Every row carries its own result breakdown and its target sample.
+    await expect(rows.first()).toContainText(/\d+ done/);
+    await expect(rows.first()).toContainText(/Results Recorded/);
+    await expect(rows.first().getByRole('button', { name: 'View Details' })).toBeVisible();
+  });
+
+  test('a Deployments counter narrows the grid without moving the counters', async ({ page }) => {
+    await page.goto('/deployments');
+    const all = page.getByRole('button', { name: /All Actions/ });
+    const scheduled = page.getByRole('button', { name: /^Scheduled/ });
+    await expect(all).toBeVisible();
+    const total = (await all.innerText()).replace(/\D/g, '');
+
+    await scheduled.click();
+    await expect(scheduled).toHaveAttribute('aria-pressed', 'true');
+
+    // The counters count every action, so they do not follow the filter.
+    await expect(all).toContainText(total);
+    // Everything left is scheduled, and a scheduled action says when it starts.
+    const rows = page.getByRole('table', { name: 'Deployments' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    for (const row of await rows.allInnerTexts()) {
+      expect(row).toContain('Scheduled');
+      expect(row).toContain('Starts');
+    }
+  });
+
+  test('an action opens its detail from the grid', async ({ page }) => {
+    await page.goto('/deployments');
+    const rows = page.getByRole('table', { name: 'Deployments' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    const name = await rows.first().locator('button').first().innerText();
+
+    await rows.first().getByRole('button', { name: 'View Details' }).click();
+    await expect(page).toHaveURL(/\/deployments\/dep-/);
+    await expect(page.getByRole('heading', { name })).toBeVisible();
+  });
+
   test('a device opens, and its tabs are deep-linkable', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('table', { name: 'Devices' }).locator('tbody tr').first().click();
@@ -425,7 +481,10 @@ test.describe('role restrictions', () => {
     await signIn(page, ACCOUNTS.readOnly);
 
     await page.goto('/deployments');
-    await expect(page.getByRole('button', { name: 'New action' })).toHaveCount(0);
+    // The reference shows this action to everyone, so it is rendered and
+    // disabled rather than hidden — as on the software catalogue. The
+    // permission itself is enforced on the endpoint, not by the button.
+    await expect(page.getByRole('button', { name: '+ New action' })).toBeDisabled();
 
     await page.goto('/devices');
     // No checkbox column: selection exists to drive actions this role lacks.

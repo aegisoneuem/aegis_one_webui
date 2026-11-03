@@ -238,23 +238,33 @@ CREATE TABLE config_checks (
   exception_count INTEGER NOT NULL
 );
 
+-- Column names follow the contract's DeploymentSummary: the action's package,
+-- who triggered it and when, when a scheduled one starts, and the three result
+-- counts the grid draws.
 CREATE TABLE deployments (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   type TEXT NOT NULL,
   status TEXT NOT NULL,
-  content TEXT NOT NULL,
+  package TEXT NOT NULL,
   target_count INTEGER NOT NULL,
-  succeeded INTEGER NOT NULL,
+  -- The first few target hostnames, materialised at seed time. The grid shows
+  -- them under the count on every row, and joining per row to find three names
+  -- would be a scan of deployment_results for a line of secondary text.
+  target_preview TEXT NOT NULL DEFAULT '',
+  done INTEGER NOT NULL,
   failed INTEGER NOT NULL,
   pending INTEGER NOT NULL,
-  created_at TEXT NOT NULL,
-  created_by TEXT NOT NULL,
-  scheduled_at TEXT,
+  triggered_at TEXT NOT NULL,
+  triggered_by TEXT NOT NULL,
+  starts_at TEXT,
   completed_at TEXT,
   wake_offline_first INTEGER NOT NULL DEFAULT 0,
   notes TEXT
 );
+
+-- The six counters above the grid are counted by status on every load.
+CREATE INDEX idx_deployments_status ON deployments(status);
 
 CREATE TABLE deployment_results (
   deployment_id TEXT NOT NULL REFERENCES deployments(id),

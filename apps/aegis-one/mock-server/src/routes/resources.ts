@@ -73,6 +73,12 @@ interface ResourceDef {
    * the whole catalogue rather than the page in hand.
    */
   envelope?: (db: Db) => Record<string, unknown>;
+  /**
+   * Last word on a row's shape, for a contract that nests what the table
+   * keeps flat. It runs after the boolean and JSON handling, so it sees the
+   * row as it would otherwise have gone out.
+   */
+  shape?: (row: Record<string, unknown>) => Record<string, unknown>;
 }
 
 /**
@@ -105,6 +111,24 @@ function softwareCounts(db: Db): Record<string, unknown> {
  * it asks for the updates outstanding on endpoints running that version, which
  * is a join, so it is resolved to a list of ids first.
  */
+/**
+ * The contract keeps a deployment's three result figures in one `counts`
+ * object and its target sample as a list; the table keeps both flat, because
+ * a column is what a filter and a sort can reach.
+ */
+function shapeDeployment(row: Record<string, unknown>): Record<string, unknown> {
+  const { done, failed, pending, targetPreview, ...rest } = row;
+  return {
+    ...rest,
+    ...(targetPreview === undefined
+      ? {}
+      : { targetPreview: String(targetPreview).split(',').filter(Boolean) }),
+    ...(done === undefined && failed === undefined && pending === undefined
+      ? {}
+      : { counts: { done, failed, pending } }),
+  };
+}
+
 function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): void {
   // A repeated parameter arrives as an array; these three each name one value.
   const first = (key: string): string | undefined => {
@@ -140,7 +164,7 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'software', spec: softwareSpec, envelope: softwareCounts },
   { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
   { path: 'vulnerabilities', spec: vulnerabilitiesSpec },
-  { path: 'deployments', spec: deploymentsSpec },
+  { path: 'deployments', spec: deploymentsSpec, shape: shapeDeployment },
   { path: 'liveops/script-jobs', spec: liveJobsSpec },
   { path: 'groups', spec: groupsSpec },
   { path: 'profiles/checks', spec: configChecksSpec },
@@ -192,7 +216,11 @@ function safeParse(value: string): unknown {
 
 export function registerResourceRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   for (const resource of RESOURCES) {
-    const { path, spec, zoneScoped, jsonFields, derive, envelope } = resource;
+    const { path, spec, zoneScoped, jsonFields, derive, envelope, shape } = resource;
+    const dress = (row: Record<string, unknown>): Record<string, unknown> => {
+      const shaped = shapeRow(row, jsonFields);
+      return shape ? shape(shaped) : shaped;
+    };
 
     app.get(`${basePath}/${path}`, async (request) => {
       const scope = zoneScoped && request.auth ? zoneScope(request.auth) : undefined;
@@ -200,7 +228,7 @@ export function registerResourceRoutes(app: FastifyInstance, db: Db, basePath: s
       if (derive) derive(db, query.filters ?? {});
       const result = listRows<Record<string, unknown>>(db, spec, query, scope ? { scope } : {});
       return {
-        items: result.items.map((row) => shapeRow(row, jsonFields)),
+        items: result.items.map(dress),
         page: result.page,
         ...(envelope ? envelope(db) : {}),
       };
@@ -223,7 +251,7 @@ export function registerResourceRoutes(app: FastifyInstance, db: Db, basePath: s
       const row = result.items[0];
       // Outside the caller's zones is 404, not 403: a 403 would confirm the id exists.
       if (!row) throw notFound();
-      return shapeRow(row, jsonFields);
+      return dress(row);
     });
   }
 }

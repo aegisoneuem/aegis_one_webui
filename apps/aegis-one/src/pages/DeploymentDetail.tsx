@@ -39,14 +39,14 @@ export default function DeploymentDetail() {
   if (deployment.isLoading || !deployment.data) return <Skeleton className={styles.summary} />;
 
   const d = deployment.data;
-  const done = d.succeeded + d.failed;
+  const reported = d.counts.done + d.counts.failed;
   const rows = results.data?.items ?? [];
 
   return (
     <div className={styles.page}>
       <PageHeader
         title={d.name}
-        description={`${humanise(d.type)} · ${d.content} · created by ${d.createdBy} ${relative(d.createdAt).toLowerCase()}`}
+        description={`${humanise(d.type)} · ${d.package} · triggered by ${d.triggeredBy} ${relative(d.triggeredAt).toLowerCase()}`}
         actions={
           <StatusPill dot tone={toneFor(d.status)}>
             {humanise(d.status)}
@@ -58,23 +58,33 @@ export default function DeploymentDetail() {
         <KpiTile label="Targets" value={num(d.targetCount)} />
         <KpiTile
           label="Succeeded"
-          value={num(d.succeeded)}
+          value={num(d.counts.done)}
           tone="good"
-          caption={done > 0 ? `${pct((d.succeeded / done) * 100, 0)} of completed` : undefined}
+          caption={
+            reported > 0 ? `${pct((d.counts.done / reported) * 100, 0)} of reported` : undefined
+          }
         />
-        <KpiTile label="Failed" value={num(d.failed)} tone={d.failed > 0 ? 'bad' : 'neutral'} />
-        <KpiTile label="Pending" value={num(d.pending)} tone={d.pending > 0 ? 'warn' : 'neutral'} />
+        <KpiTile
+          label="Failed"
+          value={num(d.counts.failed)}
+          tone={d.counts.failed > 0 ? 'bad' : 'neutral'}
+        />
+        <KpiTile
+          label="Pending"
+          value={num(d.counts.pending)}
+          tone={d.counts.pending > 0 ? 'warn' : 'neutral'}
+        />
       </div>
 
       <div className={styles.diagnosticsGrid}>
         <Card title="Action settings">
           <div className={styles.summary}>
             <Fact label="Type" value={humanise(d.type)} />
-            <Fact label="Content" value={d.content} />
-            <Fact label="Created" value={dateTime(d.createdAt)} />
+            <Fact label="Package" value={d.package} />
+            <Fact label="Triggered" value={dateTime(d.triggeredAt)} />
             <Fact
               label="Scheduled for"
-              value={d.scheduledAt ? dateTime(d.scheduledAt) : 'Queued immediately'}
+              value={d.startsAt ? dateTime(d.startsAt) : 'Queued immediately'}
             />
             <Fact label="Completed" value={d.completedAt ? dateTime(d.completedAt) : 'Not yet'} />
             <Fact label="Wake offline first" value={d.wakeOfflineFirst ? 'Yes' : 'No'} />
@@ -164,7 +174,7 @@ export function DeploymentCreated() {
         {data
           ? `${num(data.targetCount)} endpoints were resolved for this action. ${
               data.status === 'scheduled'
-                ? `It is scheduled and will start at ${dateTime(data.scheduledAt)}.`
+                ? `It is scheduled and will start at ${dateTime(data.startsAt)}.`
                 : 'It has been queued and will start as endpoints check in.'
             }`
           : 'The action was created.'}

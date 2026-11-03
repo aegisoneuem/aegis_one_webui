@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { badRequest, conflict, notFound, zoneScope, type Db } from '@aegis/mock-core';
+import { clearAggregates } from './aggregates';
 import { shapeRow, toListQuery } from './resources';
 
 /**
@@ -241,6 +242,19 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
     const now = new Date().toISOString();
     const scheduled = body.schedule?.mode === 'later';
 
+    // The grid names the first few targets under the count, so they are read
+    // once here rather than joined back out of the results on every list.
+    const head = targets.slice(0, 3);
+    const preview = head.length
+      ? (
+          db
+            .prepare(
+              `SELECT hostname FROM devices WHERE id IN (${head.map(() => '?').join(',')}) ORDER BY hostname`,
+            )
+            .all(...head) as { hostname: string }[]
+        ).map((row) => row.hostname)
+      : [];
+
     const contentLabel =
       body.content?.packageId ??
       (body.content?.patchIds?.length ? `${body.content.patchIds.length} patches` : undefined) ??
@@ -248,8 +262,8 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       'unspecified';
 
     db.prepare(
-      `INSERT INTO deployments (id,name,type,status,content,target_count,succeeded,failed,pending,created_at,created_by,scheduled_at,wake_offline_first,notes)
-       VALUES (?,?,?,?,?,?,0,0,?,?,?,?,?,?)`,
+      `INSERT INTO deployments (id,name,type,status,package,target_count,target_preview,done,failed,pending,triggered_at,triggered_by,starts_at,wake_offline_first,notes)
+       VALUES (?,?,?,?,?,?,?,0,0,?,?,?,?,?,?)`,
     ).run(
       deploymentId,
       body.name,
@@ -257,6 +271,7 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       scheduled ? 'scheduled' : 'running',
       contentLabel,
       targets.length,
+      preview.join(','),
       targets.length,
       now,
       request.auth?.email ?? 'unknown',
@@ -278,12 +293,22 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       `${targets.length} endpoints`,
     );
 
+    // The six counters above the grid have just changed.
+    clearAggregates();
+
+    // The contract's DeploymentSummary, which is what a 201 returns.
     return reply.status(201).send({
       id: deploymentId,
       name: body.name,
+      type: body.type,
       status: scheduled ? 'scheduled' : 'running',
+      package: contentLabel,
       targetCount: targets.length,
-      createdAt: now,
+      targetPreview: preview,
+      counts: { done: 0, failed: 0, pending: targets.length },
+      triggeredBy: request.auth?.email ?? 'unknown',
+      triggeredAt: now,
+      startsAt: scheduled ? (body.schedule?.startAt ?? null) : null,
     });
   });
 

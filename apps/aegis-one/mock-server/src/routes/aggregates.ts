@@ -17,6 +17,15 @@ import { shapeRow } from './resources';
 const AGGREGATE_TTL_MS = Number(process.env['MOCK_AGGREGATE_TTL_MS'] ?? 5000);
 const aggregates = new TtlCache<unknown>({ ttlMs: AGGREGATE_TTL_MS });
 
+/**
+ * Drops every cached aggregate. A write that changes what the counters count
+ * calls this, so the next read recomputes rather than serving the figures the
+ * write has just invalidated.
+ */
+export function clearAggregates(): void {
+  aggregates.clear();
+}
+
 const iso = (ms: number): string => new Date(ms).toISOString();
 
 /** A whole-number percentage, which is the only precision these widgets show. */
@@ -335,12 +344,12 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
       attention,
       recentActivity: many<Record<string, unknown>>(
         `SELECT id, name, type, status, target_count AS targetCount,
-                succeeded, failed, pending,
-                created_by AS triggeredBy, created_at AS triggeredAt
-         FROM deployments ORDER BY created_at DESC LIMIT 6`,
-      ).map(({ succeeded, failed, pending, ...row }) => ({
+                done, failed, pending,
+                triggered_by AS triggeredBy, triggered_at AS triggeredAt
+         FROM deployments ORDER BY triggered_at DESC LIMIT 6`,
+      ).map(({ done, failed, pending, ...row }) => ({
         ...shapeRow(row),
-        counts: { done: succeeded, failed, pending },
+        counts: { done, failed, pending },
       })),
       updatedAt: iso(Date.now()),
     };
@@ -528,6 +537,31 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
     const zoneIds = request.auth?.zoneIds ?? [];
     return aggregates.get(`patches:${scopeKey(zoneIds)}`, () => buildPatchSummary(zoneIds));
   });
+
+  /**
+   * The six counters above the Deployments grid.
+   *
+   * They count the whole set of actions, not the filtered page, because each
+   * one is a filter a reader can click — a counter that already reflected the
+   * filter would always read the same as the grid under it.
+   *
+   * "With failures" is any action that has recorded a failure, which is not
+   * the same as an action whose status is failed: a completed rollout with one
+   * bad endpoint is the case worth surfacing.
+   */
+  app.get(`${basePath}/deployments/summary`, async () =>
+    aggregates.get('deployments:summary', () =>
+      one<Record<string, number>>(
+        `SELECT COUNT(*) AS "all",
+                SUM(status IN ('queued', 'running')) AS active,
+                SUM(status = 'scheduled') AS scheduled,
+                SUM(status = 'completed') AS completed,
+                SUM(failed > 0) AS withFailures,
+                SUM(status IN ('paused', 'cancelled')) AS pausedOrCancelled
+         FROM deployments`,
+      ),
+    ),
+  );
 
   app.get(`${basePath}/patch-policies`, async () =>
     many<Record<string, unknown>>(

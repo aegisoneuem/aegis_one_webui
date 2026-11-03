@@ -432,3 +432,23 @@ imports, not an asset the product ships.
 So the restored card renders the monogram tile, every seeded package has
 `logoUrl: null`, and the card uses the image the moment one is imported. If the
 logos should ship after all, that is a licensing decision, not a design one.
+
+## D-030 — No "Example" marker on deployment rows
+
+v129's Deployments grid labels every row `… · Example`, sets "Example Record"
+as the trigger, offers a **Hide Examples** toggle, and footnotes that example
+rows are illustrative. That is the reference's fixture distinguishing rows it
+made up from rows it means.
+
+Nothing in the contract carries it: `DeploymentSummary` has no such field, and
+adding one would mean seeding a subset of our actions as "real" and the rest as
+"examples" — a distinction that does not exist in a seeded fixture where every
+row is equally illustrative. Inventing it would be fabricating data, which this
+project does not do.
+
+So the marker, the toggle and the two footnote sentences about them are left
+out, and the first sentence of the footnote — the one about stored per-computer
+records — is kept and extended to say why a running action shows fewer results
+than computers. If a real deployment can be an "example" (a saved preview that
+never executes), that is an API change to propose rather than a design to
+restore: see handover-backend.md question 13.

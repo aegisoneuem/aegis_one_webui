@@ -280,3 +280,22 @@ you.
     replaced — v129 shows that figure. Either the per-device patch record
     keeps history, or the Remediated column reads zero for superseded rows,
     which is what it does here.
+13. **Are "example" deployments a real thing?** The approved design marks some
+    actions as examples, shows "Example Record" as the trigger, and offers a
+    Hide Examples toggle. `DeploymentSummary` declares nothing of the kind. If
+    a saved preview action that never executes is a product concept, it needs
+    a field on the schema and a filter on `GET /deployments`; if it is only
+    the reference's fixture marking its own demo rows, nothing is needed. We
+    have assumed the latter (decisions.md D-030).
+14. **"With failures" at estate scale.** The counter counts actions with any
+    recorded failure, which is what the contract's `withFailures` and the
+    approved label both say. Against rollouts of thousands of endpoints that
+    is almost every action — thirteen of fifteen in our fixture — so the tile
+    stops separating anything. Confirm the intent: any failure, or a failure
+    rate above a threshold the contract would have to state.
+15. **The deployment detail's extra fields.** `completedAt`,
+    `wakeOfflineFirst` and `notes` are served on a deployment and declared
+    nowhere; `DeploymentSummary` is `additionalProperties: false`. They belong
+    inside `Deployment`'s `schedule` / `network` / `options` objects, which are
+    open. That is a change to make when the detail page is restored, and it is
+    listed here so it is not lost.

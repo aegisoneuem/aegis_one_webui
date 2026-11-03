@@ -200,22 +200,36 @@ export type Vulnerability = {
   remediatedCount: number;
 };
 
+/** The contract's DeploymentStatus. */
+export type DeploymentStatus =
+  'queued' | 'scheduled' | 'running' | 'completed' | 'failed' | 'paused' | 'cancelled';
+
+/** The contract's DeploymentSummary, plus the fields the detail page reads. */
 export type Deployment = {
   id: string;
   name: string;
   type: string;
-  status: string;
-  content: string;
+  status: DeploymentStatus;
+  package: string;
   targetCount: number;
-  succeeded: number;
-  failed: number;
-  pending: number;
-  createdAt: string;
-  createdBy: string;
-  scheduledAt: string | null;
+  targetPreview: string[];
+  counts: { done: number; failed: number; pending: number };
+  triggeredBy: string;
+  triggeredAt: string;
+  startsAt: string | null;
   completedAt: string | null;
   wakeOfflineFirst: boolean;
   notes: string | null;
+};
+
+/** The six counters above the Deployments grid, one per filter tile. */
+export type DeploymentsSummary = {
+  all: number;
+  active: number;
+  scheduled: number;
+  completed: number;
+  withFailures: number;
+  pausedOrCancelled: number;
 };
 
 export type LiveJob = {

@@ -154,24 +154,26 @@ export const vulnerabilitiesSpec: TableSpec = {
   },
 };
 
+/** Field names are the contract's DeploymentSummary, not the table's. */
 export const deploymentsSpec: TableSpec = {
   table: 'deployments',
   idColumn: 'id',
-  searchColumns: ['name', 'content'],
-  defaultSort: { field: 'createdAt', desc: true },
+  searchColumns: ['name', 'package', 'target_preview'],
+  defaultSort: { field: 'triggeredAt', desc: true },
   columns: {
     id,
     name: { column: 'name', sortable: true, filters: ['like'] },
     type: { column: 'type', sortable: true, filters: ['eq', 'in'] },
     status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
-    content: { column: 'content' },
+    package: { column: 'package' },
     targetCount: { column: 'target_count', sortable: true },
-    succeeded: { column: 'succeeded', sortable: true },
+    targetPreview: { column: 'target_preview' },
+    done: { column: 'done', sortable: true },
     failed: { column: 'failed', sortable: true, filters: ['gte'] },
     pending: { column: 'pending', sortable: true },
-    createdAt: { column: 'created_at', sortable: true, filters: ['gte', 'lte'] },
-    createdBy: { column: 'created_by', sortable: true, filters: ['eq', 'in'] },
-    scheduledAt: { column: 'scheduled_at', sortable: true },
+    triggeredAt: { column: 'triggered_at', sortable: true, filters: ['gte', 'lte'] },
+    triggeredBy: { column: 'triggered_by', sortable: true, filters: ['eq', 'in'] },
+    startsAt: { column: 'starts_at', sortable: true },
     completedAt: { column: 'completed_at', sortable: true },
     wakeOfflineFirst: { column: 'wake_offline_first' },
     notes: { column: 'notes' },

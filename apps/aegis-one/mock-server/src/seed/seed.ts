@@ -1043,7 +1043,7 @@ function seedConfigChecks(db: Db, rng: Rng, deviceCount: number): void {
 
 function seedDeployments(db: Db, rng: Rng): void {
   const insert = db.prepare(`INSERT INTO deployments
-    (id,name,type,status,content,target_count,succeeded,failed,pending,created_at,created_by,scheduled_at,completed_at,wake_offline_first,notes)
+    (id,name,type,status,package,target_count,done,failed,pending,triggered_at,triggered_by,starts_at,completed_at,wake_offline_first,notes)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
   const plans: readonly (readonly [string, string, string])[] = [
@@ -1065,7 +1065,7 @@ function seedDeployments(db: Db, rng: Rng): void {
   ];
 
   db.transaction(() => {
-    plans.forEach(([name, type, content], i) => {
+    plans.forEach(([name, type, packageLabel], i) => {
       const targets = rng.int(60, 9800);
       const status = rng.weighted([
         ['completed', 48],
@@ -1076,7 +1076,9 @@ function seedDeployments(db: Db, rng: Rng): void {
         ['paused', 6],
       ] as const);
 
-      const done =
+      // How many endpoints have reported at all. The contract splits that into
+      // `done` and `failed`, and whatever has not reported is `pending`.
+      const attempted =
         status === 'scheduled'
           ? 0
           : status === 'running'
@@ -1085,7 +1087,7 @@ function seedDeployments(db: Db, rng: Rng): void {
       const failed =
         status === 'scheduled'
           ? 0
-          : Math.round(done * (status === 'failed' ? 0.72 : rng.next() * 0.07));
+          : Math.round(attempted * (status === 'failed' ? 0.72 : rng.next() * 0.07));
       const created = rng.recentMs(NOW, 45);
 
       insert.run(
@@ -1093,11 +1095,11 @@ function seedDeployments(db: Db, rng: Rng): void {
         name,
         type,
         status,
-        content,
+        packageLabel,
         targets,
-        done - failed,
+        attempted - failed,
         failed,
-        targets - done,
+        targets - attempted,
         iso(created),
         rng.pick(['r.deshpande', 'a.iyer', 's.kulkarni', 'n.banerjee']),
         status === 'scheduled' ? iso(NOW + rng.int(1, 72) * 3_600_000) : null,
@@ -1146,6 +1148,37 @@ function seedDeployments(db: Db, rng: Rng): void {
           state === 'pending' ? null : iso(rng.recentMs(NOW, 20)),
         );
       }
+    }
+  })();
+
+  rollUpTargetPreviews(db);
+}
+
+/**
+ * The first three target hostnames per action, stored on the row.
+ *
+ * The grid prints them under the endpoint count on every row. Reading them per
+ * row would be a join into deployment_results for a line of secondary text,
+ * and the targets of a seeded action do not change, so they are materialised
+ * once here. A scheduled action has reported nothing yet, so it falls back to
+ * the head of the estate rather than showing no targets at all.
+ */
+function rollUpTargetPreviews(db: Db): void {
+  const fallback = db.prepare(`SELECT hostname FROM devices ORDER BY hostname LIMIT 3`).all() as {
+    hostname: string;
+  }[];
+  const names = db.prepare(
+    `SELECT d.hostname FROM deployment_results r JOIN devices d ON d.id = r.device_id
+      WHERE r.deployment_id = ? ORDER BY d.hostname LIMIT 3`,
+  );
+  const update = db.prepare(`UPDATE deployments SET target_preview = ? WHERE id = ?`);
+  const rows = db.prepare(`SELECT id FROM deployments`).all() as { id: string }[];
+
+  db.transaction(() => {
+    for (const { id } of rows) {
+      const hit = names.all(id) as { hostname: string }[];
+      const preview = (hit.length ? hit : fallback).map((r) => r.hostname);
+      update.run(preview.join(','), id);
     }
   })();
 }

@@ -347,7 +347,7 @@ you.
     what decides whether `runs` and `lastRunAt` are stored or derived.
 24. **`DeviceDiagnostics.recentJobs` is declared as `LiveJob[]` and is not.**
     `/devices/{deviceId}/diagnostics` returns one row per job that touched
-    *this* endpoint, carrying that endpoint's own status, exit code and
+    _this_ endpoint, carrying that endpoint's own status, exit code and
     duration — which is what the device page needs and a `LiveJob` cannot
     express. Either the schema should become a per-endpoint shape (a
     `LiveJobResult` plus the job's title and kind) or the endpoint should
@@ -362,3 +362,43 @@ you.
     says it returns the job after cancellation. The button is rendered and
     permission-gated, and wiring it is held until the response shape is
     settled — a 204 gives the console nothing to re-render from.
+27. **`Finding` carried ten of the grid's columns and none of the drawer's.**
+    The contract had severity, CVSS, priority, devices, age, SLA and state.
+    The approved page also shows the check id, the threat indicators, the
+    detection status and its confidence, the check family, the solution in
+    full, the fix type, the port the check reached, the first and last
+    detection, the SLA due date, the owning project and the reason a risk was
+    accepted. All were added. `threats` went from two values to the
+    reference's eight.
+28. **Nothing accepts a risk.** `Finding.acceptedReason` is now in the
+    contract and one finding is seeded as accepted, so the State filter has
+    something to show, but there is no endpoint that accepts or re-opens a
+    risk. The approved drawer has "Accept Risk (90 days)" and "Re-open Risk";
+    neither is rendered, because a button that cannot write is worse than no
+    button. A write here also invalidates the stored exposure score
+    (decisions.md D-036), so the two need designing together.
+29. **Remediation is read-only.** `/vulnerabilities/remediations` lists the
+    fixes ranked by the risk they remove, and nothing deploys one. The
+    approved page has "Remediate" and "Create Project" per row and a
+    Remediate dialog with target selection, schedule and restart policy —
+    which is Patch Management's deployment flow under another name. The
+    restored tab therefore links each patchable row to Patch Management
+    rather than growing a second deployment pipeline. If remediation is to be
+    driven from here, the cleanest contract is a
+    `POST /deployments` with `type: remediate-finding`.
+30. **Projects are read-only too.** `POST /vulnerabilities/projects` is not
+    declared, so "New Project" and the drawer's "Add to project" are absent.
+    `progressPct` is seeded rather than derived; deriving it needs a
+    definition of "remediated" per project that the contract does not give.
+31. **The estate looks implausibly clean.** The seed gives each device a
+    10–16% chance of each applicable CVE, which over 16 CVEs leaves a mean of
+    about half an open finding per device and an estate exposure score of 44
+    out of 1,000 — Grade A. The figure is honest for the data, but a 50,000-
+    endpoint estate with 15 distinct open findings is not a realistic
+    fixture. Raising the catalogue or the applicability rate would move the
+    Overview's own CVE counters, so it is left as it is and flagged here.
+32. **The Scans grid sorts by Started, so a scheduled scan sorts first.**
+    `vuln_scans.started_at` holds a future timestamp for a scan that has not
+    run, which is what the reference's own data does. Sorted by that column
+    the scheduled scan lands at the top. Either `Scan` needs a separate
+    `nextRunAt`, or the grid needs a sort that puts what has run first.

@@ -2496,8 +2496,31 @@ export interface components {
             severity: components["schemas"]["Severity"];
             cvss: number;
             priority: number;
-            threats?: ("known-exploited" | "exploit-available")[];
-            detection?: string;
+            /** @description The reference's eight threat indicators, in its own order. */
+            threats?: ("known-exploited" | "exploit-available" | "ransomware" | "wormable" | "zero-day" | "remote" | "malware" | "no-fix")[];
+            /** @enum {string} */
+            detection?: "new" | "active" | "reopened";
+            /**
+             * @description Whether the check proved the finding or only inferred it.
+             * @enum {string}
+             */
+            confidence?: "confirmed" | "potential";
+            /** @description The check family a finding belongs to, for example Windows Security Updates. */
+            family?: string;
+            /** @description The fix in full, as the drawer and the Remediations tab state it. */
+            solution?: string;
+            /** @enum {string} */
+            fixType?: "patch" | "workaround";
+            /** @description The port and service the check reached, or "local". */
+            port?: string;
+            /** Format: date-time */
+            firstDetectedAt?: string;
+            /** Format: date-time */
+            lastDetectedAt?: string;
+            /** Format: date-time */
+            slaDueAt?: string;
+            projectId?: string | null;
+            acceptedReason?: string | null;
             devices: number;
             ageDays: number;
             /** @enum {string} */
@@ -2514,6 +2537,12 @@ export interface components {
                 deviceId: string;
                 name: string;
                 os?: string;
+                ip?: string;
+                site?: string;
+                /** @description Device criticality 0-10, which weights the exposure score. */
+                criticality?: number;
+                /** @enum {string} */
+                scanMethod?: "agent" | "credentialed-network" | "not-scanned";
                 exposure: number;
                 critical: number;
                 high: number;
@@ -2528,6 +2557,12 @@ export interface components {
             items: {
                 id: string;
                 fix: string;
+                highestSeverity?: components["schemas"]["Severity"];
+                /** @enum {string} */
+                fixType?: "patch" | "workaround";
+                /** @description This fix's share of the risk every open fix would remove. */
+                riskReducedPct?: number;
+                cves?: string[];
                 findings: number;
                 devicesMissing: number;
             }[];
@@ -2539,6 +2574,8 @@ export interface components {
             findings: number;
             /** Format: date */
             due: string;
+            /** @description Whole days from now until the due date, negative once it has passed. */
+            dueInDays?: number;
             owner: string;
             progressPct?: number;
         };
@@ -2549,18 +2586,25 @@ export interface components {
             startedAt: string;
             /** Format: date-time */
             finishedAt?: string | null;
+            name?: string;
+            template?: components["schemas"]["ScanTemplate"];
+            /** @description The cadence in the reference's own words, or "One-off". */
+            schedule?: string;
+            durationLabel?: string;
             scope: string;
             devicesScanned: number;
             findingsOpened?: number;
+            findingsFixed?: number;
         };
         ScanPage: {
             items: components["schemas"]["Scan"][];
             page: components["schemas"]["PageInfo"];
         };
+        /** @enum {string} */
+        ScanTemplate: "full-vulnerability" | "critical-and-exploited-quick" | "configuration-audit" | "discovery";
         ScanInput: {
             name: string;
-            /** @enum {string} */
-            template: "full-vulnerability" | "critical-and-exploited-quick" | "configuration-audit" | "discovery";
+            template: components["schemas"]["ScanTemplate"];
             targets: components["schemas"]["TargetSelection"];
             /** @enum {string} */
             schedule: "now" | "daily-0300" | "weekly-fri-0200" | "monthly-1st-0100";
@@ -2590,6 +2634,10 @@ export interface components {
                 /** Format: date */
                 date: string;
                 open: number;
+                critical?: number;
+                high?: number;
+                medium?: number;
+                low?: number;
             }[];
             sla: {
                 within?: number;

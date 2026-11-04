@@ -5,7 +5,8 @@
  */
 import { createHash } from 'node:crypto';
 
-const BASE = 'http://localhost:8080';
+// Override when the server under test is not on its default port.
+const BASE = process.env['MOCK_BASE'] ?? 'http://localhost:8080';
 const API = `${BASE}/api/v1`;
 // Must match a redirect URI the server has registered, which follows
 // APP_ORIGIN. Override when the console is served from somewhere else.
@@ -165,6 +166,95 @@ const run = async () => {
     overview.patchCompliance.byOs.length > 0,
     String(overview.patchCompliance.byOs.length),
   );
+
+  // --- Vulnerabilities -----------------------------------------------------
+  const vulnSummary = await fetch(`${API}/vulnerabilities/summary`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'vulnerability summary grades the estate',
+    vulnSummary.exposureScore >= 0 &&
+      vulnSummary.exposureScore <= 1000 &&
+      'ABCDF'.includes(vulnSummary.grade),
+    `${vulnSummary.exposureScore} / grade ${vulnSummary.grade}`,
+  );
+  check(
+    'the summary carries all six dashboard series',
+    vulnSummary.trend.length === 12 &&
+      vulnSummary.age.length === 4 &&
+      vulnSummary.topPriorities.length > 0 &&
+      vulnSummary.topFixes.length > 0 &&
+      vulnSummary.threatIndicators.length > 0 &&
+      typeof vulnSummary.sla.overdue === 'number',
+  );
+
+  // The counter above the grid and the rows inside it are the same query.
+  const openFindings = await fetch(`${API}/vulnerabilities/findings?state=open&limit=100`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'open findings total matches the summary counter',
+    openFindings.page.total === vulnSummary.openFindings,
+    `${openFindings.page.total} vs ${vulnSummary.openFindings}`,
+  );
+
+  const exploited = await fetch(
+    `${API}/vulnerabilities/findings?state=open&threat=known-exploited&limit=100`,
+    { headers: authed(token) },
+  ).then((r) => r.json());
+  check(
+    'the known-exploited filter matches its counter',
+    exploited.page.total === vulnSummary.knownExploited,
+    `${exploited.page.total} vs ${vulnSummary.knownExploited}`,
+  );
+  check(
+    'every finding carries the drawer fields the contract declares',
+    openFindings.items.every(
+      (f) =>
+        typeof f.family === 'string' &&
+        typeof f.solution === 'string' &&
+        ['patch', 'workaround'].includes(f.fixType) &&
+        ['within', 'due-soon', 'overdue'].includes(f.sla) &&
+        Array.isArray(f.threats),
+    ),
+  );
+
+  const vulnDevices = await fetch(`${API}/vulnerabilities/devices?limit=5`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'devices are ranked by exposure, worst first',
+    vulnDevices.items.length === 5 &&
+      vulnDevices.items.every((d, i) => i === 0 || d.exposure <= vulnDevices.items[i - 1].exposure),
+  );
+
+  const remediations = await fetch(`${API}/vulnerabilities/remediations`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'remediations rank fixes by the risk they remove',
+    remediations.items.length > 0 &&
+      remediations.items.every(
+        (r) => r.riskReducedPct >= 0 && r.riskReducedPct <= 100 && r.cves.length > 0,
+      ),
+  );
+
+  const scanRes = await fetch(`${API}/vulnerabilities/scans`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      name: 'Contract check scan',
+      template: 'critical-and-exploited-quick',
+      targets: {},
+      schedule: 'now',
+      authenticated: true,
+    }),
+  });
+  // Accepted for later, like every other job the console submits.
+  check('a scan is accepted with a CSRF header', scanRes.status === 202, `HTTP ${scanRes.status}`);
 
   const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
   check('insight returns findings', insight.findings.length >= 5);

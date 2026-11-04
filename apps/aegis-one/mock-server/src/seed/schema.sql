@@ -56,7 +56,15 @@ CREATE TABLE devices (
   antivirus_ok INTEGER NOT NULL DEFAULT 1,
   firewall_ok INTEGER NOT NULL DEFAULT 1,
   reboot_pending INTEGER NOT NULL,
-  config_pass_pct INTEGER NOT NULL
+  config_pass_pct INTEGER NOT NULL,
+  -- What the Vulnerabilities page needs of a device. Criticality weights the
+  -- exposure score, the scan method says how the device was reached, and
+  -- `exposure` is the 0-1000 figure itself: it is stored rather than summed
+  -- per request because the Devices tab ranks the whole estate by it.
+  criticality INTEGER NOT NULL DEFAULT 5,
+  scan_method TEXT NOT NULL DEFAULT 'agent',
+  last_scan_at TEXT NOT NULL DEFAULT '',
+  exposure INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_devices_zone ON devices(zone_id);
@@ -194,18 +202,67 @@ CREATE TABLE patch_device_counts (
 
 CREATE INDEX idx_patch_device_counts ON patch_device_counts(dimension, zone_id);
 
+-- Columns are the contract's Finding. CVSS is the published score; `priority`
+-- is the console's own Priority Rating, which is what the grid sorts on by
+-- default, because a 10.0 nobody can reach outranks nothing.
 CREATE TABLE vulnerabilities (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   severity TEXT NOT NULL,
   cvss REAL NOT NULL,
+  priority REAL NOT NULL DEFAULT 0,
   exploited INTEGER NOT NULL,
   published_at TEXT NOT NULL,
   affects TEXT NOT NULL,
   fixed_by TEXT NOT NULL,
+  check_id TEXT NOT NULL DEFAULT '',
+  family TEXT NOT NULL DEFAULT '',
+  solution TEXT NOT NULL DEFAULT '',
+  fix_type TEXT NOT NULL DEFAULT 'patch',
+  -- A JSON array of the contract's eight threat indicators.
+  threats TEXT NOT NULL DEFAULT '[]',
+  detection TEXT NOT NULL DEFAULT 'active',
+  confidence TEXT NOT NULL DEFAULT 'confirmed',
+  port TEXT NOT NULL DEFAULT 'local',
+  first_detected_at TEXT NOT NULL DEFAULT '',
+  last_detected_at TEXT NOT NULL DEFAULT '',
+  sla_due_at TEXT NOT NULL DEFAULT '',
+  project_id TEXT REFERENCES vuln_projects(id),
+  accepted_reason TEXT,
+  -- Rolled up from the per-device rows: a finding is open while any device
+  -- still has it, accepted when someone signed it off, resolved otherwise.
+  state TEXT NOT NULL DEFAULT 'open',
   affected_count INTEGER NOT NULL DEFAULT 0,
   remediated_count INTEGER NOT NULL DEFAULT 0
 );
+
+-- A remediation project groups findings behind one owner and one due date.
+CREATE TABLE vuln_projects (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  owner TEXT NOT NULL,
+  due TEXT NOT NULL,
+  progress_pct INTEGER NOT NULL DEFAULT 0
+);
+
+-- The Scans tab's nine columns. `schedule` is the cadence in words; a scan
+-- started from New Scan carries 'One-off'.
+CREATE TABLE vuln_scans (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  template TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  schedule TEXT NOT NULL,
+  status TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  duration_label TEXT NOT NULL DEFAULT '—',
+  devices_scanned INTEGER NOT NULL DEFAULT 0,
+  findings_opened INTEGER NOT NULL DEFAULT 0,
+  findings_fixed INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_vuln_scans_started ON vuln_scans(started_at DESC);
 
 CREATE TABLE device_vulnerabilities (
   device_id TEXT NOT NULL REFERENCES devices(id),

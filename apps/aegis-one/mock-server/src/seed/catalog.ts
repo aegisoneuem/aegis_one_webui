@@ -627,6 +627,16 @@ export const SOFTWARE: readonly SoftwareDef[] = [
   },
 ];
 
+export type ThreatIndicator =
+  | 'known-exploited'
+  | 'exploit-available'
+  | 'ransomware'
+  | 'wormable'
+  | 'zero-day'
+  | 'remote'
+  | 'malware'
+  | 'no-fix';
+
 export interface CveDef {
   id: string;
   title: string;
@@ -637,6 +647,24 @@ export interface CveDef {
   publishedDaysAgo: number;
   affects: string;
   fixedBy: string;
+  /** The console's own check that found it, shown beside the CVE. */
+  checkId: string;
+  /**
+   * Priority Rating 0-10. CVSS says how bad the flaw is in the abstract;
+   * this says how urgently it should be fixed here, so the grid sorts on it.
+   */
+  priority: number;
+  family: string;
+  threats: readonly ThreatIndicator[];
+  /** Newly found, still present, or found again after being fixed. */
+  detection: 'new' | 'active' | 'reopened';
+  /** Whether the check proved the finding or only inferred it. */
+  confidence: 'confirmed' | 'potential';
+  /** The port and service the check reached, or 'local'. */
+  port: string;
+  fixType: 'patch' | 'workaround';
+  /** The fix in full, as the drawer and the Remediations tab state it. */
+  solution: string;
 }
 
 export const CVES: readonly CveDef[] = [
@@ -649,6 +677,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 22,
     affects: 'Windows',
     fixedBy: 'KB5034020',
+    checkId: 'AX-210881',
+    priority: 9.7,
+    family: 'Windows: Security Updates',
+    threats: ['known-exploited', 'ransomware'],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Install KB5034020 (the current Windows cumulative update)',
   },
   {
     id: 'CVE-2026-20644',
@@ -659,6 +696,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 41,
     affects: 'Windows',
     fixedBy: 'KB5034050',
+    checkId: 'AX-210644',
+    priority: 9.5,
+    family: 'Windows: Security Updates',
+    threats: ['known-exploited', 'wormable', 'remote'],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: 'network stack',
+    fixType: 'patch',
+    solution: 'Install KB5034050 (the current Windows cumulative update)',
   },
   {
     id: 'CVE-2026-19902',
@@ -669,6 +715,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 9,
     affects: 'Google Chrome',
     fixedBy: 'Chrome 142.0.7204.92',
+    checkId: 'AX-209902',
+    priority: 9.4,
+    family: 'Web Browsers',
+    threats: ['known-exploited', 'zero-day', 'remote'],
+    detection: 'new',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Update Google Chrome to 142.0.7204.92',
   },
   {
     id: 'CVE-2026-18877',
@@ -679,6 +734,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 63,
     affects: 'Linux',
     fixedBy: 'openssl-3.2.4',
+    checkId: 'AX-208877',
+    priority: 7.9,
+    family: 'Linux: Security Updates',
+    threats: ['remote'],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: '443/tcp https',
+    fixType: 'patch',
+    solution: 'Apply the openssl security update (openssl-3.2.4)',
   },
   {
     id: 'CVE-2026-18214',
@@ -689,6 +753,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 77,
     affects: 'Linux',
     fixedBy: 'kernel-5.14.0-427.33',
+    checkId: 'AX-208214',
+    priority: 8.2,
+    family: 'Linux: Security Updates',
+    threats: ['known-exploited', 'ransomware'],
+    detection: 'reopened',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Apply the kernel update (kernel-5.14.0-427.33) and reboot',
   },
   {
     id: 'CVE-2026-17760',
@@ -699,6 +772,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 30,
     affects: 'Adobe Acrobat Reader',
     fixedBy: '24.4.20272',
+    checkId: 'AX-207760',
+    priority: 7.1,
+    family: 'Third-Party Apps',
+    threats: ['exploit-available'],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Update Adobe Acrobat Reader to 24.4.20272',
   },
   {
     id: 'CVE-2026-17331',
@@ -709,6 +791,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 55,
     affects: 'Oracle Java SE Runtime',
     fixedBy: '21.0.5',
+    checkId: 'AX-207331',
+    priority: 6.8,
+    family: 'Third-Party Apps',
+    threats: ['remote'],
+    detection: 'active',
+    confidence: 'potential',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Update Oracle Java SE Runtime to 21.0.5',
   },
   {
     id: 'CVE-2026-16988',
@@ -719,6 +810,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 18,
     affects: 'macOS',
     fixedBy: 'macOS 15.1',
+    checkId: 'AX-206988',
+    priority: 8.0,
+    family: 'macOS: Security Updates',
+    threats: ['known-exploited', 'zero-day', 'remote'],
+    detection: 'new',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Upgrade macOS to 15.1',
   },
   {
     id: 'CVE-2026-16402',
@@ -729,6 +829,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 36,
     affects: 'Microsoft 365 Apps for enterprise',
     fixedBy: '16.0.18227.20162',
+    checkId: 'AX-206402',
+    priority: 7.6,
+    family: 'Microsoft Office',
+    threats: ['malware'],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Update Microsoft 365 Apps to build 16.0.18227.20162',
   },
   {
     id: 'CVE-2026-15771',
@@ -739,6 +848,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 88,
     affects: 'Windows',
     fixedBy: 'KB5039895',
+    checkId: 'AX-205771',
+    priority: 5.9,
+    family: 'Windows: Security Updates',
+    threats: [],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Install KB5039895 (Print Spooler security update)',
   },
   {
     id: 'CVE-2026-15230',
@@ -749,6 +867,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 102,
     affects: 'Linux',
     fixedBy: 'curl-8.11.0',
+    checkId: 'AX-205230',
+    priority: 5.4,
+    family: 'Linux: Security Updates',
+    threats: ['remote'],
+    detection: 'active',
+    confidence: 'potential',
+    port: '443/tcp https',
+    fixType: 'patch',
+    solution: 'Apply the curl security update (curl-8.11.0)',
   },
   {
     id: 'CVE-2026-14866',
@@ -759,6 +886,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 120,
     affects: 'PuTTY',
     fixedBy: '0.82',
+    checkId: 'AX-204866',
+    priority: 4.8,
+    family: 'Third-Party Apps',
+    threats: [],
+    detection: 'reopened',
+    confidence: 'confirmed',
+    port: '22/tcp ssh',
+    fixType: 'patch',
+    solution: 'Update PuTTY to 0.82',
   },
   {
     id: 'CVE-2026-14205',
@@ -769,6 +905,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 74,
     affects: 'Windows',
     fixedBy: 'KB5034050',
+    checkId: 'AX-204205',
+    priority: 5.1,
+    family: 'Windows: Security Updates',
+    threats: ['wormable', 'remote'],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: '445/tcp smb',
+    fixType: 'patch',
+    solution: 'Install KB5034050 (the current Windows cumulative update)',
   },
   {
     id: 'CVE-2026-13644',
@@ -779,6 +924,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 140,
     affects: '7-Zip',
     fixedBy: '24.09',
+    checkId: 'AX-203644',
+    priority: 4.2,
+    family: 'Third-Party Apps',
+    threats: [],
+    detection: 'active',
+    confidence: 'confirmed',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Update 7-Zip to 24.09',
   },
   {
     id: 'CVE-2026-12980',
@@ -789,6 +943,15 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 160,
     affects: 'VLC Media Player',
     fixedBy: '3.0.21',
+    checkId: 'AX-202980',
+    priority: 2.4,
+    family: 'Third-Party Apps',
+    threats: [],
+    detection: 'active',
+    confidence: 'potential',
+    port: 'local',
+    fixType: 'patch',
+    solution: 'Update VLC Media Player to 3.0.21',
   },
   {
     id: 'CVE-2026-12311',
@@ -799,6 +962,16 @@ export const CVES: readonly CveDef[] = [
     publishedDaysAgo: 190,
     affects: 'AIX',
     fixedBy: 'IJ49882',
+    checkId: 'AX-202311',
+    priority: 2.1,
+    family: 'Configuration',
+    threats: ['no-fix'],
+    detection: 'active',
+    confidence: 'potential',
+    port: '2049/tcp nfs',
+    fixType: 'workaround',
+    solution:
+      'No console-deployable fix: restrict NFS exports to the storage VLAN (IBM interim fix IJ49882 is applied by hand)',
   },
 ];
 

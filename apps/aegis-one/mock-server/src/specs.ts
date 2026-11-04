@@ -135,22 +135,65 @@ export const patchPoliciesSpec: TableSpec = {
   },
 };
 
-export const vulnerabilitiesSpec: TableSpec = {
+/**
+ * Field names are the contract's Finding, not the table's. The grid sorts on
+ * Priority Rating by default, because that — not CVSS — is the order the page
+ * asks an administrator to work in.
+ */
+export const findingsSpec: TableSpec = {
   table: 'vulnerabilities',
   idColumn: 'id',
-  searchColumns: ['id', 'title', 'affects'],
-  defaultSort: { field: 'cvss', desc: true },
+  searchColumns: ['id', 'title', 'affects', 'check_id', 'family'],
+  defaultSort: { field: 'priority', desc: true },
   columns: {
     id,
+    cve: { column: 'id', sortable: true },
+    checkId: { column: 'check_id', sortable: true, filters: ['like'] },
     title: { column: 'title', sortable: true, filters: ['like'] },
+    product: { column: 'affects', sortable: true, filters: ['eq', 'in'] },
     severity: { column: 'severity', sortable: true, filters: ['eq', 'in'] },
     cvss: { column: 'cvss', sortable: true, filters: ['gte', 'lte'] },
+    priority: { column: 'priority', sortable: true, filters: ['gte', 'lte'] },
+    threats: { column: 'threats', filters: ['like'] },
+    detection: { column: 'detection', sortable: true, filters: ['eq', 'in'] },
+    confidence: { column: 'confidence', sortable: true, filters: ['eq'] },
+    family: { column: 'family', sortable: true, filters: ['eq', 'in'] },
+    solution: { column: 'solution' },
+    fixType: { column: 'fix_type', sortable: true, filters: ['eq'] },
+    port: { column: 'port' },
+    state: { column: 'state', sortable: true, filters: ['eq', 'in'] },
     exploited: { column: 'exploited', sortable: true, filters: ['eq'] },
     publishedAt: { column: 'published_at', sortable: true, filters: ['gte', 'lte'] },
-    affects: { column: 'affects', sortable: true, filters: ['eq', 'in'] },
+    firstDetectedAt: { column: 'first_detected_at', sortable: true, filters: ['gte', 'lte'] },
+    lastDetectedAt: { column: 'last_detected_at', sortable: true },
+    slaDueAt: { column: 'sla_due_at', sortable: true, filters: ['gte', 'lte'] },
+    projectId: { column: 'project_id', filters: ['eq'] },
+    acceptedReason: { column: 'accepted_reason' },
     fixedBy: { column: 'fixed_by' },
-    affectedCount: { column: 'affected_count', sortable: true, filters: ['gte'] },
+    devices: { column: 'affected_count', sortable: true, filters: ['gte'] },
     remediatedCount: { column: 'remediated_count', sortable: true },
+  },
+};
+
+/** Field names are the contract's Scan. */
+export const scansSpec: TableSpec = {
+  table: 'vuln_scans',
+  idColumn: 'id',
+  searchColumns: ['name', 'scope'],
+  defaultSort: { field: 'startedAt', desc: true },
+  columns: {
+    id,
+    name: { column: 'name', sortable: true, filters: ['like'] },
+    template: { column: 'template', sortable: true, filters: ['eq', 'in'] },
+    scope: { column: 'scope', sortable: true },
+    schedule: { column: 'schedule' },
+    status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
+    startedAt: { column: 'started_at', sortable: true, filters: ['gte', 'lte'] },
+    finishedAt: { column: 'finished_at', sortable: true },
+    durationLabel: { column: 'duration_label' },
+    devicesScanned: { column: 'devices_scanned', sortable: true },
+    findingsOpened: { column: 'findings_opened', sortable: true },
+    findingsFixed: { column: 'findings_fixed', sortable: true },
   },
 };
 

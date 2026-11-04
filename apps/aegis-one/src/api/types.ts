@@ -187,6 +187,7 @@ export type PatchSummary = {
   };
 };
 
+/** The device tab's own row, which is not the contract's Finding. */
 export type Vulnerability = {
   id: string;
   title: string;
@@ -196,8 +197,137 @@ export type Vulnerability = {
   publishedAt: string;
   affects: string;
   fixedBy: string;
-  affectedCount: number;
-  remediatedCount: number;
+  state: string;
+  firstSeenAt: string;
+};
+
+export type Severity = 'critical' | 'high' | 'medium' | 'low';
+
+/** The contract's eight threat indicators, in the order the page lists them. */
+export type ThreatIndicator =
+  | 'known-exploited'
+  | 'exploit-available'
+  | 'ransomware'
+  | 'wormable'
+  | 'zero-day'
+  | 'remote'
+  | 'malware'
+  | 'no-fix';
+
+export type FindingState = 'open' | 'in-remediation' | 'accepted' | 'resolved';
+export type SlaState = 'within' | 'due-soon' | 'overdue';
+
+/** The contract's Finding — one row of the Findings grid. */
+export type Finding = {
+  id: string;
+  cve: string | null;
+  checkId: string | null;
+  title: string;
+  product: string;
+  severity: Severity;
+  cvss: number;
+  priority: number;
+  threats: ThreatIndicator[];
+  detection: 'new' | 'active' | 'reopened';
+  confidence: 'confirmed' | 'potential';
+  family: string;
+  solution: string;
+  fixType: 'patch' | 'workaround';
+  port: string;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  slaDueAt: string;
+  projectId: string | null;
+  acceptedReason: string | null;
+  devices: number;
+  ageDays: number;
+  sla: SlaState;
+  state: FindingState;
+};
+
+/** The contract's VulnerabilitySummary: the six KPIs and the six widgets. */
+export type VulnerabilitySummary = {
+  exposureScore: number;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  openFindings: number;
+  devicesAffected: number;
+  criticalAndHigh: number;
+  knownExploited: number;
+  slaOverdue: number;
+  scanCoverage: { scanned: number; total: number };
+  bySeverity: Record<Severity, number>;
+  /** Twelve weeks of open findings, stacked by severity. */
+  trend: {
+    date: string;
+    open: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  }[];
+  sla: { within: number; dueSoon: number; overdue: number };
+  age: { bucket: string; count: number }[];
+  topPriorities: Finding[];
+  topFixes: { fix: string; findings: number; devicesMissing: number }[];
+  threatIndicators: { indicator: ThreatIndicator; count: number }[];
+};
+
+/** One row of the Devices tab, ranked by exposure. */
+export type VulnerableDevice = {
+  deviceId: string;
+  name: string;
+  os: string;
+  ip: string;
+  site: string;
+  criticality: number;
+  scanMethod: 'agent' | 'credentialed-network' | 'not-scanned';
+  exposure: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  lastScan: string;
+};
+
+/** One row of the Remediations tab: a fix, not a CVE. */
+export type Remediation = {
+  id: string;
+  fix: string;
+  highestSeverity: Severity;
+  fixType: 'patch' | 'workaround';
+  riskReducedPct: number;
+  cves: string[];
+  findings: number;
+  devicesMissing: number;
+};
+
+export type VulnerabilityProject = {
+  id: string;
+  name: string;
+  owner: string;
+  due: string;
+  /** Measured against the server's clock, so the page need not know "now". */
+  dueInDays: number;
+  progressPct: number;
+  findings: number;
+};
+
+export type ScanTemplate =
+  'full-vulnerability' | 'critical-and-exploited-quick' | 'configuration-audit' | 'discovery';
+
+export type Scan = {
+  id: string;
+  name: string;
+  template: ScanTemplate;
+  schedule: string;
+  status: JobStatus;
+  startedAt: string;
+  finishedAt: string | null;
+  durationLabel: string;
+  scope: string;
+  devicesScanned: number;
+  findingsOpened: number;
+  findingsFixed: number;
 };
 
 /** The contract's DeploymentStatus. */

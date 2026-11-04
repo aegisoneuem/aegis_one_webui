@@ -18,6 +18,7 @@ import {
   SOFTWARE,
   WORKSTATION_MODELS,
   ZONES,
+  type CveDef,
 } from './catalog';
 
 /**
@@ -72,6 +73,7 @@ export function seedDatabase({
   seedLiveJobs(db, rng);
   seedLogBundles(db, rng);
   seedLogSettings(db);
+  seedScans(db, rng);
   seedPeers(db, rng);
   seedIntegrations(db, rng);
   seedUsersAndRoles(db, rng);
@@ -566,23 +568,220 @@ function seedPatchPolicies(db: Db): void {
   })();
 }
 
+/**
+ * How long a finding of each severity may stay open before it is overdue.
+ * The Vulnerabilities page reports SLA state everywhere, so the due date is
+ * computed once here rather than in each query that reads it back.
+ */
+const SLA_DAYS: Record<CveDef['severity'], number> = {
+  critical: 30,
+  high: 60,
+  medium: 120,
+  low: 180,
+};
+
+/**
+ * The remediation projects, and the findings each one owns. A finding belongs
+ * to at most one project, which is why the link is a column on the finding
+ * rather than a join table.
+ */
+const VULN_PROJECTS: readonly {
+  id: string;
+  name: string;
+  owner: string;
+  dueInDays: number;
+  progressPct: number;
+  cves: readonly string[];
+}[] = [
+  {
+    id: 'vp-win-cumulative',
+    name: 'Windows cumulative update rollout',
+    owner: 'Meera Subramanian',
+    dueInDays: 10,
+    progressPct: 62,
+    cves: ['CVE-2026-20881', 'CVE-2026-20644', 'CVE-2026-14205'],
+  },
+  {
+    id: 'vp-browser-hardening',
+    name: 'Browser hardening',
+    owner: 'Aarav Sharma',
+    dueInDays: 20,
+    progressPct: 35,
+    cves: ['CVE-2026-19902', 'CVE-2026-17760'],
+  },
+];
+
+/**
+ * Risks somebody signed off rather than fixed. They stay in the grid under
+ * the State filter, with the reason, because an accepted risk that disappears
+ * is an accepted risk nobody reviews again.
+ */
+const ACCEPTED_RISKS: Record<string, string> = {
+  'CVE-2026-12980':
+    'Denial of service only, on a player that is not business-critical. Removed at the next desktop image refresh.',
+};
+
 function seedVulnerabilities(db: Db): void {
-  const insert = db.prepare(
-    `INSERT INTO vulnerabilities (id,title,severity,cvss,exploited,published_at,affects,fixed_by) VALUES (?,?,?,?,?,?,?,?)`,
+  const insertProject = db.prepare(
+    `INSERT INTO vuln_projects (id,name,owner,due,progress_pct) VALUES (?,?,?,?,?)`,
   );
+  const insert = db.prepare(
+    `INSERT INTO vulnerabilities (
+       id,title,severity,cvss,priority,exploited,published_at,affects,fixed_by,
+       check_id,family,solution,fix_type,threats,detection,confidence,port,
+       first_detected_at,last_detected_at,sla_due_at,project_id,accepted_reason
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  );
+  const projectOf = new Map<string, string>();
+  for (const project of VULN_PROJECTS)
+    for (const cve of project.cves) projectOf.set(cve, project.id);
+
   db.transaction(() => {
+    for (const project of VULN_PROJECTS)
+      insertProject.run(
+        project.id,
+        project.name,
+        project.owner,
+        iso(NOW + project.dueInDays * 86_400_000).slice(0, 10),
+        project.progressPct,
+      );
+
     for (const c of CVES) {
+      // A finding is first detected when the estate was next scanned after
+      // publication, not on the day the CVE was published.
+      const firstDetected = NOW - Math.max(0, c.publishedDaysAgo - 2) * 86_400_000;
       insert.run(
         c.id,
         c.title,
         c.severity,
         c.cvss,
+        c.priority,
         c.exploited ? 1 : 0,
         daysAgo(c.publishedDaysAgo),
         c.affects,
         c.fixedBy,
+        c.checkId,
+        c.family,
+        c.solution,
+        c.fixType,
+        JSON.stringify(c.threats),
+        c.detection,
+        c.confidence,
+        c.port,
+        iso(firstDetected),
+        iso(NOW - 3_600_000),
+        iso(firstDetected + SLA_DAYS[c.severity] * 86_400_000),
+        projectOf.get(c.id) ?? null,
+        ACCEPTED_RISKS[c.id] ?? null,
       );
     }
+  })();
+}
+
+/**
+ * Scan history, as the Scans tab lists it: three that have run and one still
+ * to come. The device figure is the estate the scan could actually reach.
+ */
+function seedScans(db: Db, rng: Rng): void {
+  const insert = db.prepare(
+    `INSERT INTO vuln_scans (id,name,template,scope,schedule,status,started_at,finished_at,
+                             duration_label,devices_scanned,findings_opened,findings_fixed)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+  );
+  const reachable =
+    (
+      db.prepare(`SELECT COUNT(*) AS n FROM devices WHERE status <> 'offline'`).get() as
+        { n: number } | undefined
+    )?.n ?? 0;
+
+  const rows: readonly (readonly [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    number,
+    number | null,
+    string,
+    number,
+    number,
+    number,
+  ])[] = [
+    [
+      'scan-weekly-full',
+      'Weekly full scan',
+      'full-vulnerability',
+      'All devices',
+      'Weekly \u00b7 Friday 02:00',
+      'completed',
+      NOW - 3_600_000,
+      NOW - 1_140_000,
+      '41 min',
+      reachable,
+      3,
+      2,
+    ],
+    [
+      'scan-exploited-sweep',
+      'Exploited CVE sweep',
+      'critical-and-exploited-quick',
+      'All devices',
+      'Daily \u00b7 03:00',
+      'completed',
+      NOW - 26 * 3_600_000,
+      NOW - 26 * 3_600_000 + 540_000,
+      '9 min',
+      reachable,
+      1,
+      0,
+    ],
+    [
+      'scan-server-audit',
+      'Server configuration audit',
+      'configuration-audit',
+      'Device group: Servers',
+      'Monthly \u00b7 1st 01:00',
+      'completed',
+      NOW - 3 * 86_400_000,
+      NOW - 3 * 86_400_000 + 1_020_000,
+      '17 min',
+      rng.int(400, 900),
+      0,
+      1,
+    ],
+    [
+      'scan-discovery',
+      'Network discovery',
+      'discovery',
+      'Zones: all',
+      'Weekly \u00b7 Thursday 22:00',
+      'queued',
+      NOW + 2 * 86_400_000,
+      null,
+      '\u2014',
+      0,
+      0,
+      0,
+    ],
+  ];
+
+  db.transaction(() => {
+    for (const r of rows)
+      insert.run(
+        r[0],
+        r[1],
+        r[2],
+        r[3],
+        r[4],
+        r[5],
+        iso(r[6]),
+        r[7] === null ? null : iso(r[7]),
+        r[8],
+        r[9],
+        r[10],
+        r[11],
+      );
   })();
 }
 
@@ -891,6 +1090,43 @@ function rollUpCounts(db: Db): void {
     UPDATE vulnerabilities SET
       affected_count = (SELECT COUNT(*) FROM device_vulnerabilities WHERE device_vulnerabilities.vulnerability_id = vulnerabilities.id AND state = 'open'),
       remediated_count = (SELECT COUNT(*) FROM device_vulnerabilities WHERE device_vulnerabilities.vulnerability_id = vulnerabilities.id AND state = 'remediated');
+
+    UPDATE vulnerabilities SET state = CASE
+      WHEN accepted_reason IS NOT NULL THEN 'accepted'
+      WHEN affected_count = 0 THEN 'resolved'
+      ELSE 'open' END;
+
+    /* How much a device matters, which weights its exposure score. */
+    UPDATE devices SET
+      criticality = CASE
+        WHEN kind = 'server' THEN 9
+        WHEN department IN ('Finance', 'Legal & Compliance') THEN 8
+        WHEN department = 'IT Infrastructure' THEN 7
+        ELSE 4 + (rowid % 3) END,
+      scan_method = CASE
+        WHEN status = 'offline' THEN 'not-scanned'
+        WHEN rowid % 6 = 3 THEN 'credentialed-network'
+        ELSE 'agent' END,
+      last_scan_at = last_seen_at;
+
+    /*
+     * Exposure 0-1000. Each open finding contributes its Priority Rating
+     * times a severity weight, raised where the flaw is exploited in the
+     * wild; the total is then scaled by how much the device matters. A
+     * device nothing has scanned keeps 0, and the page says "Not scanned"
+     * rather than reporting that as a clean result.
+     */
+    UPDATE devices SET exposure = (
+      SELECT MIN(1000, CAST(ROUND(COALESCE(SUM(
+               v.priority
+               * CASE v.severity WHEN 'critical' THEN 10 WHEN 'high' THEN 6
+                                 WHEN 'medium' THEN 3 ELSE 1 END
+               * CASE WHEN v.exploited = 1 THEN 1.3 ELSE 1.0 END), 0)
+             * (0.55 + devices.criticality * 0.06) * 1.05) AS INTEGER))
+        FROM device_vulnerabilities dv
+        JOIN vulnerabilities v ON v.id = dv.vulnerability_id
+       WHERE dv.device_id = devices.id AND dv.state = 'open')
+      WHERE scan_method <> 'not-scanned';
   `);
 
   rollUpPatchCells(db);

@@ -2,14 +2,14 @@
 
 Source of truth: `design-reference/Aegis-One-Console-v129.html`, Live Activity page.
 
-|                 |                                       |
-| --------------- | ------------------------------------- |
-| Reference       | `screenshots/liveops-v129-console.png` |
-| Console         | `screenshots/liveops-console.png`      |
-| Run Script      | `screenshots/liveops-script.png`       |
-| Log Collection  | `screenshots/liveops-logs.png`         |
-| Storage & Mail  | `screenshots/liveops-storage.png`      |
-| Task Results    | `screenshots/liveops-results.png`      |
+|                |                                        |
+| -------------- | -------------------------------------- |
+| Reference      | `screenshots/liveops-v129-console.png` |
+| Console        | `screenshots/liveops-console.png`      |
+| Run Script     | `screenshots/liveops-script.png`       |
+| Log Collection | `screenshots/liveops-logs.png`         |
+| Storage & Mail | `screenshots/liveops-storage.png`      |
+| Task Results   | `screenshots/liveops-results.png`      |
 
 ## What the page is now
 
@@ -38,11 +38,11 @@ header comment and the e2e suite asserts the words "remote desktop", "remote
 control", "screen share", "screen view", "remote session", "terminal session"
 and "take control" appear nowhere on it.
 
-| Operation       | What it configures                                                |
-| --------------- | ----------------------------------------------------------------- |
-| **Live Data**   | the eight-field checklist, with the reference's own captions       |
-| **Run Script**  | runtime, the editor, and Load Inventory Example                    |
-| **Collect Logs**| the log source, and the note about permitted paths and redaction   |
+| Operation        | What it configures                                               |
+| ---------------- | ---------------------------------------------------------------- |
+| **Live Data**    | the eight-field checklist, with the reference's own captions     |
+| **Run Script**   | runtime, the editor, and Load Inventory Example                  |
+| **Collect Logs** | the log source, and the note about permitted paths and redaction |
 
 The example script, the runtime list, the log sources and all three notes are
 the reference's own copy, read out of it rather than written here.
@@ -58,10 +58,10 @@ nothing served. `LiveJob` already had `title`, `counts`, `submittedBy` and
 
 ### What was added, and why
 
-| Schema          | Added                                                                         |
-| --------------- | ----------------------------------------------------------------------------- |
-| `LiveJobResult` | `connection`, `actionId`, `actionType`, `queuedAt`, `reason`, `detail`         |
-| `LogSchedule`   | `runs`, `delivery`, `lastRunAt`, `enabled`                                     |
+| Schema          | Added                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| `LiveJobResult` | `connection`, `actionId`, `actionType`, `queuedAt`, `reason`, `detail`                          |
+| `LogSchedule`   | `runs`, `delivery`, `lastRunAt`, `enabled`                                                      |
 | `LogSettings`   | `rootPath`, `folderLayout`, `fileNamePattern`, `maxBundleSizeMb`, `sendAs`, `attachmentLimitMb` |
 
 All three are the columns the approved grids and panels show. The Task
@@ -86,13 +86,13 @@ Results grid has ten columns and the contract described four of them.
 
 ## Present in v129, not in the restored build
 
-| Missing                        | Why                                                            |
-| ------------------------------ | -------------------------------------------------------------- |
-| Collect Now / New Schedule     | `POST /liveops/log-schedules` is declared and unserved.        |
-| Save Settings                  | `PUT /liveops/log-settings` is declared and unserved (D-035).  |
-| Export List / Export           | No export endpoint for either grid.                            |
+| Missing                            | Why                                                             |
+| ---------------------------------- | --------------------------------------------------------------- |
+| Collect Now / New Schedule         | `POST /liveops/log-schedules` is declared and unserved.         |
+| Save Settings                      | `PUT /liveops/log-settings` is declared and unserved (D-035).   |
+| Export List / Export               | No export endpoint for either grid.                             |
 | Download All (ZIP), Email Selected | `/liveops/script-jobs/{jobId}/bundle` is declared and unserved. |
-| Column resize handles          | The reference's grids carry them; ours do not.                 |
+| Column resize handles              | The reference's grids carry them; ours do not.                  |
 
 Cancel Task is rendered and permission-gated but not wired — see
 handover-backend.md 26.

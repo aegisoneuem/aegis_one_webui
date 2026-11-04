@@ -617,6 +617,107 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByText('<ROOT_SERVER>')).toBeVisible();
   });
 
+  test('Vulnerabilities opens on the approved dashboard: six counters, six widgets', async ({
+    page,
+  }) => {
+    await page.goto('/vulns');
+
+    for (const kpi of [
+      'Exposure Score',
+      'Open Findings',
+      'Critical & High',
+      'Known Exploited',
+      'SLA Overdue',
+      'Scan Coverage',
+    ])
+      await expect(page.getByText(kpi, { exact: true }).first()).toBeVisible();
+
+    for (const widget of [
+      'Open Findings Trend',
+      'SLA Status',
+      'Top Priorities',
+      'Vulnerability Age',
+      'Top Fixes Out of Compliance',
+      'Threat Indicators',
+    ])
+      await expect(page.getByRole('heading', { name: widget })).toBeVisible();
+
+    for (const tab of ['Findings', 'Devices', 'Remediations', 'Projects', 'Scans'])
+      await expect(page.getByRole('tab', { name: tab })).toBeVisible();
+
+    // The grid sorts on the Priority Rating, not on CVSS: both columns are
+    // there, and the reference puts Priority first. Scoped to the tab body,
+    // because the Top Priorities widget above it has columns of its own.
+    const grid = page.locator('[class*="tabBody"]');
+    for (const column of ['Severity', 'Priority', 'CVSS', 'Finding', 'Threats', 'SLA', 'State'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('a Vulnerabilities counter narrows the grid to what it counted', async ({ page }) => {
+    await page.goto('/vulns');
+
+    const exploited = await page
+      .getByRole('button', { name: /Known Exploited/ })
+      .first()
+      .innerText();
+    const expected = Number(/(\d[\d,]*)/.exec(exploited)?.[1]?.replace(/,/g, '') ?? '0');
+    expect(expected).toBeGreaterThan(0);
+
+    await page
+      .getByRole('button', { name: /Known Exploited/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/threat=known-exploited/);
+    await expect(page.getByText(`${expected} findings`)).toBeVisible();
+  });
+
+  test('a finding opens its drawer, with the solution and the scan evidence', async ({ page }) => {
+    await page.goto('/vulns');
+
+    await page.locator('[class*="tabBody"] table tbody tr').first().click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+    for (const fact of ['Priority Rating', 'CVSS v3.1 base', 'Fix type', 'Family'])
+      await expect(drawer.getByText(fact, { exact: true })).toBeVisible();
+    await expect(drawer.getByRole('heading', { name: 'Solution' })).toBeVisible();
+    await expect(drawer.getByRole('heading', { name: 'Scan evidence' })).toBeVisible();
+  });
+
+  test('the other four Vulnerabilities tabs carry their own columns', async ({ page }) => {
+    await page.goto('/vulns');
+
+    const body = page.locator('[class*="tabBody"]');
+
+    await page.getByRole('tab', { name: 'Devices' }).click();
+    for (const column of ['Device Criticality', 'Exposure (0–1000)', 'Scan Method'])
+      await expect(body.getByRole('columnheader', { name: column })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Remediations' }).click();
+    for (const column of ['Remediation', 'Risk Reduced', 'Fix Type'])
+      await expect(body.getByRole('columnheader', { name: column })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Projects' }).click();
+    await expect(body.getByText(/devices remediated/).first()).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Scans' }).click();
+    for (const column of ['Template', 'Targets', 'New Findings'])
+      await expect(body.getByRole('columnheader', { name: column })).toBeVisible();
+  });
+
+  test('New Scan is accepted and the scan appears in the history', async ({ page }) => {
+    await page.goto('/vulns?tab=scans');
+
+    await page.getByRole('button', { name: '+ New Scan' }).first().click();
+    const dialog = page.getByRole('dialog', { name: 'New Scan' });
+    await dialog.getByLabel('Scan name').fill('E2E ad-hoc scan');
+    await dialog.getByLabel('Template').selectOption('critical-and-exploited-quick');
+    await dialog.getByLabel('Targets').selectOption('windows');
+    await dialog.getByRole('button', { name: 'Start Scan' }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('cell', { name: 'Platform: Windows' }).first()).toBeVisible();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

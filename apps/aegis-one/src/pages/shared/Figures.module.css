@@ -41,6 +41,15 @@
   color: var(--ao-neutral);
 }
 
+/* The two lighter steps of the warm ramp, for an age or severity scale. */
+.sand {
+  color: var(--ao-brand-hi);
+}
+
+.amber {
+  color: var(--ao-warning);
+}
+
 /* `currentColor` is what makes one tone class serve a stroke, a fill and a
    text colour at once, so a slice and its legend swatch can never drift. */
 .arc {

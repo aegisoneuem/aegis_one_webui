@@ -527,3 +527,46 @@ v129's Storage & Mail panel has a Save Settings button. `PUT
 restored panel renders the settings and says so rather than offering a save
 that would do nothing. The root path stays `\<ROOT_SERVER>\AegisLogs`: a real
 one names a server, and this is a seeded estate.
+
+## D-036 — A device's exposure score is stored, not summed per request
+
+v129 computes each device's exposure live, over an estate of 32 devices. This
+estate has 50,000, and the Devices tab ranks all of them by that figure, so
+summing it per request would mean a join over `device_vulnerabilities` for
+every row of every page.
+
+The formula is the reference's — each open finding contributes its Priority
+Rating times a severity weight, raised where the flaw is exploited in the
+wild, the total scaled by how much the device matters and capped at 1,000 —
+and it is evaluated once, in the seed's roll-up, into `devices.exposure`. The
+estate score above the page is the average of that column over the devices
+something actually scanned. A device nothing reached keeps 0 and the page
+says "Not scanned" rather than reporting it as a clean result.
+
+This is only safe because nothing in this build changes a finding's state at
+runtime: the contract declares no write that would move the figure.
+
+## D-037 — The grid sorts on the Priority Rating, not CVSS
+
+The old page sorted findings by CVSS descending. The reference sorts on its
+own Priority Rating and shows CVSS as a second, narrower column.
+
+They answer different questions. CVSS says how bad a flaw is in the abstract;
+the Priority Rating says how urgently it should be fixed _here_, which is
+what an administrator works through. The clearest case in this estate is
+CVE-2026-20881: CVSS 9.8 and Priority 9.7, next to a configuration finding
+that scores 10.0 on CVSS and nothing like it on priority. `priority` is
+therefore a column of its own on `vulnerabilities`, and the spec's default
+sort.
+
+## D-038 — "Now" is the server's to know
+
+Age, SLA state and a project's days-to-due are all comparisons against the
+current time. Computing them while rendering makes a component's output
+depend on when it happened to render, which the console's lint rules forbid
+and which would make two screenshots of the same data disagree.
+
+So the server derives `ageDays`, `sla` and `dueInDays` and the page only
+reads them. Where the page still needs a day count — "23 d left" beside the
+SLA tag — it subtracts two figures the server already measured (the SLA
+window and the finding's age) rather than reaching for the clock.

@@ -107,6 +107,59 @@ function resolveTargets(db: Db, selection: TargetSelection, zoneIds: readonly st
   return rows.map((r) => r.id);
 }
 
+/**
+ * A scan's scope, which is not a job's target list.
+ *
+ * Submitting work to endpoints names them, and `resolveTargets` refuses an
+ * empty selection for exactly that reason. A scan is the opposite: "All
+ * devices" is its default and its commonest scope, so an empty selection
+ * means the whole estate the caller can see rather than nothing at all. It
+ * is still resolved server-side, so a zone-scoped caller cannot scan outside
+ * their zones.
+ */
+function resolveScanScope(
+  db: Db,
+  selection: TargetSelection,
+  zoneIds: readonly string[],
+): { count: number; label: string } {
+  const scope = zoneScope({ zoneIds: [...zoneIds] });
+  const clauses: string[] = [];
+  const params: unknown[] = [];
+  let label = 'All devices';
+
+  if (selection.zone) {
+    clauses.push('zone_id = ?');
+    params.push(selection.zone);
+    label = `Zone: ${selection.zone}`;
+  }
+
+  if (selection.groupIds?.length) {
+    const placeholders = selection.groupIds.map(() => '?').join(',');
+    clauses.push(`id IN (SELECT device_id FROM group_members WHERE group_id IN (${placeholders}))`);
+    params.push(...selection.groupIds);
+    label = `Device groups: ${selection.groupIds.length}`;
+  }
+
+  // The only filter a scan takes is the platform, matched as a prefix:
+  // os_family holds "Windows 11" and "Red Hat Enterprise Linux 9", not a
+  // family name on its own.
+  const family = selection.filter ? new URLSearchParams(selection.filter).get('osFamily') : null;
+  if (family) {
+    clauses.push('os_family LIKE ?');
+    params.push(`${family}%`);
+    label = `Platform: ${family}`;
+  }
+
+  const where = [clauses.length ? `(${clauses.join(' AND ')})` : '1=1', scope?.sql]
+    .filter(Boolean)
+    .join(' AND ');
+  const row = db
+    .prepare(`SELECT COUNT(*) AS n FROM devices WHERE ${where}`)
+    .get(...params, ...(scope?.params ?? [])) as { n: number };
+
+  return { count: row.n, label };
+}
+
 export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   /**
    * Submit a remote script-execution job.
@@ -251,6 +304,89 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       jobId,
     );
     return reply.status(204).send();
+  });
+
+  /**
+   * Start a vulnerability scan, or schedule one.
+   *
+   * A scan is a job the server owns: the console asks for it and reads the
+   * result back from the Scans tab. The targets are resolved here, so a
+   * zone-scoped caller cannot scan outside their zones by naming devices.
+   */
+  app.post(`${basePath}/vulnerabilities/scans`, async (request, reply) => {
+    const body = request.body as {
+      name?: string;
+      template?: string;
+      targets?: TargetSelection;
+      schedule?: string;
+      authenticated?: boolean;
+    };
+
+    if (!body.name || !body.template || !body.targets || !body.schedule)
+      throw badRequest('name, template, targets and schedule are required.');
+
+    const scope = resolveScanScope(db, body.targets, request.auth?.zoneIds ?? []);
+    const scanId = `scan-${randomUUID().slice(0, 8)}`;
+    const now = new Date().toISOString();
+    const runNow = body.schedule === 'now';
+
+    const SCHEDULE_LABEL: Record<string, string> = {
+      now: 'One-off',
+      'daily-0300': 'Daily · 03:00',
+      'weekly-fri-0200': 'Weekly · Friday 02:00',
+      'monthly-1st-0100': 'Monthly · 1st 01:00',
+    };
+
+    db.prepare(
+      `INSERT INTO vuln_scans
+         (id,name,template,scope,schedule,status,started_at,finished_at,
+          duration_label,devices_scanned,findings_opened,findings_fixed)
+       VALUES (?,?,?,?,?,?,?,NULL,?,?,0,0)`,
+    ).run(
+      scanId,
+      body.name,
+      body.template,
+      scope.label,
+      SCHEDULE_LABEL[body.schedule] ?? body.schedule,
+      runNow ? 'running' : 'queued',
+      now,
+      runNow ? 'running…' : '—',
+      // Nothing has been scanned yet; the figure is what the scan will reach.
+      runNow ? 0 : 0,
+    );
+
+    db.prepare(
+      `INSERT INTO audit_log (id,at,actor,actor_role,action,object_type,object_id,outcome,ip,detail)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    ).run(
+      `aud-${randomUUID().slice(0, 8)}`,
+      now,
+      request.auth?.email ?? 'unknown',
+      request.auth?.role ?? 'unknown',
+      runNow ? 'vulnerabilities.scan.start' : 'vulnerabilities.scan.schedule',
+      'scan',
+      scanId,
+      'success',
+      request.ip,
+      `${scope.count} endpoints · ${body.authenticated === false ? 'unauthenticated' : 'authenticated'}`,
+    );
+
+    // The contract's Scan, so the Scans tab can show the new row without
+    // fetching the page back.
+    return reply.status(202).send({
+      id: scanId,
+      name: body.name,
+      template: body.template,
+      schedule: SCHEDULE_LABEL[body.schedule] ?? body.schedule,
+      status: runNow ? 'running' : 'queued',
+      startedAt: now,
+      finishedAt: null,
+      durationLabel: runNow ? 'running…' : '—',
+      scope: scope.label,
+      devicesScanned: 0,
+      findingsOpened: 0,
+      findingsFixed: 0,
+    });
   });
 
   /** Create a deployment. Targets are resolved here for the same reason as jobs. */

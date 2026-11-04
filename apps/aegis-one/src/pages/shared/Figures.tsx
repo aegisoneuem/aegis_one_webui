@@ -11,8 +11,14 @@
 import { useId } from 'react';
 import styles from './Figures.module.css';
 
-/** The tone names the approved status palette defines. */
-export type Tone = 'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral';
+/**
+ * The tone names the approved status palette defines.
+ *
+ * `sand` and `amber` are the two lighter steps of the warm ramp. They exist
+ * because a severity or age ramp needs four warm steps, and good/warn/bad
+ * only gives it two.
+ */
+export type Tone = 'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral' | 'sand' | 'amber';
 
 export type Datum = {
   key: string;
@@ -36,6 +42,8 @@ const TONE_CLASS: Record<Tone, string> = {
   info: styles.info as string,
   alt: styles.alt as string,
   neutral: styles.neutral as string,
+  sand: styles.sand as string,
+  amber: styles.amber as string,
 };
 
 /** High is good: the band the approved design colours a percentage by. */

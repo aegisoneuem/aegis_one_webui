@@ -5057,14 +5057,66 @@ components:
         priority:
           type: integer
         threats:
+          description: The reference's eight threat indicators, in its own order.
           type: array
           items:
             type: string
             enum:
             - known-exploited
             - exploit-available
+            - ransomware
+            - wormable
+            - zero-day
+            - remote
+            - malware
+            - no-fix
         detection:
           type: string
+          enum:
+          - new
+          - active
+          - reopened
+        confidence:
+          description: Whether the check proved the finding or only inferred it.
+          type: string
+          enum:
+          - confirmed
+          - potential
+        family:
+          description: The check family a finding belongs to, for example Windows Security Updates.
+          type: string
+          maxLength: 80
+        solution:
+          description: The fix in full, as the drawer and the Remediations tab state it.
+          type: string
+          maxLength: 200
+        fixType:
+          type: string
+          enum:
+          - patch
+          - workaround
+        port:
+          description: The port and service the check reached, or "local".
+          type: string
+          maxLength: 40
+        firstDetectedAt:
+          type: string
+          format: date-time
+        lastDetectedAt:
+          type: string
+          format: date-time
+        slaDueAt:
+          type: string
+          format: date-time
+        projectId:
+          type:
+          - string
+          - 'null'
+        acceptedReason:
+          type:
+          - string
+          - 'null'
+          maxLength: 200
         devices:
           type: integer
         ageDays:
@@ -5122,6 +5174,21 @@ components:
                 type: string
               os:
                 type: string
+              ip:
+                type: string
+              site:
+                type: string
+              criticality:
+                description: Device criticality 0-10, which weights the exposure score.
+                type: integer
+                minimum: 0
+                maximum: 10
+              scanMethod:
+                type: string
+                enum:
+                - agent
+                - credentialed-network
+                - not-scanned
               exposure:
                 type: integer
               critical:
@@ -5159,6 +5226,23 @@ components:
                 type: string
               fix:
                 type: string
+              highestSeverity:
+                $ref: '#/components/schemas/Severity'
+              fixType:
+                type: string
+                enum:
+                - patch
+                - workaround
+              riskReducedPct:
+                description: This fix's share of the risk every open fix would remove.
+                type: integer
+                minimum: 0
+                maximum: 100
+              cves:
+                type: array
+                items:
+                  type: string
+                  maxLength: 64
               findings:
                 type: integer
               devicesMissing:
@@ -5184,6 +5268,9 @@ components:
         due:
           type: string
           format: date
+        dueInDays:
+          description: Whole days from now until the due date, negative once it has passed.
+          type: integer
         owner:
           type: string
         progressPct:
@@ -5210,11 +5297,25 @@ components:
           - string
           - 'null'
           format: date-time
+        name:
+          type: string
+          maxLength: 120
+        template:
+          $ref: '#/components/schemas/ScanTemplate'
+        schedule:
+          description: The cadence in the reference's own words, or "One-off".
+          type: string
+          maxLength: 60
+        durationLabel:
+          type: string
+          maxLength: 20
         scope:
           type: string
         devicesScanned:
           type: integer
         findingsOpened:
+          type: integer
+        findingsFixed:
           type: integer
     ScanPage:
       type: object
@@ -5229,6 +5330,13 @@ components:
             $ref: '#/components/schemas/Scan'
         page:
           $ref: '#/components/schemas/PageInfo'
+    ScanTemplate:
+      type: string
+      enum:
+      - full-vulnerability
+      - critical-and-exploited-quick
+      - configuration-audit
+      - discovery
     ScanInput:
       type: object
       additionalProperties: false
@@ -5243,12 +5351,7 @@ components:
           minLength: 1
           maxLength: 120
         template:
-          type: string
-          enum:
-          - full-vulnerability
-          - critical-and-exploited-quick
-          - configuration-audit
-          - discovery
+          $ref: '#/components/schemas/ScanTemplate'
         targets:
           $ref: '#/components/schemas/TargetSelection'
         schedule:
@@ -5339,6 +5442,14 @@ components:
                 type: string
                 format: date
               open:
+                type: integer
+              critical:
+                type: integer
+              high:
+                type: integer
+              medium:
+                type: integer
+              low:
                 type: integer
         sla:
           type: object

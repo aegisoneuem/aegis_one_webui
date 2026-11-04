@@ -7,12 +7,14 @@ import {
   type ListQuery,
   type TableSpec,
 } from '@aegis/mock-core';
+import { shapeFinding } from './vulnerabilities';
 import {
   apiTokensSpec,
   auditSpec,
   configChecksSpec,
   deploymentsSpec,
   devicesSpec,
+  findingsSpec,
   integrationsSpec,
   liveJobsSpec,
   logBundlesSpec,
@@ -21,7 +23,7 @@ import {
   reportsSpec,
   softwareSpec,
   usersSpec,
-  vulnerabilitiesSpec,
+  scansSpec,
   zonesSpec,
 } from '../specs';
 
@@ -188,6 +190,60 @@ function deriveLiveAuditFilters(_db: Db, filters: ListQuery['filters'] & object)
   filters['action.like'] = 'liveops.';
 }
 
+/**
+ * The findings grid's own parameters.
+ *
+ * Three of them are not columns. `threat` is one of eight indicators inside a
+ * JSON array; `sla` is a comparison against now, not a stored state; and
+ * `platform` asks for the findings open on devices of that family, which is a
+ * join, so it is resolved to a list of ids first.
+ */
+function deriveFindingFilters(db: Db, filters: ListQuery['filters'] & object): void {
+  const first = (key: string): string | undefined => {
+    const raw = filters[key];
+    filters[key] = undefined;
+    return Array.isArray(raw) ? raw[0] : raw;
+  };
+  const threat = first('threat');
+  const sla = first('sla');
+  const platform = first('platform');
+
+  // Quoted, so "remote" cannot also match a longer indicator were one added.
+  if (threat && threat !== 'none') filters['threats.like'] = `"${threat}"`;
+
+  if (sla) {
+    const soon = new Date(Date.now() + 7 * 86_400_000).toISOString();
+    const now = new Date().toISOString();
+    if (sla === 'overdue') filters['slaDueAt.lte'] = now;
+    if (sla === 'due-soon') {
+      filters['slaDueAt.gte'] = now;
+      filters['slaDueAt.lte'] = soon;
+    }
+    if (sla === 'within') filters['slaDueAt.gte'] = soon;
+  }
+
+  if (!platform) return;
+  const family =
+    platform === 'windows'
+      ? 'Windows%'
+      : platform === 'macos'
+        ? 'macOS%'
+        : platform === 'aix'
+          ? 'AIX%'
+          : 'Linux%';
+  const ids = db
+    .prepare(
+      `SELECT DISTINCT dv.vulnerability_id AS id
+         FROM device_vulnerabilities dv JOIN devices d ON d.id = dv.device_id
+        WHERE dv.state = 'open' AND d.os_family LIKE ?`,
+    )
+    .all(family) as { id: string }[];
+
+  // An empty list stays a filter that matches nothing; leaving it off would
+  // quietly widen the grid back to every platform.
+  filters['id'] = ids.length ? ids.map((row) => row.id).join(',') : '\u0000none';
+}
+
 function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): void {
   // A repeated parameter arrives as an array; these three each name one value.
   const first = (key: string): string | undefined => {
@@ -222,7 +278,14 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'devices', spec: devicesSpec, zoneScoped: true },
   { path: 'software', spec: softwareSpec, envelope: softwareCounts },
   { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
-  { path: 'vulnerabilities', spec: vulnerabilitiesSpec },
+  {
+    path: 'vulnerabilities/findings',
+    spec: findingsSpec,
+    jsonFields: ['threats'],
+    derive: deriveFindingFilters,
+    shape: shapeFinding,
+  },
+  { path: 'vulnerabilities/scans', spec: scansSpec },
   { path: 'deployments', spec: deploymentsSpec, shape: shapeDeployment },
   { path: 'liveops/script-jobs', spec: liveJobsSpec, shape: shapeLiveJob },
   { path: 'profiles/checks', spec: configChecksSpec },

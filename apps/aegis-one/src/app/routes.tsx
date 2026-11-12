@@ -202,11 +202,6 @@ const SUB_ROUTES: PageRoute[] = [
     handle: { pageId: 'deployments', crumbs: ['Action details'] },
   },
   {
-    path: 'admin/api-access',
-    component: Administration,
-    handle: { pageId: 'admin', crumbs: ['API access'], permission: 'admin:tokens' },
-  },
-  {
     path: 'reports/custom',
     component: CustomReportBuilder,
     handle: { pageId: 'reports', crumbs: ['Custom report'], permission: 'reports:build' },

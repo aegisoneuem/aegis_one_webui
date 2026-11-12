@@ -753,6 +753,34 @@ CREATE TABLE deliveries (
 
 CREATE INDEX idx_deliveries_at ON deliveries(at DESC);
 
+-- The four providers the approved Identity & SSO tab prints. A provider is
+-- "enabled" when sign-in through it is switched on, and "connected" when it
+-- has actually been wired up: the card prints those as two separate fields,
+-- STATUS and CONNECTION, because a provider can be configured and switched
+-- off, or switched on and not yet configured.
+--
+-- No secret is stored here. Configuring a provider accepts one and drops it;
+-- there is no column for it and no route that reads one back.
+CREATE TABLE identity_providers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  protocol TEXT NOT NULL,              -- oidc | saml | ldap
+  description TEXT NOT NULL,           -- the line under the name
+  enabled INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL,                -- connected | not-configured | error
+  mfa_required INTEGER NOT NULL DEFAULT 0,
+  seq INTEGER NOT NULL
+);
+
+-- One row. Agent enrollment settings are a single object in the contract, so
+-- they are a single row here rather than a key-value table nobody can read.
+CREATE TABLE agent_enrollment_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  require_token INTEGER NOT NULL DEFAULT 1,
+  auto_assign_group TEXT,
+  token_max_age_days INTEGER NOT NULL DEFAULT 30
+);
+
 CREATE TABLE api_tokens (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -773,6 +801,7 @@ CREATE TABLE users (
   name TEXT NOT NULL,
   role TEXT NOT NULL,
   zone_ids TEXT NOT NULL,
+  mfa_enrolled INTEGER NOT NULL DEFAULT 1,
   status TEXT NOT NULL,
   last_sign_in_at TEXT,
   created_at TEXT NOT NULL
@@ -783,7 +812,12 @@ CREATE TABLE roles (
   name TEXT NOT NULL,
   permissions TEXT NOT NULL,
   system INTEGER NOT NULL,
+  -- The approved Roles & Content Access card prints three scopes side by
+  -- side: where a role may act, what software it may touch, and which device
+  -- groups it may see. An empty array means "everything", as the contract says.
   zone_ids TEXT NOT NULL DEFAULT '[]',
+  software_categories TEXT NOT NULL DEFAULT '[]',
+  group_ids TEXT NOT NULL DEFAULT '[]',
   user_count INTEGER NOT NULL DEFAULT 0
 );
 

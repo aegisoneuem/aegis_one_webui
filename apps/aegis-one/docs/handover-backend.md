@@ -579,3 +579,34 @@ you.
     Activity opens nothing and no contract route describes a per-cache
     activity feed. What it should show — transfers served, peers fed, bytes
     avoided over time — exists per zone on Aegis Zones but not per cache.
+60. **Nothing in the console can revoke an API token any more.** v129 has no
+    API-token surface on any of its nineteen pages, so the restored
+    Administration has four tabs rather than five and the `admin/api-access`
+    route is gone. `GET`/`POST /admin/api-tokens` and
+    `DELETE /admin/api-tokens/{id}` are still served at the declared path and
+    the contract check still exercises them, but no page calls them — so a
+    leaked token can only be revoked through the API. This is faithful to the
+    approved design and is a real reduction against the previous build. If
+    token management is meant to exist, it needs a home in the approved
+    design; if it is not, the three endpoints should come out of the
+    contract.
+61. **Agent enrollment settings are served and unreachable.**
+    `GET`/`PUT /admin/agent-enrollment` returns `requireToken`,
+    `autoAssignGroup` and `tokenMaxAgeDays`, as declared. The approved Agent
+    Enrollment tab is a roster of endpoints, not a settings form, so nothing
+    reads them. Either the tab is meant to carry both, or the settings belong
+    on the Enrollment page, which already owns enrollment tokens.
+62. **Five buttons on this page open nothing.** Configure, Add user, Create
+    role, Edit Access and Register endpoint are all present, permission-gated
+    and backed by served routes — but the reference's own buttons open
+    nothing, so there is no approved dialog to restore. What each form needs
+    is a design question: an issuer and a client secret for a provider, an
+    email and a role for a user, and for a role, a permission picker that can
+    express "not more than the creator holds".
+63. **A device's status is drawn independently of its last check-in.** The
+    Agent Enrollment table sorts by most recently seen, and a handful of
+    `offline` devices carry the newest `last_seen_at` in the estate — the seed
+    picks the two independently. Within the fixture's one-hour check-in window
+    the overlap is small, but an endpoint that was seen a minute ago and
+    reports Offline reads as a contradiction. Nothing on this page is wrong;
+    the fixture is.

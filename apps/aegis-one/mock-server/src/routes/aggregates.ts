@@ -818,17 +818,4 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
       },
     };
   }
-
-  app.get(`${basePath}/admin/roles`, async () =>
-    many(
-      `SELECT id, name, permissions, system, zone_ids AS zoneIds, user_count AS userCount FROM roles ORDER BY system DESC, name`,
-    ).map((row) => {
-      const r = row as Record<string, unknown>;
-      return {
-        ...shapeRow(r),
-        permissions: JSON.parse(String(r['permissions'])) as string[],
-        zoneIds: JSON.parse(String(r['zoneIds'])) as string[],
-      };
-    }),
-  );
 }

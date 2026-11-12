@@ -850,3 +850,43 @@ status value, not just how a date is printed.
 A real backend compares against now. In a fixture, the newest row _is_ now.
 The frozen clock still shows through wherever a date is merely formatted —
 handover question 57 — but it no longer invents findings.
+
+## D-052 — The contract's descending sort form is now honoured
+
+`GET /devices?sort=-lastSeenAt` returned HTTP 400 until this page needed it.
+
+The contract has always stated the form: "Column id, prefix with - for
+descending. Example: -lastSeen." The shared query builder in `@aegis/mock-core`
+never read it — it took direction from a separate `order` parameter that the
+contract does not declare — so the documented form was refused on every list
+endpoint in the console. Every page happened to send `order`, so nobody found
+it; Administration's Agent Enrollment tab was the first caller to write what
+the contract says.
+
+The builder now accepts both. The `-` prefix wins where both are present,
+because it is the declared form and the more specific one. `order` stays
+because a dozen pages send it and breaking them to make a point would be a
+worse trade than carrying two spellings.
+
+This is the second contract-level defect a restoration has turned up rather
+than a page-level one — the first was `/devices` ignoring an undeclared
+`filter[id]` silently (AEGIS Insight). Both share a shape: the server and the
+pages agreed with each other, and neither agreed with the spec.
+
+## D-053 — A provider is not "connected" because it exists
+
+The Identity & SSO cards print STATUS and CONNECTION as two separate fields,
+and the restored page keeps them separate because they answer different
+questions: whether sign-in through a provider is switched on, and whether it
+has been wired up at all. A provider can be configured and disabled, or
+enabled and unconfigured — and the second of those is a misconfiguration worth
+seeing.
+
+All four ship disabled and not-configured. That is what the reference shows,
+and it is also the truth about this estate: the console signs in through the
+built-in OIDC provider in `@aegis/mock-core`, and no federation to Okta or
+Entra exists. Seeding one as "Connected" would have made a better-looking
+screenshot and a false claim about an authentication path.
+
+`PUT` refuses to enable a provider that has no issuer, with HTTP 409. An
+enabled provider nobody can reach is not a configuration, it is a lockout.

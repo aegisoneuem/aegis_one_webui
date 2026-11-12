@@ -1040,6 +1040,149 @@ const run = async () => {
     `HTTP ${unknownZone.status}`,
   );
 
+  // --- Administration ------------------------------------------------------
+  const idps = await fetch(`${API}/admin/identity-providers`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'the four identity providers come back',
+    idps.length === 4 && idps.every((p) => ['oidc', 'saml', 'ldap'].includes(p.protocol)),
+    `${idps.length} providers`,
+  );
+  /*
+   * A provider can be configured and switched off, or switched on and not yet
+   * configured, which is why the card prints two fields. None of the four is
+   * wired up on this estate, and claiming otherwise would claim a federation
+   * that does not exist.
+   */
+  check(
+    'no provider claims a federation it does not have',
+    idps.every((p) => p.enabled === false && p.status === 'not-configured'),
+  );
+  const enableUnconfigured = await fetch(
+    `${API}/admin/identity-providers/${encodeURIComponent(idps[0].id)}`,
+    {
+      method: 'PUT',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: JSON.stringify({ enabled: true }),
+    },
+  );
+  check(
+    'switching on an unconfigured provider is refused — HTTP 409',
+    enableUnconfigured.status === 409,
+    `HTTP ${enableUnconfigured.status}`,
+  );
+
+  const adminRoles = await fetch(`${API}/admin/roles`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'every role carries the three content scopes the cards print',
+    adminRoles.length >= 5 &&
+      adminRoles.every(
+        (r) =>
+          Array.isArray(r.zoneIds) &&
+          Array.isArray(r.softwareCategories) &&
+          Array.isArray(r.groupIds) &&
+          typeof r.userCount === 'number',
+      ),
+    `${adminRoles.length} roles`,
+  );
+  // An empty scope list means everything, so at least one role must be
+  // narrowed or the scoping is decorative.
+  check(
+    'at least one role is actually scoped',
+    adminRoles.some((r) => r.zoneIds.length > 0 && r.softwareCategories.length > 0),
+    adminRoles.find((r) => r.zoneIds.length > 0)?.name ?? 'none',
+  );
+
+  const adminUsers = await fetch(`${API}/admin/users?limit=50`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'the console users come back with their access state',
+    adminUsers.items.length === 8 && adminUsers.items.every((u) => typeof u.disabled === 'boolean'),
+    `${adminUsers.items.length} accounts`,
+  );
+  check(
+    'a disabled account has no second factor enrolled',
+    adminUsers.items.filter((u) => u.disabled).every((u) => u.mfaEnrolled === false),
+  );
+
+  // Only a Super Admin may grant Super Admin — the contract's own rule.
+  const promote = await fetch(
+    `${API}/admin/users/${encodeURIComponent(adminUsers.items.find((u) => u.role === 'Operator').id)}`,
+    {
+      method: 'PATCH',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: JSON.stringify({ role: 'Auditor' }),
+    },
+  );
+  check('a role can be changed', promote.status === 200, `HTTP ${promote.status}`);
+  const restored = await fetch(
+    `${API}/admin/users/${encodeURIComponent((await promote.json()).id)}`,
+    {
+      method: 'PATCH',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: JSON.stringify({ role: 'Operator' }),
+    },
+  );
+  check('and changed back, leaving the fixture as it was', restored.status === 200);
+
+  // Disabling the last active Super Admin would lock everyone out.
+  const superAdmin = adminUsers.items.find((u) => u.role === 'Super Admin');
+  const lockout = await fetch(`${API}/admin/users/${encodeURIComponent(superAdmin.id)}`, {
+    method: 'PATCH',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ disabled: true }),
+  });
+  check(
+    'disabling the last Super Admin is refused — HTTP 409',
+    lockout.status === 409,
+    `HTTP ${lockout.status}`,
+  );
+
+  const settings = await fetch(`${API}/admin/agent-enrollment`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'the agent enrollment settings come back',
+    settings.requireToken === true && typeof settings.tokenMaxAgeDays === 'number',
+    `token required, max age ${settings.tokenMaxAgeDays} days`,
+  );
+
+  /*
+   * The contract states the descending sort as a `-` prefix on `sort`. The
+   * builder only ever read a separate `order` parameter, so the declared form
+   * was refused — which the Agent Enrollment tab found by being the first
+   * caller to use it.
+   */
+  const descending = await fetch(`${API}/devices?limit=2&sort=-lastSeenAt&fields=id,lastSeenAt`, {
+    headers: authed(token),
+  });
+  check(
+    "the contract's own descending sort form is accepted",
+    descending.status === 200,
+    `HTTP ${descending.status}`,
+  );
+  const descRows = (await descending.json()).items;
+  check(
+    'and it really sorts descending',
+    Date.parse(descRows[0].lastSeenAt) >= Date.parse(descRows[1].lastSeenAt),
+  );
+
   // --- Device detail -------------------------------------------------------
   const firstId = (
     await fetch(`${API}/devices?limit=1&fields=id`, { headers: authed(token) }).then((r) =>
@@ -1176,7 +1319,7 @@ const run = async () => {
   );
 
   // --- Tokens --------------------------------------------------------------
-  const tokenList = await fetch(`${API}/admin/tokens?limit=5`, { headers: authed(token) }).then(
+  const tokenList = await fetch(`${API}/admin/api-tokens?limit=5`, { headers: authed(token) }).then(
     (r) => r.json(),
   );
   check(

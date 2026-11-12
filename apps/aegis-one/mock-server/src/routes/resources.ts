@@ -18,7 +18,6 @@ import {
   logBundlesSpec,
   patchesSpec,
   softwareSpec,
-  usersSpec,
   scansSpec,
 } from '../specs';
 
@@ -291,8 +290,7 @@ const RESOURCES: readonly ResourceDef[] = [
     envelope: logStats,
   },
   { path: 'liveops/audit', spec: auditSpec, derive: deriveLiveAuditFilters },
-  { path: 'admin/users', spec: usersSpec, jsonFields: ['zoneIds'] },
-  { path: 'admin/tokens', spec: apiTokensSpec, jsonFields: ['scopes'] },
+  { path: 'admin/api-tokens', spec: apiTokensSpec, jsonFields: ['scopes'] },
 ];
 
 /** SQLite has no boolean, so 0/1 columns come back as numbers. */

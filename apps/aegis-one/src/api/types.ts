@@ -896,15 +896,38 @@ export type DeliveryAttempt = {
   httpStatus: number | null;
 };
 
+/** The contract's User: one console account and the access it has. */
 export type ConsoleUser = {
   id: string;
   email: string;
   name: string;
   role: string;
   zoneIds: string[];
-  status: string;
-  lastSignInAt: string | null;
-  createdAt: string;
+  mfaEnrolled: boolean;
+  disabled: boolean;
+  lastSignIn: string | null;
+};
+
+/**
+ * One card on the Identity & SSO tab. A provider can be configured and
+ * switched off, or switched on and not yet configured, which is why the card
+ * prints STATUS and CONNECTION as two separate fields.
+ */
+export type IdentityProvider = {
+  id: string;
+  name: string;
+  protocol: 'oidc' | 'saml' | 'ldap';
+  description: string;
+  enabled: boolean;
+  status: 'connected' | 'not-configured' | 'error';
+  mfaRequired: boolean;
+};
+
+/** The contract's AgentEnrollmentSettings. */
+export type AgentEnrollmentSettings = {
+  requireToken: boolean;
+  autoAssignGroup: string | null;
+  tokenMaxAgeDays: number;
 };
 
 export type ApiToken = {
@@ -953,12 +976,18 @@ export type EnrollmentSummary = {
   methods: EnrollmentMethod[];
 };
 
+/**
+ * The contract's RoleDef. The three scope lists are what the approved card
+ * prints side by side; an empty list means "everything", not "nothing".
+ */
 export type RoleDefinition = {
   id: string;
   name: string;
   permissions: string[];
   system: boolean;
   zoneIds: string[];
+  softwareCategories: string[];
+  groupIds: string[];
   userCount: number;
 };
 

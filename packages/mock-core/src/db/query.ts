@@ -195,13 +195,26 @@ export function listRows<T extends Record<string, unknown>>(
 ): PageResult<T> {
   const limit = Math.min(Math.max(Number(query.limit) || DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
 
-  const sortField = query.sort ?? spec.defaultSort?.field ?? spec.idColumn;
+  /*
+   * The contract states the descending form as a `-` prefix on `sort`
+   * ("Column id, prefix with - for descending. Example: -lastSeen."), while
+   * this builder only ever read a separate `order` parameter. Both are
+   * honoured: the declared prefix, because the contract is the source of
+   * truth, and `order`, because every page in the console already sends it.
+   */
+  const rawSort = query.sort ?? spec.defaultSort?.field ?? spec.idColumn;
+  const descPrefixed = rawSort.startsWith('-');
+  const sortField = descPrefixed ? rawSort.slice(1) : rawSort;
   const sortSpec = spec.columns[sortField];
   if (!sortSpec?.sortable && sortField !== spec.idColumn) {
     throw badRequest(`Cannot sort by ${sortField}.`, { sort: 'unsupported' });
   }
   const sortColumn = sortSpec?.column ?? spec.idColumn;
-  const desc = query.order ? query.order.toLowerCase() === 'desc' : Boolean(spec.defaultSort?.desc);
+  const desc = descPrefixed
+    ? true
+    : query.order
+      ? query.order.toLowerCase() === 'desc'
+      : Boolean(spec.defaultSort?.desc);
 
   const fields = resolveFields(spec, query.fields);
   const select = fields.map((f) => {

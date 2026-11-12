@@ -503,7 +503,7 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
    * is stored — so it cannot be read back from the list endpoint, the database
    * or a backup.
    */
-  app.post(`${basePath}/admin/tokens`, async (request, reply) => {
+  app.post(`${basePath}/admin/api-tokens`, async (request, reply) => {
     const body = request.body as { name?: string; scopes?: string[]; expiresAt?: string };
     if (!body.name || !body.scopes?.length) throw badRequest('name and scopes are required.');
 
@@ -544,7 +544,7 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
     });
   });
 
-  app.delete(`${basePath}/admin/tokens/:tokenId`, async (request, reply) => {
+  app.delete(`${basePath}/admin/api-tokens/:tokenId`, async (request, reply) => {
     const { tokenId } = request.params as { tokenId: string };
     const row = db.prepare(`SELECT revoked_at FROM api_tokens WHERE id = ?`).get(tokenId) as
       { revoked_at: string | null } | undefined;

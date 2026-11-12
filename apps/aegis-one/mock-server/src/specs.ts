@@ -326,27 +326,6 @@ export const reportsSpec: TableSpec = {
   },
 };
 
-export const usersSpec: TableSpec = {
-  table: 'users',
-  idColumn: 'id',
-  searchColumns: ['email', 'name'],
-  defaultSort: { field: 'name' },
-  columns: {
-    id,
-    email: { column: 'email', sortable: true, filters: ['eq', 'like'] },
-    name: { column: 'name', sortable: true, filters: ['like'] },
-    role: { column: 'role', sortable: true, filters: ['eq', 'in'] },
-    zoneIds: { column: 'zone_ids' },
-    status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
-    lastSignInAt: { column: 'last_sign_in_at', sortable: true },
-    createdAt: { column: 'created_at', sortable: true },
-  },
-};
-
-/**
- * API tokens. `token_hash` is deliberately absent: it is not a field clients
- * may project, filter or sort by, so it cannot leave the database.
- */
 export const apiTokensSpec: TableSpec = {
   table: 'api_tokens',
   idColumn: 'id',

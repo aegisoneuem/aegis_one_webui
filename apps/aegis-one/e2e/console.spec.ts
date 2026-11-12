@@ -1306,6 +1306,81 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('button', { name: 'Activity' })).toBeDisabled();
   });
 
+  test('Administration opens on the approved four tabs', async ({ page }) => {
+    await page.goto('/admin');
+
+    for (const tab of ['Identity & SSO', 'Users', 'Roles & Content Access', 'Agent Enrollment'])
+      await expect(page.getByRole('tab', { name: tab, exact: true })).toBeVisible();
+
+    // Identity & SSO opens first, with the reference's four provider cards.
+    for (const provider of [
+      'Okta',
+      'Microsoft Entra ID',
+      'Generic SAML 2.0',
+      'LDAP / Active Directory',
+    ])
+      await expect(page.getByText(provider, { exact: true })).toBeVisible();
+
+    // Each card prints STATUS and CONNECTION as two separate fields.
+    await expect(page.getByText('Status', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Setup Required').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Configure' })).toHaveCount(4);
+  });
+
+  test('a role card prints its permissions and all three content scopes', async ({ page }) => {
+    await page.goto('/admin?tab=roles');
+
+    await expect(page.getByRole('button', { name: '+ Create role' })).toBeVisible();
+
+    /*
+     * The scoped role is the one the design exists for: narrowed on zones and
+     * software, so the card shows names rather than "All" three times.
+     */
+    const scoped = page.locator('section').filter({ hasText: 'Jaipur Branch Operator' });
+    await expect(scoped.getByText('Jaipur Branch', { exact: true })).toBeVisible();
+    await expect(scoped.getByText('Browser, Utilities')).toBeVisible();
+    await expect(scoped.getByText('All Groups')).toBeVisible();
+
+    // A built-in role cannot be edited, which the contract states.
+    const system = page.locator('section').filter({ hasText: 'Super Admin' });
+    await expect(system.getByText('Full Console Access')).toBeVisible();
+    await expect(system.getByRole('button', { name: 'Edit Permissions' })).toBeDisabled();
+  });
+
+  test('a console account can be disabled and re-enabled', async ({ page }) => {
+    await page.goto('/admin?tab=users');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['User', 'Role', 'Access', 'Actions'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    /*
+     * Acts on the Auditor account rather than a Super Admin, and puts it back,
+     * so the test leaves the fixture exactly as it found it.
+     */
+    const row = grid.locator('tr').filter({ hasText: 'Kavya Chandrasekar' });
+    await expect(row.getByText('Active')).toBeVisible();
+
+    await row.getByRole('button', { name: /More actions/ }).click();
+    await page.getByRole('button', { name: 'Revoke Sessions' }).click();
+    await expect(row.getByText('Disabled')).toBeVisible();
+
+    await row.getByRole('button', { name: /More actions/ }).click();
+    await page.getByRole('button', { name: 'Enable account' }).click();
+    await expect(row.getByText('Active')).toBeVisible();
+  });
+
+  test('Agent Enrollment lists the endpoints that have checked in', async ({ page }) => {
+    await page.goto('/admin?tab=enrollment');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Endpoint', 'Zone', 'Agent Version', 'Last Seen', 'Connection'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(grid.locator('tbody tr')).toHaveCount(25);
+    await expect(page.getByText(/enrolled endpoints/)).toBeVisible();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

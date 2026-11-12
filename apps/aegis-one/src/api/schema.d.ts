@@ -3381,7 +3381,14 @@ export interface components {
             name: string;
             /** @enum {string} */
             protocol: "oidc" | "saml" | "ldap";
-            /** @enum {string} */
+            /** @description The line under the name, e.g. SAML - Federated Identity. */
+            description?: string;
+            /** @description Whether sign-in through this provider is switched on - the card's STATUS field. */
+            enabled?: boolean;
+            /**
+             * @description Whether it is wired up - the card's CONNECTION field.
+             * @enum {string}
+             */
             status: "connected" | "not-configured" | "error";
             mfaRequired?: boolean;
         };
@@ -3410,6 +3417,8 @@ export interface components {
             role: components["schemas"]["Role"];
             mfaEnrolled: boolean;
             disabled: boolean;
+            /** @description Empty means every zone, as on a role. */
+            zoneIds?: string[];
             /** Format: date-time */
             lastSignIn?: string | null;
         };
@@ -3421,6 +3430,8 @@ export interface components {
             id: string;
             /** @description True for the five built-in roles, which cannot be edited. */
             system: boolean;
+            /** @description How many console users hold this role. */
+            userCount: number;
         };
         AgentEnrollmentSettings: {
             requireToken: boolean;

@@ -7349,7 +7349,14 @@ components:
           - oidc
           - saml
           - ldap
+        description:
+          description: The line under the name, e.g. SAML - Federated Identity.
+          type: string
+        enabled:
+          description: Whether sign-in through this provider is switched on - the card's STATUS field.
+          type: boolean
         status:
+          description: Whether it is wired up - the card's CONNECTION field.
           type: string
           enum:
           - connected
@@ -7425,6 +7432,12 @@ components:
           type: boolean
         disabled:
           type: boolean
+        zoneIds:
+          description: Empty means every zone, as on a role.
+          type: array
+          maxItems: 100
+          items:
+            type: string
         lastSignIn:
           type:
           - string
@@ -7450,12 +7463,16 @@ components:
         required:
         - id
         - system
+        - userCount
         properties:
           id:
             type: string
           system:
             type: boolean
             description: True for the five built-in roles, which cannot be edited.
+          userCount:
+            description: How many console users hold this role.
+            type: integer
     AgentEnrollmentSettings:
       type: object
       additionalProperties: false

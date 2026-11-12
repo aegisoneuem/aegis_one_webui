@@ -88,6 +88,7 @@ export function seedDatabase({
   seedInsightTemplates(db);
   seedIntegrations(db);
   seedUsersAndRoles(db, rng);
+  seedIdentityProviders(db);
   seedTokens(db, rng);
   seedLicenses(db, deviceStats.total);
   seedServiceHealth(db, rng);
@@ -2709,10 +2710,13 @@ const SCOPED_ROLE = {
 
 function seedUsersAndRoles(db: Db, rng: Rng): void {
   const insertRole = db.prepare(
-    `INSERT INTO roles (id,name,permissions,system,zone_ids,user_count) VALUES (?,?,?,?,?,?)`,
+    `INSERT INTO roles
+       (id,name,permissions,system,zone_ids,software_categories,group_ids,user_count)
+     VALUES (?,?,?,?,?,?,?,?)`,
   );
   const insertUser = db.prepare(
-    `INSERT INTO users (id,email,name,role,zone_ids,status,last_sign_in_at,created_at) VALUES (?,?,?,?,?,?,?,?)`,
+    `INSERT INTO users (id,email,name,role,zone_ids,mfa_enrolled,status,last_sign_in_at,created_at)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
   );
 
   const users: readonly (readonly [string, string, string, string, string[]])[] = [
@@ -2736,6 +2740,14 @@ function seedUsersAndRoles(db: Db, rng: Rng): void {
         JSON.stringify(role.permissions),
         role.system ? 1 : 0,
         JSON.stringify(role.name === 'Jaipur Branch Operator' ? ['zn-jai-br'] : []),
+        /*
+         * One role is narrowed on all three axes, because a card where every
+         * scope reads "All" tells you nothing about what the scoping does.
+         * A branch operator who may install browsers and utilities but not
+         * security agents is the case the approved design exists for.
+         */
+        JSON.stringify(role.name === 'Jaipur Branch Operator' ? ['Browser', 'Utilities'] : []),
+        JSON.stringify([]),
         users.filter((u) => u[3] === role.name).length,
       );
     }
@@ -2746,11 +2758,54 @@ function seedUsersAndRoles(db: Db, rng: Rng): void {
         name,
         role,
         JSON.stringify(zoneIds),
+        // The disabled account never finished enrolling a second factor,
+        // which is why it is disabled.
+        id === 'usr-008' ? 0 : 1,
         id === 'usr-008' ? 'disabled' : 'active',
         id === 'usr-008' ? daysAgo(96) : iso(rng.recentMs(NOW, 10)),
         daysAgo(rng.int(120, 1100)),
       );
     }
+  })();
+}
+
+/**
+ * The four identity providers the approved Identity & SSO tab prints, with
+ * the descriptive line each card carries under its name.
+ *
+ * All four ship switched off and unconfigured, which is what the reference
+ * shows: STATUS "Disabled", CONNECTION "Setup Required". That is also the
+ * truthful state of this estate — the console's own sign-in is the built-in
+ * OIDC provider in `@aegis/mock-core`, not any of these four, and claiming
+ * Okta was connected would be claiming a federation that does not exist.
+ */
+function seedIdentityProviders(db: Db): void {
+  const providers: readonly (readonly [string, string, string, string, boolean])[] = [
+    ['idp-okta', 'Okta', 'saml', 'SAML · Federated Identity', false],
+    [
+      'idp-entra',
+      'Microsoft Entra ID',
+      'oidc',
+      'OIDC · Microsoft Authenticator Via Entra MFA',
+      true,
+    ],
+    ['idp-saml', 'Generic SAML 2.0', 'saml', 'SAML · Federated Identity', false],
+    ['idp-ldap', 'LDAP / Active Directory', 'ldap', 'LDAP · Directory Authentication', false],
+  ];
+
+  const insert = db.prepare(
+    `INSERT INTO identity_providers
+       (id,name,protocol,description,enabled,status,mfa_required,seq)
+     VALUES (?,?,?,?,0,'not-configured',?,?)`,
+  );
+  db.transaction(() => {
+    providers.forEach(([id, name, protocol, description, mfa], i) =>
+      insert.run(id, name, protocol, description, mfa ? 1 : 0, i),
+    );
+    db.prepare(
+      `INSERT INTO agent_enrollment_settings (id,require_token,auto_assign_group,token_max_age_days)
+       VALUES (1,1,NULL,30)`,
+    ).run();
   })();
 }
 

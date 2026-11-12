@@ -77,19 +77,40 @@ CONNECTION), `User` gained `zoneIds`, and `RoleDef` gained `userCount`.
 server served `/admin/tokens`. Both the list and the two write routes now sit
 at the declared path.
 
-## The API access tab is gone, and that is a loss
+## The API access tab: removed, then restored on instruction
 
 v129 has no API-token surface — not on this page, not on any of its nineteen.
-The restored page therefore has four tabs, not five, and the `admin/api-access`
-sub-route is deleted.
+The restoration therefore removed the API access tab, leaving four, and
+deleted the `admin/api-access` sub-route.
 
-The endpoints remain: `GET`/`POST /admin/api-tokens` and
-`DELETE /admin/api-tokens/{id}` are served, at the declared path, and the
-contract check still exercises them. But **nothing in the console can now
-revoke a token**, which is a real reduction in what an administrator can do
-compared with the build before this change. It is faithful to the approved
-design and it is worth someone deciding on deliberately — see handover
-question 60.
+That left **nothing in the console able to revoke a token**: a real reduction
+against the previous build, since the endpoints were still served but
+unreachable, and a leaked token could only be retired through the API. The
+question was put to the owner, who said to add it back.
+
+So **API access is a fifth tab**, and it is a deliberate departure from the
+approved design rather than an oversight. It lists Token / Prefix / Scopes /
+State / Last used / Expires / Created by with a Revoke action, creates a token
+through a dialog that shows the secret once, and confirms revocation before
+acting. The `admin/api-access` sub-route stays deleted — the tab is reachable
+at `?tab=tokens` like every other tab on the page, and a second URL for the
+same view was only ever a duplicate.
+
+### Two more contract defects this tab found
+
+Restoring it against the declared contract — rather than the path the old page
+used — surfaced two further mismatches, both of which had been invisible
+because the old page was calling an undeclared path:
+
+- **`expiresAt` was required on `ApiTokenInput`.** The old create flow never
+  sent it, so "Create token" would have returned HTTP 400 against the declared
+  schema. A token with no expiry is a credential nobody retires, so rather
+  than making the caller always state one, the field is now optional and the
+  server applies a documented default of one year.
+- **`GET /admin/api-tokens` declared a bare array.** The server returns the
+  same `{items, page}` envelope every other lister returns, and the page reads
+  it. The contract now declares `ApiTokenPage`, with the cursor, limit and
+  search parameters the lister already honours.
 
 ## Agent Enrollment reads the device list
 

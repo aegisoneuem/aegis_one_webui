@@ -1183,6 +1183,43 @@ const run = async () => {
     Date.parse(descRows[0].lastSeenAt) >= Date.parse(descRows[1].lastSeenAt),
   );
 
+  // --- API tokens ----------------------------------------------------------
+  /*
+   * The secret exists exactly once, in the response that creates it. The
+   * server keeps a SHA-256 and a display prefix, so a leak can only be
+   * answered by revoking — which is why the console needs a way to revoke.
+   */
+  const madeToken = await fetch(`${API}/admin/api-tokens`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ name: 'contract-check-token', scopes: ['devices:read'] }),
+  });
+  const made = await madeToken.json();
+  check(
+    'creating a token returns its secret once',
+    madeToken.status === 201 && typeof made.secret === 'string' && made.secret.startsWith('aeg_'),
+    `HTTP ${madeToken.status}`,
+  );
+
+  const afterCreate = await fetch(`${API}/admin/api-tokens?limit=50`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  const mine = afterCreate.items.find((t) => t.name === 'contract-check-token');
+  check('and the token is listed afterwards', mine !== undefined);
+  check(
+    'but the list never carries the secret again',
+    !JSON.stringify(afterCreate).includes(made.secret),
+  );
+
+  const revoked = await fetch(`${API}/admin/api-tokens/${encodeURIComponent(mine.id)}`, {
+    method: 'DELETE',
+    headers: authed(token, { 'x-csrf-token': session.csrfToken }),
+  });
+  check('a token can be revoked', revoked.status === 204, `HTTP ${revoked.status}`);
+
   // --- Device detail -------------------------------------------------------
   const firstId = (
     await fetch(`${API}/devices?limit=1&fields=id`, { headers: authed(token) }).then((r) =>

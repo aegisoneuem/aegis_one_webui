@@ -195,7 +195,6 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
     const targets = resolveTargets(db, body.targets, request.auth?.zoneIds ?? []);
     const jobId = `job-${randomUUID().slice(0, 8)}`;
     const now = new Date().toISOString();
-
     db.prepare(
       `INSERT INTO live_jobs
          (id,title,kind,script_language,script,change_ref,status,target_count,
@@ -518,6 +517,14 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
     const secret = `aeg_${randomUUID().replace(/-/g, '')}${randomUUID().replace(/-/g, '').slice(0, 8)}`;
     const tokenId = `tok-${randomUUID().slice(0, 8)}`;
     const now = new Date().toISOString();
+    /*
+     * A token with no expiry is a credential that outlives whoever created
+     * it. The contract makes `expiresAt` optional and says the server
+     * defaults to a year, so an omitted expiry becomes a year rather than
+     * "never" — computed once here so the stored row and the response
+     * cannot disagree by a millisecond.
+     */
+    const expiresAt = body.expiresAt ?? new Date(Date.now() + 365 * 86_400_000).toISOString();
 
     db.prepare(
       `INSERT INTO api_tokens (id,name,token_hash,prefix,scopes,created_at,created_by,expires_at)
@@ -530,7 +537,7 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       JSON.stringify(body.scopes),
       now,
       request.auth?.email ?? 'unknown',
-      body.expiresAt ?? null,
+      expiresAt,
     );
 
     return reply.status(201).send({
@@ -539,6 +546,7 @@ export function registerActionRoutes(app: FastifyInstance, db: Db, basePath: str
       prefix: secret.slice(0, 11),
       scopes: body.scopes,
       createdAt: now,
+      expiresAt,
       // Shown once. There is no endpoint that can return it again.
       secret,
     });

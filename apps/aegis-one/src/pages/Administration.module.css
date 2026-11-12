@@ -349,6 +349,24 @@
   cursor: default;
 }
 
+/* The token prefix and the one-time secret are both read, not prose. */
+.prefix,
+.secret {
+  color: var(--ao-navy-mid);
+  font-family: var(--ui-font-mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+.secret {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--ao-border);
+  margin: 0;
+  background: var(--ao-bg);
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+}
+
 .empty {
   padding: 28px 14px;
   color: var(--ao-muted);

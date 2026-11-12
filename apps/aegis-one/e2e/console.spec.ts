@@ -1381,6 +1381,46 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByText(/enrolled endpoints/)).toBeVisible();
   });
 
+  test('an API token is created once, shown once, and can be revoked', async ({ page }) => {
+    await page.goto('/admin?tab=tokens');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Token', 'Prefix', 'Scopes', 'State', 'Last used', 'Expires'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    // An already-revoked token cannot be revoked twice.
+    const dead = grid.locator('tr').filter({ hasText: 'legacy-inventory-export' });
+    await expect(dead.getByText('Revoked')).toBeVisible();
+    await expect(dead.getByRole('button', { name: 'Revoke' })).toBeDisabled();
+
+    /*
+     * Creates its own token and revokes it, so the test never touches a
+     * seeded one and can be run twice in a row.
+     */
+    const name = `e2e-token-${Date.now()}`;
+    await page.getByRole('button', { name: '+ New token' }).click();
+    await page.getByLabel('Token name').fill(name);
+    await page.getByRole('button', { name: 'Create token' }).click();
+
+    // The secret is shown exactly once, and the dialog says so.
+    await expect(page.getByText('This is the only time it will be shown.')).toBeVisible();
+    const secret = await page.locator('pre').innerText();
+    expect(secret).toMatch(/^aeg_[0-9a-f]+$/);
+    await page.getByRole('button', { name: 'I have stored it' }).click();
+
+    const row = grid.locator('tr').filter({ hasText: name });
+    await expect(row.getByText('Active')).toBeVisible();
+    // The grid shows a prefix, never the secret itself.
+    await expect(page.getByText(secret)).toHaveCount(0);
+
+    await row.getByRole('button', { name: 'Revoke' }).click();
+    await page.getByRole('button', { name: 'Revoke token' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Token revoked'),
+    ).toBeVisible();
+    await expect(row.getByText('Revoked')).toBeVisible();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

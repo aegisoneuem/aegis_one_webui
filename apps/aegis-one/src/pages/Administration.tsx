@@ -1,29 +1,48 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, ErrorState, Skeleton, useToast } from '@aegis/ui';
-import { api, type Page } from '../api/client';
+import { Button, ErrorState, Field, Input, Modal, Skeleton, useToast } from '@aegis/ui';
+import { ApiError, api, type Page } from '../api/client';
 import { useCan } from '../app/auth';
-import { dateTime, num, relative } from '../app/format';
-import type { ConsoleUser, Device, IdentityProvider, RoleDefinition, Zone } from '../api/types';
+import { date, dateTime, num, relative } from '../app/format';
+import type {
+  ApiToken,
+  ConsoleUser,
+  Device,
+  IdentityProvider,
+  RoleDefinition,
+  Zone,
+} from '../api/types';
 import styles from './Administration.module.css';
 
 /**
- * Administration, restored to the approved v129 layout: four tabs — Identity
- * & SSO, Users, Roles & Content Access, Agent Enrollment — in that order.
+ * Administration, restored to the approved v129 layout: Identity & SSO,
+ * Users, Roles & Content Access and Agent Enrollment, in that order.
  *
  * The page that was here had four tabs too, but a different fourth one: API
- * access, which the approved design does not have, and no Agent Enrollment,
- * which it does. Its Identity & SSO tab was two paragraphs of prose where the
- * reference prints four provider cards, and its role cards showed one of the
- * three content scopes the reference prints.
+ * access, and no Agent Enrollment. Its Identity & SSO tab was two paragraphs
+ * of prose where the reference prints four provider cards, and its role cards
+ * showed one of the three content scopes the reference prints.
+ *
+ * API access is kept as a fifth tab on the owner's explicit instruction. It
+ * is not in the approved design — v129 has no API-token surface on any of its
+ * nineteen pages — but without it nothing in the console can revoke a leaked
+ * token. The departure is deliberate and recorded; see
+ * docs/administration-restoration.md.
  */
 
+/**
+ * The reference has four tabs. API access is a fifth, kept at the owner's
+ * explicit request: v129 has no API-token surface anywhere in its nineteen
+ * pages, and without this tab nothing in the console could revoke a leaked
+ * token. See docs/administration-restoration.md and handover question 60.
+ */
 const TABS = [
   { id: 'sso', label: 'Identity & SSO' },
   { id: 'users', label: 'Users' },
   { id: 'roles', label: 'Roles & Content Access' },
   { id: 'enrollment', label: 'Agent Enrollment' },
+  { id: 'tokens', label: 'API access' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -98,6 +117,7 @@ export default function Administration() {
       {tab === 'users' ? <UsersTab /> : null}
       {tab === 'roles' ? <RolesTab /> : null}
       {tab === 'enrollment' ? <EnrollmentTab /> : null}
+      {tab === 'tokens' ? <TokensTab /> : null}
     </div>
   );
 }
@@ -481,6 +501,255 @@ function EnrollmentTab() {
           </p>
         ) : null}
       </section>
+    </>
+  );
+}
+
+/* --- API access ----------------------------------------------------------- */
+
+/**
+ * API access.
+ *
+ * A token's secret exists exactly once, in the response that creates it. The
+ * server stores a SHA-256 and a display prefix, so there is no endpoint — and
+ * no backup — that can hand the secret back. That is why the dialog says so
+ * plainly and why revoking is the only remedy for a leak.
+ *
+ * Not part of the approved v129 design; restored on the owner's instruction
+ * because its absence left no way to revoke a token from the console.
+ */
+function TokensTab() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const canManage = useCan('admin:tokens');
+
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState('');
+  const [secret, setSecret] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<ApiToken | null>(null);
+
+  const tokens = useQuery({
+    queryKey: ['/admin/api-tokens'],
+    queryFn: ({ signal }) =>
+      api.get<Page<ApiToken>>('/admin/api-tokens', { limit: '50', sort: '-createdAt' }, signal),
+  });
+
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['/admin/api-tokens'] });
+
+  const create = useMutation({
+    mutationFn: () =>
+      // No expiry is sent, so the server applies its documented default of
+      // one year. A token that never expires is a credential nobody retires.
+      api.post<{ secret: string }>('/admin/api-tokens', {
+        name: name.trim(),
+        scopes: ['devices:read', 'reports:read'],
+      }),
+    onSuccess: (result) => {
+      setSecret(result.secret);
+      setCreating(false);
+      setName('');
+      invalidate();
+    },
+    onError: (err) =>
+      toast.show({
+        tone: 'error',
+        title: 'The token could not be created',
+        message:
+          err instanceof ApiError ? `${err.message} Reference ${err.requestId}.` : 'Try again.',
+      }),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (token: ApiToken) => api.delete(`/admin/api-tokens/${token.id}`),
+    onSuccess: () => {
+      toast.show({
+        tone: 'success',
+        title: 'Token revoked',
+        message: 'Anything using it stopped working immediately.',
+      });
+      setRevoking(null);
+      invalidate();
+    },
+    onError: (err) =>
+      toast.show({
+        tone: 'error',
+        title: 'The token could not be revoked',
+        message:
+          err instanceof ApiError ? `${err.message} Reference ${err.requestId}.` : 'Try again.',
+      }),
+  });
+
+  if (tokens.error) {
+    return (
+      <ErrorState
+        title="The API tokens could not be loaded"
+        description="The token list did not come back."
+        retryLabel="Try again"
+        onRetry={() => void tokens.refetch()}
+      />
+    );
+  }
+
+  const stateOf = (token: ApiToken): { label: string; tone: string } => {
+    if (token.revokedAt) return { label: 'Revoked', tone: styles.bad as string };
+    if (token.expiresAt && new Date(token.expiresAt) < new Date())
+      return { label: 'Expired', tone: styles.warn as string };
+    return { label: 'Active', tone: styles.good as string };
+  };
+
+  return (
+    <>
+      <div className={styles.toolbar}>
+        <Button variant="primary" disabled={!canManage} onClick={() => setCreating(true)}>
+          + New token
+        </Button>
+      </div>
+
+      <section className={styles.panel}>
+        <div className={styles.tableWrap}>
+          <table className={styles.grid}>
+            <thead>
+              <tr>
+                <th scope="col">Token</th>
+                <th scope="col">Prefix</th>
+                <th scope="col">Scopes</th>
+                <th scope="col">State</th>
+                <th scope="col">Last used</th>
+                <th scope="col">Expires</th>
+                <th scope="col">Created by</th>
+                <th scope="col">
+                  <span className={styles.srOnly}>Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {tokens.isPending ? (
+                <tr>
+                  <td colSpan={8} className={styles.empty}>
+                    Loading tokens…
+                  </td>
+                </tr>
+              ) : (tokens.data?.items ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={8} className={styles.empty}>
+                    No API tokens. Create one to let a system call the API without a person signing
+                    in.
+                  </td>
+                </tr>
+              ) : (
+                (tokens.data?.items ?? []).map((token) => {
+                  const state = stateOf(token);
+                  return (
+                    <tr key={token.id}>
+                      <td>
+                        <b>{token.name}</b>
+                      </td>
+                      <td>
+                        <code className={styles.prefix}>{token.prefix}…</code>
+                      </td>
+                      <td>{token.scopes.join(', ')}</td>
+                      <td>
+                        <b className={state.tone}>{state.label}</b>
+                      </td>
+                      <td title={token.lastUsedAt ? dateTime(token.lastUsedAt) : undefined}>
+                        {token.lastUsedAt ? relative(token.lastUsedAt) : 'Never'}
+                      </td>
+                      <td>{token.expiresAt ? date(token.expiresAt) : 'No expiry'}</td>
+                      <td>{token.createdBy}</td>
+                      <td className={styles.actions}>
+                        <div>
+                          <Button
+                            disabled={!canManage || token.revokedAt !== null}
+                            onClick={() => setRevoking(token)}
+                          >
+                            Revoke
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <Modal
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="New API token"
+        description="The secret is shown once, when the token is created. It cannot be retrieved later."
+        footer={
+          <>
+            <Button onClick={() => setCreating(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              loading={create.isPending}
+              disabled={!name.trim()}
+              onClick={() => create.mutate()}
+            >
+              Create token
+            </Button>
+          </>
+        }
+      >
+        <Field
+          label="Token name"
+          required
+          hint="Name it after the system that will use it. The token expires in one year."
+        >
+          {(field) => (
+            <Input
+              {...field}
+              maxLength={64}
+              placeholder="servicenow-sync"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          )}
+        </Field>
+      </Modal>
+
+      <Modal
+        open={secret !== null}
+        onClose={() => setSecret(null)}
+        title="Copy this token now"
+        description="This is the only time it will be shown. Store it in your secret manager before closing."
+        footer={
+          <Button variant="primary" onClick={() => setSecret(null)}>
+            I have stored it
+          </Button>
+        }
+      >
+        <pre className={styles.secret}>{secret}</pre>
+      </Modal>
+
+      <Modal
+        open={revoking !== null}
+        onClose={() => setRevoking(null)}
+        title={`Revoke ${revoking?.name ?? ''}?`}
+        description="Anything using this token stops working immediately. This cannot be undone."
+        footer={
+          <>
+            <Button onClick={() => setRevoking(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              loading={revoke.isPending}
+              onClick={() => revoking && revoke.mutate(revoking)}
+            >
+              Revoke token
+            </Button>
+          </>
+        }
+      >
+        {revoking ? (
+          <p>
+            Last used {revoking.lastUsedAt ? relative(revoking.lastUsedAt).toLowerCase() : 'never'}.
+            Created by {revoking.createdBy} on {dateTime(revoking.createdAt)}.
+          </p>
+        ) : null}
+      </Modal>
     </>
   );
 }

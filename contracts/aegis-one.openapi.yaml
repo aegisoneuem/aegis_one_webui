@@ -2961,15 +2961,17 @@ paths:
       operationId: listApiTokens
       summary: API tokens (API access). The secret is never returned after creation.
       x-required-permission: admin:tokens
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Q'
       responses:
         '200':
           description: Tokens
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiToken'
+                $ref: '#/components/schemas/ApiTokenPage'
     post:
       tags:
       - administration
@@ -7491,13 +7493,25 @@ components:
           type: integer
           minimum: 1
           maximum: 365
+    ApiTokenPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - page
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiToken'
+        page:
+          $ref: '#/components/schemas/PageInfo'
     ApiTokenInput:
       type: object
       additionalProperties: false
       required:
       - name
       - scopes
-      - expiresAt
       properties:
         name:
           type: string
@@ -7511,6 +7525,7 @@ components:
             type: string
             maxLength: 64
         expiresAt:
+          description: When the token stops working. Omitted means the server's default of one year.
           type: string
           format: date-time
     ApiToken:

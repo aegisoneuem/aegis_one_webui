@@ -579,17 +579,16 @@ you.
     Activity opens nothing and no contract route describes a per-cache
     activity feed. What it should show — transfers served, peers fed, bytes
     avoided over time — exists per zone on Aegis Zones but not per cache.
-60. **Nothing in the console can revoke an API token any more.** v129 has no
-    API-token surface on any of its nineteen pages, so the restored
-    Administration has four tabs rather than five and the `admin/api-access`
-    route is gone. `GET`/`POST /admin/api-tokens` and
-    `DELETE /admin/api-tokens/{id}` are still served at the declared path and
-    the contract check still exercises them, but no page calls them — so a
-    leaked token can only be revoked through the API. This is faithful to the
-    approved design and is a real reduction against the previous build. If
-    token management is meant to exist, it needs a home in the approved
-    design; if it is not, the three endpoints should come out of the
-    contract.
+60. **~~Nothing in the console can revoke an API token any more.~~ Answered:
+    API access is back as a fifth tab.** v129 has no API-token surface on any
+    of its nineteen pages, so the restoration removed the tab — which left a
+    leaked token revocable only through the API. The owner's instruction was
+    to add it back, so Administration carries five tabs and the fifth is a
+    deliberate departure from the approved design, recorded in
+    `administration-restoration.md`. What remains open is the design
+    question, not the capability: if API access is meant to exist, it should
+    appear in the approved design so the next restoration does not remove it
+    again.
 61. **Agent enrollment settings are served and unreachable.**
     `GET`/`PUT /admin/agent-enrollment` returns `requireToken`,
     `autoAssignGroup` and `tokenMaxAgeDays`, as declared. The approved Agent
@@ -610,3 +609,11 @@ you.
     the overlap is small, but an endpoint that was seen a minute ago and
     reports Offline reads as a contradiction. Nothing on this page is wrong;
     the fixture is.
+64. **The declared token input and lister were both wrong, and nobody noticed
+    because the page called an undeclared path.** `ApiTokenInput` required
+    `expiresAt`, so the old create flow — which never sent it — would have
+    been refused by the declared schema; `expiresAt` is now optional with a
+    documented one-year default applied by the server. `GET /admin/api-tokens`
+    declared a bare array where the server returns the standard
+    `{items, page}` envelope; the contract now declares `ApiTokenPage`. Worth
+    a sweep of the remaining list endpoints for the same bare-array slip.

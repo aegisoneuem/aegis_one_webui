@@ -3438,11 +3438,18 @@ export interface components {
             autoAssignGroup: string | null;
             tokenMaxAgeDays: number;
         };
+        ApiTokenPage: {
+            items: components["schemas"]["ApiToken"][];
+            page: components["schemas"]["PageInfo"];
+        };
         ApiTokenInput: {
             name: string;
             scopes: string[];
-            /** Format: date-time */
-            expiresAt: string;
+            /**
+             * Format: date-time
+             * @description When the token stops working. Omitted means the server's default of one year.
+             */
+            expiresAt?: string;
         };
         ApiToken: {
             id: string;
@@ -6754,7 +6761,13 @@ export interface operations {
     };
     listApiTokens: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Opaque cursor from the previous page. */
+                cursor?: components["parameters"]["Cursor"];
+                limit?: components["parameters"]["Limit"];
+                /** @description Free-text search. */
+                q?: components["parameters"]["Q"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6767,7 +6780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiToken"][];
+                    "application/json": components["schemas"]["ApiTokenPage"];
                 };
             };
         };

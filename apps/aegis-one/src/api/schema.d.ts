@@ -1371,6 +1371,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/{reportId}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A report's counters and its charts, before its rows are fetched. */
+        get: operations["getReportSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/{reportId}/run": {
         parameters: {
             query?: never;
@@ -3038,11 +3055,49 @@ export interface components {
             /** @enum {string} */
             category: "computers-software" | "daily-operations" | "security" | "leadership";
             description?: string;
+            /** @description The noun the row count is measured in, e.g. "computers". */
+            unit?: string;
+            /** @description Rows the report would return against the estate now. */
+            total?: number;
+            charts?: number;
+            columns?: number;
             headline?: {
                 label?: string;
                 value?: string;
             };
+            /** @description The largest group of the report's first chart. */
+            secondary?: {
+                label?: string;
+                value?: string;
+            };
+            /** @description The report's first breakdown, for the figure on the card. */
+            preview?: {
+                label: string;
+                value: number;
+            }[];
             favorite: boolean;
+        };
+        ReportSummary: {
+            id: string;
+            title: string;
+            description?: string;
+            unit?: string;
+            total: number;
+            /** @description The counters above the panels, the row total first. */
+            kpis: {
+                label: string;
+                value: number;
+            }[];
+            /** @description One panel per chart, each a count grouped by one field. */
+            charts: {
+                title: string;
+                field: string;
+                data: {
+                    label: string;
+                    value: number;
+                }[];
+            }[];
+            columns?: components["schemas"]["ColumnDef"][];
         };
         ReportPage: {
             columns: components["schemas"]["ColumnDef"][];
@@ -5745,6 +5800,29 @@ export interface operations {
                 };
                 content?: never;
             };
+        };
+    };
+    getReportSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"];
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
     };
     runReport: {

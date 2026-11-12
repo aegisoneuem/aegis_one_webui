@@ -30,9 +30,8 @@ const Insight = lazy(() => import('../pages/Insight'));
 const Zones = lazy(() => import('../pages/Zones'));
 const PeerCache = lazy(() => import('../pages/PeerCache'));
 const Reports = lazy(() => import('../pages/Reports'));
-const CustomReportBuilder = lazy(() =>
-  import('../pages/Reports').then((m) => ({ default: m.CustomReportBuilder })),
-);
+const CustomReportBuilder = lazy(() => import('../pages/CustomReportBuilder'));
+const ReportViewer = lazy(() => import('../pages/ReportViewer'));
 const Integrations = lazy(() => import('../pages/Integrations'));
 const Administration = lazy(() => import('../pages/Administration'));
 const Licensing = lazy(() => import('../pages/Licensing'));
@@ -211,6 +210,11 @@ const SUB_ROUTES: PageRoute[] = [
     path: 'reports/custom',
     component: CustomReportBuilder,
     handle: { pageId: 'reports', crumbs: ['Custom report'], permission: 'reports:build' },
+  },
+  {
+    path: 'reports/:reportId',
+    component: ReportViewer,
+    handle: { pageId: 'reports', crumbs: ['Report'], permission: 'reports:read' },
   },
 ];
 

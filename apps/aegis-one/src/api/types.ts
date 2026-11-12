@@ -569,6 +569,46 @@ export type ConfigProfileDetail = {
   settings: { setting: string; values: { version: number; value: string }[] }[];
 };
 
+/** The four categories the Reports library counts. */
+export type ReportCategory = 'computers-software' | 'daily-operations' | 'security' | 'leadership';
+
+/** One card in the Reports library. */
+export type ReportCard = {
+  id: string;
+  title: string;
+  category: ReportCategory;
+  description: string;
+  unit: string;
+  total: number;
+  charts: number;
+  columns: number;
+  headline: { label: string; value: string };
+  /** The largest group of the report's first chart. */
+  secondary?: { label: string; value: string };
+  /** That first breakdown, for the figure drawn on the card. */
+  preview: { label: string; value: number }[];
+  favorite: boolean;
+};
+
+/** A report's counters and charts, before its rows are fetched. */
+export type ReportSummary = {
+  id: string;
+  title: string;
+  description: string;
+  unit: string;
+  total: number;
+  kpis: { label: string; value: number }[];
+  charts: { title: string; field: string; data: { label: string; value: number }[] }[];
+  columns: { id: string; header: string }[];
+};
+
+/** A page of a report's rows, in the catalogue's own column order. */
+export type ReportRowPage = {
+  columns: { id: string; header: string }[];
+  rows: Record<string, string | number | boolean | null>[];
+  page: { nextCursor: string | null; total: number };
+};
+
 /** One endpoint's experience measures, and what its score lost. */
 export type DexDevice = {
   deviceId: string;

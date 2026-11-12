@@ -663,3 +663,39 @@ One consequence worth stating: a band cap is a ceiling, not a deduction, so an
 endpoint can show a single −20 against a score of 55. The reference behaves
 the same way and does not explain it; the restored panel adds a line naming
 the cap whenever a cap is what set the figure.
+
+## D-043 — The inventory attributes are derived, not drawn
+
+The approved Reports grid offers around eighty columns per report, and
+twenty-nine of them were attributes the fixture did not keep: asset tag,
+chassis, BIOS, TPM, Secure Boot, warranty, subnet, VPN, patch ring and the
+rest. The reference synthesises every one of them when it enriches a device
+row.
+
+They are filled in by a roll-up from each device's own values rather than
+drawn from the seed's random stream, for the two reasons D-042 gives: drawing
+them would shift every figure seeded after the estate, and a multiplicative
+hash through a large prime spreads them without the periodicity that `rowid %
+n` produces.
+
+The alternative was to serve the columns the estate already had and leave
+thirty headers blank. A report column with nothing under it is worse than no
+column: the grid's whole purpose is that it exports.
+
+## D-044 — The report library's figures are cached for a minute
+
+Each of the twenty cards carries the figure its report would return against
+the estate now. Computing them sweeps every source — six hundred thousand
+installations, five hundred thousand update results — and takes about five
+seconds in total.
+
+Those figures are identical for every reader, which is exactly what the
+server's existing `TtlCache` is for, so the catalogue is computed once and
+held for a minute. The starred state is per user and costs one indexed read,
+so it stays outside the cache and is merged onto the cached cards.
+
+The alternative was to roll the figures up at seed time, as the configuration
+counts are (D-039). That would have been faster still, but the configuration
+roll-up is there because the counts cannot be computed per request at all,
+whereas these can — in five seconds once, rather than per reader. A cache is
+the smaller mechanism, and it is the one the server already has.

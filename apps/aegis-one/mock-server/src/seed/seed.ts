@@ -67,6 +67,8 @@ export function seedDatabase({
 
   rollUpCounts(db);
   rollUpDex(db);
+  rollUpInventory(db);
+  rollUpEntitlements(db);
   seedGroups(db, rng);
   seedConfiguration(db);
   seedDeployments(db, rng);
@@ -81,6 +83,7 @@ export function seedDatabase({
   seedLicenses(db, deviceStats.total);
   seedServiceHealth(db, rng);
   seedReports(db);
+  seedUsbEvents(db, rng);
   seedAuditLog(db, rng);
   onProgress('operational data');
 
@@ -1119,6 +1122,134 @@ function rollUpDex(db: Db): void {
 
     UPDATE devices SET dex_score = ${DEX_SCORE_SQL};
   `);
+}
+
+/**
+ * Fills in the inventory attributes the approved Reports grid offers as
+ * columns — asset tag, chassis, BIOS, TPM, warranty, subnet and the rest.
+ *
+ * The reference synthesises all of these per device when it enriches a row.
+ * They are derived here from the row's own values for the same reason the
+ * experience measures are (D-042): drawing them would shift the seed's random
+ * stream for everything seeded after the estate, and a report column with
+ * nothing behind it is a column that cannot be exported.
+ */
+/**
+ * Seats and renewal dates for the paid titles, so Software Licenses reports
+ * real assignments. Entitlement is set above the installed count for most
+ * titles and below it for a couple, because an over-allocated agreement is
+ * the finding the report exists to surface.
+ */
+function rollUpEntitlements(db: Db): void {
+  db.exec(`
+    UPDATE software SET
+      seats = CASE
+        WHEN category IN ('Browsers', 'Utilities', 'Runtimes') THEN 0
+        WHEN (rowid % 7) = 0 THEN MAX(1, CAST(install_count * 0.85 AS INTEGER))
+        ELSE CAST(install_count * 1.15 AS INTEGER) + 25 END,
+      renews_at = date('2027-0' || (1 + rowid % 9) || '-01');
+  `);
+}
+
+function rollUpInventory(db: Db): void {
+  const mix = (salt: number): string => `((devices.rowid * 2654435761 + ${salt}) % 1000000007)`;
+  const h = mix(7919);
+
+  db.exec(`
+    UPDATE devices SET
+      asset_tag = 'AST-' || (5000 + rowid),
+      domain = 'corp.aegis.example',
+      ownership = CASE WHEN ${h} % 9 = 4 THEN 'BYOD' ELSE 'Corporate' END,
+      chassis = CASE kind WHEN 'laptop' THEN 'Notebook' WHEN 'server' THEN 'Rack' ELSE 'Desktop' END,
+      os_install_date = date(enrolled_at),
+      uptime = CASE WHEN status = 'offline' THEN '—'
+                    ELSE (1 + ${h} % 12) || ' days' END,
+      timezone = 'Asia/Kolkata (IST)',
+      cpu_cores = CASE WHEN manufacturer = 'Apple' THEN 8
+                       WHEN kind = 'server' THEN 16 + (${h} % 3) * 8
+                       ELSE 8 + (${h} % 2) * 4 END,
+      bios_version = CASE WHEN manufacturer = 'Apple' THEN 'Apple Firmware'
+                          ELSE '1.' || (20 + ${h} % 20) || '.0' END,
+      bios_date = CASE WHEN manufacturer = 'Apple' THEN '—'
+                       ELSE '2026-0' || (1 + ${h} % 9) || '-1' || (${h} % 9) END,
+      tpm = CASE WHEN manufacturer = 'Apple' THEN 'Secure Enclave' ELSE '2.0' END,
+      secure_boot = CASE WHEN os_family = 'Linux' AND ${h} % 3 = 0 THEN 'Off'
+                         WHEN ${h} % 10 = 3 THEN 'Off' ELSE 'On' END,
+      gpu = CASE WHEN manufacturer = 'Apple' THEN 'Apple M3 GPU' ELSE 'Intel Iris Xe' END,
+      battery = CASE WHEN kind = 'laptop' THEN (74 + ${h} % 26) || '%' ELSE '—' END,
+      purchase_date = date(enrolled_at, '-' || (30 + ${h} % 400) || ' days'),
+      warranty_until = date(enrolled_at, '+' || (700 + ${h} % 400) || ' days'),
+      -- Strip the last octet: rtrim leaves "10.28.3." to build on.
+      subnet = rtrim(ip, '0123456789') || '0/24',
+      gateway = rtrim(ip, '0123456789') || '1',
+      network_type = CASE WHEN kind = 'server' THEN 'Ethernet'
+                          WHEN ${h} % 3 = 0 THEN 'Ethernet' ELSE 'Wi-Fi' END,
+      public_ip = '203.0.113.' || (10 + ${h} % 40),
+      vpn = CASE WHEN ${h} % 6 = 2 THEN 'Connected' ELSE 'Not connected' END,
+      av_product = CASE WHEN os_family = 'macOS' THEN 'XProtect'
+                        WHEN os_family = 'Linux' THEN 'ClamAV'
+                        ELSE 'Microsoft Defender' END,
+      av_definitions = CASE WHEN antivirus_ok = 0 THEN '—'
+                            ELSE '1.419.' || (200 + ${h} % 400) END,
+      encryption_type = CASE WHEN os_family = 'macOS' THEN 'FileVault'
+                             WHEN os_family = 'Linux' THEN 'LUKS'
+                             ELSE 'BitLocker' END,
+      usb_storage = CASE WHEN ${h} % 4 = 0 THEN 'Allowed' ELSE 'Blocked' END,
+      local_admins = 1 + ${h} % 3,
+      patch_ring = CASE WHEN ${h} % 50 = 0 THEN 'Pilot'
+                        WHEN os_family IN ('Linux', 'AIX') THEN 'Late' ELSE 'Broad' END,
+      agent_health = CASE WHEN status = 'offline' THEN 'Not reporting' ELSE 'Healthy' END,
+      content_source = CASE WHEN ${h} % 4 = 0 THEN 'Peer cache' ELSE 'Aegis server' END,
+      last_patched_at = CASE WHEN pending_patches > 0
+                             THEN date(last_seen_at, '-' || (40 + ${h} % 60) || ' days')
+                             ELSE date(last_seen_at, '-' || (${h} % 20) || ' days') END;
+
+    UPDATE devices SET ssid = CASE WHEN network_type = 'Wi-Fi' THEN 'AEGIS-CORP' ELSE '—' END;
+  `);
+}
+
+/**
+ * The USB connections the Security category's USB Activity report lists. It
+ * is the one report source the estate had no table for.
+ */
+function seedUsbEvents(db: Db, rng: Rng): void {
+  const PERIPHERALS: readonly (readonly [string, string])[] = [
+    ['Mass storage', 'SanDisk Cruzer 32 GB'],
+    ['Mass storage', 'Kingston DataTraveler 64 GB'],
+    ['Mass storage', 'Seagate Portable 1 TB'],
+    ['Input device', 'Logitech MX Keys'],
+    ['Input device', 'Dell KB216 Keyboard'],
+    ['Imaging', 'Canon LiDE 300 Scanner'],
+    ['Phone', 'Samsung Galaxy S24'],
+    ['Network adapter', 'TP-Link UE300 Ethernet'],
+  ];
+
+  const devices = db.prepare(`SELECT id FROM devices ORDER BY hostname LIMIT 400`).all() as {
+    id: string;
+  }[];
+
+  const insert = db.prepare(
+    `INSERT INTO usb_events (id,device_id,peripheral,usb_name,action,occurred_at)
+     VALUES (?,?,?,?,?,?)`,
+  );
+
+  db.transaction(() => {
+    for (let i = 0; i < 1200; i++) {
+      const device = devices[i % devices.length];
+      const peripheral = PERIPHERALS[i % PERIPHERALS.length];
+      if (!device || !peripheral) continue;
+      // Mass storage is what policy blocks; everything else connects.
+      const blocked = peripheral[0] === 'Mass storage' && rng.chance(0.55);
+      insert.run(
+        `usb-${String(i + 1).padStart(5, '0')}`,
+        device.id,
+        peripheral[0],
+        peripheral[1],
+        blocked ? 'Blocked' : 'Allowed',
+        daysAgo(rng.int(0, 29)),
+      );
+    }
+  })();
 }
 
 function rollUpCounts(db: Db): void {

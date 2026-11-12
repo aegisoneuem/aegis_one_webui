@@ -464,3 +464,35 @@ you.
     pages therefore report different device totals (50,000 against 49,542),
     which is correct in both cases but worth knowing before the two are
     compared.
+42. **A report cannot be narrowed by site or device group.** The reference's
+    viewer carries Location and Group selects that narrow every figure and row
+    on the report. The engine would support it — it is one more clause on the
+    source — but `GET /reports/{reportId}/run` and the new
+    `/reports/{reportId}/summary` declare no scope parameters, and these
+    restorations do not invent query parameters. Either both paths need
+    `zoneId` and `groupId`, or the console needs a saved-scope concept the
+    contract does not have.
+43. **Nothing schedules a standard report.** `CustomReportInput` carries no
+    schedule either, so the viewer's Schedule button goes to the custom-report
+    builder rather than opening a scheduling dialog. The reference schedules
+    any of the twenty from the viewer. This needs a
+    `PUT /reports/{reportId}/schedule`, or a schedule field on the report
+    definition.
+44. **Software entitlement is a fixture invention.** `software.seats` and
+    `software.renews_at` were added so Software Licenses has something real to
+    report; the estate had only the four Aegis One subscription licences,
+    which are about this product, not about third-party titles. If the real
+    backend tracks entitlement elsewhere, the Licenses report should read it
+    rather than the catalogue.
+45. **The USB event log is thirty days and 1,200 rows.** It covers the first
+    four hundred endpoints by hostname rather than the whole estate, which is
+    enough for the report to be real but means USB Activity is not a
+    whole-estate figure the way the other nineteen are.
+46. **The device row is now wide enough to matter.** Restoring the Reports
+    grid added twenty-nine inventory columns to `devices`, which took a
+    `SELECT *` page of fifty from under a millisecond to about seven, and a
+    full scan from 11ms to 65ms. An index on the grid's default sort brings
+    the page back to 2ms and is in the schema; the scan cost is inherent to
+    the width. If this becomes a problem the inventory attributes belong in a
+    `device_inventory` side table joined only when a report asks for them —
+    the twenty pages that scan the estate never read them.

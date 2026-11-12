@@ -466,6 +466,142 @@ const run = async () => {
     `${byBoot.items[0]?.bootSeconds}s worst`,
   );
 
+  // --- Reports -------------------------------------------------------------
+  const reports = await fetch(`${API}/reports`, { headers: authed(token) }).then((r) => r.json());
+  check(
+    'the report library returns the twenty standard reports',
+    reports.length === 20,
+    `${reports.length} reports`,
+  );
+  check(
+    'the four categories hold five, six, four and five reports',
+    ['computers-software', 'daily-operations', 'security', 'leadership']
+      .map((c) => reports.filter((r) => r.category === c).length)
+      .join(',') === '5,6,4,5',
+  );
+  /*
+   * The whole point of the library: every card carries the figure the report
+   * would return against the estate right now, not a label.
+   */
+  check(
+    'every card carries a live row count, a unit and its breakdown',
+    reports.every(
+      (r) =>
+        r.total > 0 &&
+        typeof r.unit === 'string' &&
+        r.unit.length > 0 &&
+        r.charts >= 4 &&
+        r.columns >= 79 &&
+        Array.isArray(r.preview) &&
+        r.preview.length > 0,
+    ),
+  );
+  check(
+    'a card headline agrees with the row count beside it',
+    reports.every((r) => Number(r.headline.value) === r.total),
+  );
+
+  const computers = await fetch(`${API}/reports/computers/summary`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'a report summary carries three counters and its charts',
+    computers.kpis.length === 3 && computers.charts.length === 4 && computers.total === 50000,
+    `${computers.total} rows`,
+  );
+  // A chart is a count by group, so its groups cannot exceed the report.
+  check(
+    'every chart group total is within the report total',
+    computers.charts.every(
+      (c) => c.data.reduce((a, d) => a + d.value, 0) <= computers.total && c.data.length > 0,
+    ),
+  );
+
+  const run = await fetch(`${API}/reports/computers/run?limit=25`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'a report runs with its own column order and pages server-side',
+    run.columns.length === 80 &&
+      run.rows.length === 25 &&
+      run.page.total === 50000 &&
+      run.columns[0].id === 'name',
+    `${run.columns.length} columns`,
+  );
+  // Every column the catalogue names has to come back with the row, or the
+  // grid would show a header with nothing under it.
+  check(
+    'every declared column is present on every row',
+    run.rows.every((row) => run.columns.every((c) => c.id in row)),
+  );
+
+  // The joined reports are the ones most likely to break: each lists one
+  // record per child row, not one per device.
+  for (const [id, min] of [
+    ['software', 100000],
+    ['usb', 1000],
+    ['security', 1000],
+    ['licenses', 1000],
+    ['activity', 100],
+  ]) {
+    const page = await fetch(`${API}/reports/${id}/run?limit=5`, {
+      headers: authed(token),
+    }).then((r) => r.json());
+    check(
+      `the ${id} report lists its own records`,
+      page.page.total >= min && page.rows.length === 5,
+      `${page.page.total} rows`,
+    );
+  }
+
+  const unknownReport = await fetch(`${API}/reports/not-a-report/run`, {
+    headers: authed(token),
+  });
+  check(
+    'an unknown report id is 404',
+    unknownReport.status === 404,
+    `HTTP ${unknownReport.status}`,
+  );
+
+  const starRes = await fetch(`${API}/reports/computers/favorite`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ favorite: true }),
+  });
+  check('a report can be starred — HTTP 204', starRes.status === 204, `HTTP ${starRes.status}`);
+  const afterStar = await fetch(`${API}/reports`, { headers: authed(token) }).then((r) => r.json());
+  check(
+    'the star is returned on the next read',
+    afterStar.find((r) => r.id === 'computers')?.favorite === true,
+  );
+
+  // Put it back, so a second run of this check starts where the first did.
+  await fetch(`${API}/reports/computers/favorite`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ favorite: false }),
+  });
+
+  const exportRes = await fetch(`${API}/reports/computers/export`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ format: 'xlsx' }),
+  });
+  check(
+    'a report export is accepted — HTTP 202',
+    exportRes.status === 202,
+    `HTTP ${exportRes.status}`,
+  );
+
   const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
   check('insight returns findings', insight.findings.length >= 5);
 

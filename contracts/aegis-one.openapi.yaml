@@ -2310,6 +2310,24 @@ paths:
       responses:
         '204':
           description: Saved
+  /reports/{reportId}/summary:
+    get:
+      tags:
+      - reports
+      operationId: getReportSummary
+      summary: A report's counters and its charts, before its rows are fetched.
+      x-required-permission: reports:read
+      parameters:
+      - $ref: '#/components/parameters/ReportId'
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /reports/{reportId}/run:
     get:
       tags:
@@ -6502,6 +6520,16 @@ components:
           - leadership
         description:
           type: string
+        unit:
+          type: string
+          description: The noun the row count is measured in, e.g. "computers".
+        total:
+          type: integer
+          description: Rows the report would return against the estate now.
+        charts:
+          type: integer
+        columns:
+          type: integer
         headline:
           type: object
           additionalProperties: false
@@ -6510,8 +6538,97 @@ components:
               type: string
             value:
               type: string
+        secondary:
+          description: The largest group of the report's first chart.
+          type: object
+          additionalProperties: false
+          properties:
+            label:
+              type: string
+            value:
+              type: string
+        preview:
+          description: The report's first breakdown, for the figure on the card.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - label
+            - value
+            properties:
+              label:
+                type: string
+              value:
+                type: integer
         favorite:
           type: boolean
+    ReportSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - total
+      - kpis
+      - charts
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        unit:
+          type: string
+        total:
+          type: integer
+        kpis:
+          description: The counters above the panels, the row total first.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - label
+            - value
+            properties:
+              label:
+                type: string
+              value:
+                type: integer
+        charts:
+          description: One panel per chart, each a count grouped by one field.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - title
+            - field
+            - data
+            properties:
+              title:
+                type: string
+              field:
+                type: string
+              data:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                  - label
+                  - value
+                  properties:
+                    label:
+                      type: string
+                    value:
+                      type: integer
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnDef'
     ReportPage:
       type: object
       additionalProperties: false

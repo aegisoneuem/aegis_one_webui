@@ -126,6 +126,9 @@ test.describe('signed in as Super Admin', () => {
 
     const first = await grid.locator('tbody tr').first().textContent();
     await page.getByRole('button', { name: 'Next' }).click();
+    // The next page is a round trip, so the row has to be there before its
+    // text can be compared: asserting straight away raced the fetch.
+    await expect(grid.locator('tbody tr').first()).toBeVisible();
     await expect(grid.locator('tbody tr').first()).not.toHaveText(first ?? '');
   });
 
@@ -942,6 +945,88 @@ test.describe('signed in as Super Admin', () => {
     const cap = await page.getByText(/Capped at \d+ by the/).count();
     if (cap === 0) expect(100 - lost).toBe(score);
     else expect(score).toBeLessThanOrEqual(100 - lost);
+  });
+
+  test('Reports opens on the approved library: five counters, twenty cards', async ({ page }) => {
+    await page.goto('/reports');
+
+    for (const [label, count] of [
+      ['All Reports', '20'],
+      ['Computers & Software', '5'],
+      ['Daily Operations', '6'],
+      ['Security', '4'],
+      ['Leadership', '5'],
+    ]) {
+      const tab = page.getByRole('tab', { name: new RegExp(`^${label}`) });
+      await expect(tab).toBeVisible();
+      await expect(tab).toContainText(count);
+    }
+
+    await expect(page.getByText('20 reports')).toBeVisible();
+    await expect(page.locator('article')).toHaveCount(20);
+
+    // Every card names what it would return, which is the point of the page.
+    const first = page.locator('article').first();
+    await expect(first.getByRole('heading', { name: 'All Computers' })).toBeVisible();
+    await expect(first.getByText(/charts · \d+ columns/)).toBeVisible();
+    await expect(first.getByRole('button', { name: 'Open Report →' })).toBeVisible();
+  });
+
+  test('a Reports category narrows the library to what it counted', async ({ page }) => {
+    await page.goto('/reports');
+
+    await expect(page.locator('article')).toHaveCount(20);
+    const tab = page.getByRole('tab', { name: /^Security/ });
+    const expected = Number((await tab.innerText()).replace(/\D/g, ''));
+    expect(expected).toBe(4);
+
+    await tab.click();
+    await expect(page).toHaveURL(/category=security/);
+    await expect(page.locator('article')).toHaveCount(expected);
+    await expect(page.getByText(`${expected} reports`)).toBeVisible();
+  });
+
+  test('a report can be starred and found again under Favorites', async ({ page }) => {
+    await page.goto('/reports');
+
+    await page.getByRole('button', { name: 'Star Offline Computers' }).click();
+    await expect(page.getByRole('button', { name: 'Unstar Offline Computers' })).toBeVisible();
+
+    await page.getByRole('button', { name: /Favorites/ }).click();
+    await expect(page.locator('article')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Offline Computers' })).toBeVisible();
+
+    // Put it back, so the fixture is as the next test expects it.
+    await page.getByRole('button', { name: 'Unstar Offline Computers' }).click();
+  });
+
+  test('opening a report shows its counters, charts and its own columns', async ({ page }) => {
+    await page.goto('/reports');
+    await page.locator('article').first().getByRole('button', { name: 'Open Report →' }).click();
+
+    await expect(page).toHaveURL(/\/reports\/computers$/);
+    await expect(page.getByRole('heading', { name: 'All Computers', exact: true })).toBeVisible();
+    await expect(page.getByText('Computers in this report')).toBeVisible();
+
+    for (const panel of [
+      'Online and offline',
+      'Operating systems',
+      'Computers by location',
+      'Computer types',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // The reference lets the reader change a panel's form.
+    await page.getByLabel('Chart type: Online and offline').selectOption('column');
+    await expect(page.getByLabel('Chart type: Online and offline')).toHaveValue('column');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Computer name', 'IP address', 'MAC address', 'Asset tag', 'TPM'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(page.getByText(/1–50 of .* computers/)).toBeVisible();
+    await page.getByRole('button', { name: 'All Reports' }).click();
+    await expect(page).toHaveURL(/\/reports$/);
   });
 
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {

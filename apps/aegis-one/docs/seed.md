@@ -63,6 +63,8 @@ enough for day-to-day work on the console and takes a few seconds.
 | `users` / `roles`        | 8 / 6                  | One account per built-in role, plus a zone-scoped role                                                           |
 | `api_tokens`             | 5                      | Only SHA-256 hashes are stored                                                                                   |
 | `audit_log`              | 1,200                  | Spread over 90 days                                                                                              |
+| `usb_events`             | 1,200                  | USB connections over 30 days, 244 refused by policy                                                              |
+| `report_favorites`       | 0                      | Starred reports, per user; the twenty report definitions live in `report-catalog.ts`                             |
 
 ## Deliberate characteristics
 

@@ -7,8 +7,8 @@ import { useCan } from '../app/auth';
 import { dateTime, humanise, num, pct } from '../app/format';
 import { segment } from '../app/safeNavigate';
 import { ResourceList } from './shared/ResourceList';
-import type { Device, DevicesSummary, Zone } from '../api/types';
-import { api, type Page } from '../api/client';
+import type { Device, DevicesSummary, ZoneList } from '../api/types';
+import { api } from '../api/client';
 import styles from './Devices.module.css';
 
 /**
@@ -363,9 +363,8 @@ export default function Devices() {
   const { data: summary } = useResource<DevicesSummary>(summaryPath);
 
   const { data: zones } = useQuery({
-    queryKey: ['/sites', 'all'],
-    queryFn: ({ signal }) =>
-      api.get<Page<Zone>>('/sites', { limit: 100, fields: 'id,name' }, signal),
+    queryKey: ['/zones', 'all'],
+    queryFn: ({ signal }) => api.get<ZoneList>('/zones', undefined, signal),
   });
 
   const zoneOptions = useMemo(

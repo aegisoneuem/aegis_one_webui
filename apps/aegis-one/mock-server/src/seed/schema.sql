@@ -9,7 +9,17 @@ CREATE TABLE zones (
   peer_cache INTEGER NOT NULL DEFAULT 0,
   bandwidth_mbps INTEGER NOT NULL,
   relay_status TEXT NOT NULL,
-  last_sync_at TEXT NOT NULL
+  last_sync_at TEXT NOT NULL,
+  -- What the approved Aegis Zones page reports. Content reaches a zone once
+  -- as a seed copy, is then served locally by its peers, and whatever a
+  -- device could not get locally it pulls straight from the central
+  -- repository. Those three figures are what every percentage on the page is
+  -- computed from, so each one is a column rather than an assumption.
+  connectivity_pct INTEGER NOT NULL DEFAULT 0,
+  seed_gb INTEGER NOT NULL DEFAULT 0,
+  direct_gb INTEGER NOT NULL DEFAULT 0,
+  avoided_week_gb INTEGER NOT NULL DEFAULT 0,
+  local_mbps INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE devices (

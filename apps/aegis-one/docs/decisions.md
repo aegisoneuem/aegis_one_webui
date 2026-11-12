@@ -699,3 +699,28 @@ counts are (D-039). That would have been faster still, but the configuration
 roll-up is there because the counts cannot be computed per request at all,
 whereas these can — in five seconds once, rather than per reader. A cache is
 the smaller mechanism, and it is the one the server already has.
+
+## D-045 — One delivery model, shown four ways
+
+The approved Aegis Zones page prints the same relationship five times: as a
+WAN-saved percentage, a hit rate, a direct-download share, a donut and a
+per-zone bar chart. The obvious way to build that is five queries, and the
+obvious result is five figures that drift apart.
+
+So the three quantities underneath are columns on `zones` — the seed copy a
+zone pulls once, what its peers then serve locally, and what endpoints fetched
+straight from central — and every percentage on the page divides two of them:
+
+    hit rate     = local / (local + direct)
+    direct share = direct / (local + direct)
+    WAN saved    = 1 - (seed + direct) / (local + direct)
+
+WAN saved sits below the hit rate by design: a zone that serves everything
+locally still paid for one seed copy across the WAN. A contract assertion
+checks both relationships hold, so the page cannot ship with a donut that
+disagrees with the counter above it.
+
+A zone with no peer cache serves nothing locally and therefore saves nothing.
+Four of this estate's nine zones are in that position, and they report 0% with
+"Not required" rather than being hidden — a branch of a thousand endpoints does
+not warrant a cache node, and the page should say so rather than imply a fault.

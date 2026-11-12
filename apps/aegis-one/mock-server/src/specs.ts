@@ -272,23 +272,6 @@ export const groupsSpec: TableSpec = {
   },
 };
 
-export const zonesSpec: TableSpec = {
-  table: 'zones',
-  idColumn: 'id',
-  searchColumns: ['name', 'city'],
-  defaultSort: { field: 'deviceCount', desc: true },
-  columns: {
-    id,
-    name: { column: 'name', sortable: true, filters: ['eq', 'in'] },
-    city: { column: 'city', sortable: true, filters: ['eq', 'in'] },
-    deviceCount: { column: 'device_count', sortable: true },
-    peerCache: { column: 'peer_cache', filters: ['eq'] },
-    bandwidthMbps: { column: 'bandwidth_mbps', sortable: true },
-    relayStatus: { column: 'relay_status', sortable: true, filters: ['eq', 'in'] },
-    lastSyncAt: { column: 'last_sync_at', sortable: true },
-  },
-};
-
 export const peersSpec: TableSpec = {
   table: 'peers',
   idColumn: 'id',

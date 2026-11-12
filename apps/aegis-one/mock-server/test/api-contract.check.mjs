@@ -602,6 +602,65 @@ const run = async () => {
     `HTTP ${exportRes.status}`,
   );
 
+  // --- Aegis Zones ---------------------------------------------------------
+  const zoneList = await fetch(`${API}/zones`, { headers: authed(token) }).then((r) => r.json());
+  check(
+    'zones returns the estate with its delivery figures',
+    zoneList.items.length === 9 &&
+      zoneList.delivery.distribution.length === 2 &&
+      zoneList.delivery.efficiency.length === 9 &&
+      zoneList.delivery.path.length === 4,
+    `${zoneList.items.length} zones`,
+  );
+  /*
+   * The page's own argument: every percentage divides the same three stored
+   * figures, so the counters, the donut and the path cannot disagree.
+   */
+  check(
+    'the distribution adds to a hundred and matches the hit rate',
+    zoneList.delivery.distribution.reduce((a, d) => a + d.pct, 0) === 100 &&
+      zoneList.delivery.distribution[0].pct === zoneList.summary.hitRatePct &&
+      zoneList.summary.directPct === 100 - zoneList.summary.hitRatePct,
+  );
+  // WAN saved is below the hit rate, because a zone's first copy still
+  // crosses the WAN.
+  check(
+    'WAN saved is at or below the hit rate',
+    zoneList.summary.wanSavedPct <= zoneList.summary.hitRatePct && zoneList.summary.wanSavedPct > 0,
+    `${zoneList.summary.wanSavedPct}% saved against ${zoneList.summary.hitRatePct}% hit rate`,
+  );
+  check(
+    'a zone with no peer cache reports no local delivery',
+    zoneList.items
+      .filter((z) => z.peerCache === 'none')
+      .every((z) => zoneList.delivery.efficiency.find((e) => e.zone === z.name)?.pct === 0),
+  );
+  check(
+    'every zone carries the grid columns',
+    zoneList.items.every(
+      (z) =>
+        z.devices > 0 &&
+        z.connectivityPct > 0 &&
+        z.bandwidthMbps > 0 &&
+        ['elected', 'none', 'disabled'].includes(z.peerCache) &&
+        ['healthy', 'degraded', 'offline'].includes(z.status),
+    ),
+  );
+
+  const discoveryRes = await fetch(`${API}/zones/discovery`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: '{}',
+  });
+  check(
+    'Refresh Discovery is accepted — HTTP 202',
+    discoveryRes.status === 202,
+    `HTTP ${discoveryRes.status}`,
+  );
+
   const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
   check('insight returns findings', insight.findings.length >= 5);
 

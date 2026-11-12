@@ -22,7 +22,6 @@ import {
   softwareSpec,
   usersSpec,
   scansSpec,
-  zonesSpec,
 } from '../specs';
 
 /**
@@ -286,7 +285,6 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'vulnerabilities/scans', spec: scansSpec },
   { path: 'deployments', spec: deploymentsSpec, shape: shapeDeployment },
   { path: 'liveops/script-jobs', spec: liveJobsSpec, shape: shapeLiveJob },
-  { path: 'sites', spec: zonesSpec },
   { path: 'peercache/peers', spec: peersSpec, zoneScoped: true },
   {
     path: 'liveops/logs',

@@ -6381,6 +6381,8 @@ components:
           description: For example Mumbai HQ.
         devices:
           type: integer
+        city:
+          type: string
         connectivityPct:
           type: integer
         bandwidthMbps:
@@ -6406,7 +6408,31 @@ components:
       required:
       - items
       - delivery
+      - summary
       properties:
+        summary:
+          description: The five figures above the panels.
+          type: object
+          additionalProperties: false
+          required:
+          - wanSavedPct
+          - avoidedThisWeekGb
+          - hitRatePct
+          - directPct
+          - avgLocalMbps
+          properties:
+            wanSavedPct:
+              type: integer
+              description: Share of delivered bytes that never crossed the WAN.
+            avoidedThisWeekGb:
+              type: integer
+            hitRatePct:
+              type: integer
+              description: Share of delivered bytes served by a local peer.
+            directPct:
+              type: integer
+            avgLocalMbps:
+              type: integer
         items:
           type: array
           items:
@@ -6458,6 +6484,16 @@ components:
                     type: integer
                   label:
                     type: string
+                  detail:
+                    type: string
+                    description: What this hop moved, e.g. "412 GB served".
+                    maxLength: 80
+                  metric:
+                    description: The figure printed against the hop, or null for the origin.
+                    type:
+                    - string
+                    - 'null'
+                    maxLength: 40
     PeerCache:
       type: object
       additionalProperties: false

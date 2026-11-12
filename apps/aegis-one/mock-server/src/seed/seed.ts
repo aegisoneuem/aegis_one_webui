@@ -77,6 +77,7 @@ export function seedDatabase({
   seedLogSettings(db);
   seedScans(db, rng);
   seedPeers(db, rng);
+  rollUpDelivery(db);
   seedIntegrations(db, rng);
   seedUsersAndRoles(db, rng);
   seedTokens(db, rng);
@@ -1148,6 +1149,48 @@ function rollUpEntitlements(db: Db): void {
         WHEN (rowid % 7) = 0 THEN MAX(1, CAST(install_count * 0.85 AS INTEGER))
         ELSE CAST(install_count * 1.15 AS INTEGER) + 25 END,
       renews_at = date('2027-0' || (1 + rowid % 9) || '-01');
+  `);
+}
+
+/**
+ * The delivery figures the Aegis Zones page reports, rolled up once the peers
+ * exist.
+ *
+ * Content reaches a zone as one seed copy, its peers then serve it locally,
+ * and whatever a device could not get locally it pulls from the central
+ * repository. Every percentage on the page divides two of those three
+ * figures, which is why each is stored rather than assumed:
+ *
+ *   WAN saved     = 1 - (seed + direct) / (local + direct)
+ *   hit rate      = local / (local + direct)
+ *   direct share  = direct / (local + direct)
+ *
+ * A zone with no peer cache serves nothing locally, so it saves nothing and
+ * its hit rate is zero — which is the finding the page exists to surface.
+ */
+function rollUpDelivery(db: Db): void {
+  db.exec(`
+    UPDATE zones SET
+      -- Connectivity is the share of this zone's endpoints that checked in.
+      connectivity_pct = COALESCE((
+        SELECT CAST(ROUND(100.0 * SUM(d.status <> 'offline') / COUNT(*)) AS INTEGER)
+          FROM devices d WHERE d.zone_id = zones.id), 0),
+      -- One seed copy per zone, sized by the catalogue it has to carry.
+      seed_gb = CASE WHEN peer_cache = 1 THEN 420 ELSE 0 END,
+      -- Without a cache every byte comes from central; with one, only what the
+      -- peers could not serve.
+      direct_gb = CASE
+        WHEN peer_cache = 1 THEN CAST(device_count * 0.9 AS INTEGER)
+        ELSE CAST(device_count * 5.5 AS INTEGER) END,
+      local_mbps = CASE
+        WHEN peer_cache = 0 THEN 0
+        WHEN bandwidth_mbps >= 1000 THEN 22
+        WHEN bandwidth_mbps >= 500 THEN 18
+        ELSE 11 END;
+
+    UPDATE zones SET avoided_week_gb = COALESCE((
+      SELECT CAST(ROUND(SUM(p.served_gb) / 8.0) AS INTEGER)
+        FROM peers p WHERE p.zone_id = zones.id), 0);
   `);
 }
 

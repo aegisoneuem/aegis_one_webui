@@ -496,3 +496,18 @@ you.
     the width. If this becomes a problem the inventory attributes belong in a
     `device_inventory` side table joined only when a report asks for them —
     the twenty pages that scan the estate never read them.
+47. **The seed copy is a fixture assumption, not a measurement.** `zones.seed_gb`
+    is a flat 420 GB for any zone with a cache, which is what makes WAN saved
+    sit just below the hit rate. A real backend measures what each zone
+    actually pulled; the figure is the one number on this page that is modelled
+    rather than counted, and it is the only input to WAN saved that the
+    estate's own tables could not supply.
+48. **`/sites` is gone.** The flat zones lister the contract never described
+    has been removed, along with its table spec, and its two readers — the
+    deployment wizard's zone picker and the Diagnostics aggregate — now read
+    `/zones` and their own shape respectively. This closes the
+    `/zones`-against-`/sites` item carried since the Overview work.
+49. **A zone row does not drill through.** The reference's rows are not links
+    either, so this is faithful, but a zone that opened the Devices page
+    filtered to it is the obvious next step and needs the same bounded id
+    filter as handover question 39.

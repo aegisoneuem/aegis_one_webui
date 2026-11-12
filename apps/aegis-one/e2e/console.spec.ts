@@ -1029,6 +1029,72 @@ test.describe('signed in as Super Admin', () => {
     await expect(page).toHaveURL(/\/reports$/);
   });
 
+  test('Aegis Zones opens on the approved layout: five counters, three panels', async ({
+    page,
+  }) => {
+    await page.goto('/sites');
+
+    for (const kpi of [
+      'WAN Saved',
+      'WAN Avoided This Week',
+      'Peer Cache Hit Rate',
+      'Direct Downloads',
+      'Avg Local Delivery',
+    ])
+      await expect(page.getByText(kpi, { exact: true })).toBeVisible();
+
+    for (const panel of [
+      'Delivery Distribution',
+      'Aegis Zone Delivery Efficiency',
+      'Content Delivery Path',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // The path names every hop content takes, which is what the page is for.
+    for (const hop of ['Central repository', 'Aegis Zone peer cache', 'Local peer', 'Endpoint'])
+      await expect(page.getByText(hop, { exact: true })).toBeVisible();
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of [
+      'Aegis Zone',
+      'Devices',
+      'Connectivity',
+      'Bandwidth',
+      'Peer Cache',
+      'Last Sync',
+      'Status',
+    ])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('a zone without a peer cache says so, and shows no local delivery', async ({ page }) => {
+    await page.goto('/sites');
+
+    // Three small branches carry no cache; the grid says "Not required"
+    // rather than reporting them as a fault.
+    const grid = page.locator('table[class*="grid"]');
+    await expect(grid.getByText('Not required').first()).toBeVisible();
+    await expect(grid.getByText('Peer cache active').first()).toBeVisible();
+
+    // And the counters agree with each other: direct is the rest of local.
+    const hit = Number(
+      (await page.getByText('Peer Cache Hit Rate').locator('..').innerText()).match(
+        /(\d+)%/,
+      )?.[1] ?? '0',
+    );
+    const direct = Number(
+      (await page.getByText('Direct Downloads').locator('..').innerText()).match(/(\d+)%/)?.[1] ??
+        '0',
+    );
+    expect(hit + direct).toBe(100);
+  });
+
+  test('Refresh Discovery is accepted', async ({ page }) => {
+    await page.goto('/sites');
+    await page.getByRole('button', { name: 'Refresh Discovery' }).click();
+    await expect(page.getByText('Discovery queued')).toBeVisible();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

@@ -17,7 +17,7 @@ import {
 import { api, ApiError, type Page } from '../api/client';
 import { humanise, num } from '../app/format';
 import { segment } from '../app/safeNavigate';
-import type { Deployment, DeviceGroup, SoftwareTitle, Zone } from '../api/types';
+import type { Deployment, DeviceGroup, SoftwareTitle, ZoneList } from '../api/types';
 import styles from './DeploymentWizard.module.css';
 
 /**
@@ -115,9 +115,8 @@ export default function DeploymentWizard() {
       api.get<{ items: DeviceGroup[] }>('/groups', {}, signal),
   });
   const { data: zones } = useQuery({
-    queryKey: ['/sites', 'wizard'],
-    queryFn: ({ signal }) =>
-      api.get<Page<Zone>>('/sites', { limit: 100, fields: 'id,name,deviceCount' }, signal),
+    queryKey: ['/zones', 'wizard'],
+    queryFn: ({ signal }) => api.get<ZoneList>('/zones', undefined, signal),
   });
 
   const selectedGroup = groups?.items.find((g) => g.id === state.groupId);
@@ -126,7 +125,7 @@ export default function DeploymentWizard() {
 
   /** Indicative only; the server resolves the real set when the action is created. */
   const estimatedTargets =
-    state.deviceIds.length || selectedGroup?.members || selectedZone?.deviceCount || 0;
+    state.deviceIds.length || selectedGroup?.members || selectedZone?.devices || 0;
 
   const stepState = useMemo(() => {
     const contentDone = Boolean(state.name.trim()) && Boolean(state.packageId);
@@ -317,7 +316,7 @@ export default function DeploymentWizard() {
                     placeholder="All zones"
                     options={(zones?.items ?? []).map((z) => ({
                       value: z.id,
-                      label: `${z.name} (${num(z.deviceCount)})`,
+                      label: `${z.name} (${num(z.devices)})`,
                     }))}
                     value={state.zone}
                     onChange={(e) => set('zone', e.target.value)}

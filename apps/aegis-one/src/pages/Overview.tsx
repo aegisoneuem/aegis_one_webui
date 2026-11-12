@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, ErrorState, Select, Skeleton } from '@aegis/ui';
 import { useResource } from '../app/useListController';
-import { ApiError, api, type Page } from '../api/client';
+import { ApiError, api } from '../api/client';
 import { dateTime, num, relative } from '../app/format';
 import { segment } from '../app/safeNavigate';
 import { Bars, Columns, Donut, Rings, bandTone } from './shared/Figures';
 import type { Datum, RingDatum, Tone } from './shared/Figures';
-import type { AttentionItem, Overview as OverviewData, Zone } from '../api/types';
+import type { AttentionItem, Overview as OverviewData, ZoneList } from '../api/types';
 import styles from './Overview.module.css';
 
 /**
@@ -116,12 +116,12 @@ export default function Overview() {
 
   const { data, isLoading, error, refetch, isFetching } = useResource<OverviewData>(path);
 
-  // Only the two fields the select needs: the zone list is otherwise a page of
-  // connectivity and bandwidth figures this page has no use for.
+  // The zone list for the scope select. It carries delivery figures this page
+  // has no use for, but there are nine zones, so narrowing it would cost more
+  // than it saves.
   const { data: zones } = useQuery({
-    queryKey: ['/sites', 'overview'],
-    queryFn: ({ signal }) =>
-      api.get<Page<Zone>>('/sites', { limit: 100, fields: 'id,name' }, signal),
+    queryKey: ['/zones', 'overview'],
+    queryFn: ({ signal }) => api.get<ZoneList>('/zones', undefined, signal),
   });
 
   // Per-widget view and chart-type choices. They are the page's own state

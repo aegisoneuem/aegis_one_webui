@@ -1,12 +1,19 @@
 import { Card, ErrorState, KpiTile, PageHeader, Skeleton, StatusPill } from '@aegis/ui';
 import { useResource } from '../app/useListController';
 import { humanise, num, relative, toneFor } from '../app/format';
-import type { ServiceHealth, Zone } from '../api/types';
+import type { ServiceHealth } from '../api/types';
 import styles from './Overview.module.css';
 
 type DiagnosticsData = {
   services: ServiceHealth[];
-  zones: Pick<Zone, 'id' | 'name' | 'relayStatus' | 'lastSyncAt' | 'deviceCount'>[];
+  /* The diagnostics aggregate's own zone row, not the contract's Zone. */
+  zones: {
+    id: string;
+    name: string;
+    relayStatus: string;
+    lastSyncAt: string;
+    deviceCount: number;
+  }[];
   counts: {
     devices: number;
     softwareInstalls: number;

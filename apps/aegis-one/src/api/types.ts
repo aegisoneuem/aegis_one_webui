@@ -670,11 +670,34 @@ export type Zone = {
   id: string;
   name: string;
   city: string;
-  deviceCount: number;
-  peerCache: boolean;
+  devices: number;
+  connectivityPct: number;
   bandwidthMbps: number;
-  relayStatus: string;
-  lastSyncAt: string;
+  /** "none" is a zone with no cache; "disabled" is one switched off. */
+  peerCache: 'elected' | 'none' | 'disabled';
+  lastSync: string;
+  status: 'healthy' | 'degraded' | 'offline';
+};
+
+/**
+ * Where content comes from and what that saves: the five counters, the two
+ * shares behind the donut, one efficiency figure per zone, and the four hops
+ * of the delivery path.
+ */
+export type ZoneList = {
+  items: Zone[];
+  summary: {
+    wanSavedPct: number;
+    avoidedThisWeekGb: number;
+    hitRatePct: number;
+    directPct: number;
+    avgLocalMbps: number;
+  };
+  delivery: {
+    distribution: { source: string; pct: number }[];
+    efficiency: { zone: string; pct: number }[];
+    path: { hop: number; label: string; detail: string; metric: string | null }[];
+  };
 };
 
 export type Peer = {

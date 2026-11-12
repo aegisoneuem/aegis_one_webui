@@ -3009,6 +3009,7 @@ export interface components {
             /** @description For example Mumbai HQ. */
             name: string;
             devices: number;
+            city?: string;
             connectivityPct: number;
             bandwidthMbps: number;
             /** @enum {string} */
@@ -3019,6 +3020,16 @@ export interface components {
             status: "healthy" | "degraded" | "offline";
         };
         ZoneList: {
+            /** @description The five figures above the panels. */
+            summary: {
+                /** @description Share of delivered bytes that never crossed the WAN. */
+                wanSavedPct: number;
+                avoidedThisWeekGb: number;
+                /** @description Share of delivered bytes served by a local peer. */
+                hitRatePct: number;
+                directPct: number;
+                avgLocalMbps: number;
+            };
             items: components["schemas"]["Zone"][];
             delivery: {
                 distribution: {
@@ -3032,6 +3043,10 @@ export interface components {
                 path: {
                     hop: number;
                     label: string;
+                    /** @description What this hop moved, e.g. "412 GB served". */
+                    detail?: string;
+                    /** @description The figure printed against the hop, or null for the origin. */
+                    metric?: string | null;
                 }[];
             };
         };

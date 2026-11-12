@@ -1526,6 +1526,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/integrations/siem/{destinationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set up a SIEM or syslog destination. Secrets are write-only. */
+        put: operations["configureSiemDestination"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/siem/{destinationId}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a test event to a destination. */
+        post: operations["testSiemDestination"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notification channels (mail, chat and issue trackers) with their delivery state. */
+        get: operations["listNotificationChannels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/channels/{channelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set up a notification channel. Secrets are write-only. */
+        put: operations["configureNotificationChannel"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/channels/{channelId}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a test notification. */
+        post: operations["testNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/integrations/notifications": {
         parameters: {
             query?: never;
@@ -1536,11 +1621,30 @@ export interface paths {
         /** Notification rules. */
         get: operations["listNotificationRules"];
         put?: never;
-        post?: never;
+        /** Add an alert rule. */
+        post: operations["createNotificationRule"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/integrations/notifications/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove an alert rule. */
+        delete: operations["deleteNotificationRule"];
+        options?: never;
+        head?: never;
+        /** Turn an alert rule on or off. */
+        patch: operations["setNotificationRuleEnabled"];
         trace?: never;
     };
     "/integrations/deliveries": {
@@ -1550,7 +1654,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Delivery log. */
+        /** Delivery log, filtered as the tab's own controls filter it. */
         get: operations["listDeliveryLog"];
         put?: never;
         post?: never;
@@ -3163,7 +3267,11 @@ export interface components {
             /** @enum {string} */
             kind: "itsm" | "siem" | "chat" | "webhook" | "identity";
             /** @enum {string} */
-            status: "connected" | "not-configured" | "error";
+            status: "connected" | "attention" | "disabled" | "not-configured" | "error";
+            /** @description What this connector is for, as the card's second line prints it. */
+            purpose?: string;
+            /** @description The permissions it was granted, for example: Vulnerability Read, Devices Read. */
+            scope?: string | null;
             /** Format: date-time */
             lastActivity?: string | null;
             logoUrl?: string | null;
@@ -3185,21 +3293,68 @@ export interface components {
         SiemDestination: {
             id: string;
             name: string;
+            /** @description How it is reached, e.g. "HTTP Event Collector" or "Syslog (LEEF)". */
+            transport: string;
             /** @enum {string} */
             protocol: "syslog-tls" | "syslog-udp" | "https";
-            host: string;
-            port: number;
+            /** @enum {string} */
+            status: "connected" | "not-configured" | "error";
+            host?: string | null;
+            port?: number | null;
+            /** @description How many event types this destination is subscribed to. */
+            eventTypes: number;
+            /** Format: date-time */
+            lastSentAt?: string | null;
+            /** @description Events forwarded in the last hour, or null when nothing is flowing. */
+            ratePerHour?: number | null;
             enabled: boolean;
+        };
+        SiemConfigInput: {
+            host?: string;
+            port?: number;
+            /** @enum {string} */
+            protocol?: "syslog-tls" | "syslog-udp" | "https";
+            secret?: string;
+            enabled?: boolean;
+        };
+        /** @description A delivery channel for alert rules — email, chat or an issue tracker. */
+        NotificationChannel: {
+            id: string;
+            name: string;
+            /** @description How it delivers, e.g. "Incoming Webhook" or "Create Issues". */
+            transport: string;
+            /** @enum {string} */
+            status: "connected" | "not-configured" | "error";
+            eventTypes?: number | null;
+            /** Format: date-time */
+            lastSentAt?: string | null;
+            ratePerHour?: number | null;
         };
         NotificationRule: {
             id: string;
+            /** @description The condition, as the When column prints it. */
             event: string;
-            channel: string;
+            /** @description The channels it sends to, in the order the Send To column prints them. */
+            channels: {
+                id: string;
+                name: string;
+                /** @enum {string} */
+                status: "connected" | "not-configured" | "error";
+            }[];
+            enabled: boolean;
+        };
+        NotificationRuleInput: {
+            event: string;
+            channelIds: string[];
+        };
+        NotificationRulePatch: {
             enabled: boolean;
         };
         DeliveryAttempt: {
             id: string;
             connector: string;
+            /** @description The family the event belongs to, as the Event Type column prints it. */
+            eventType: string;
             event: string;
             /** Format: date-time */
             at: string;
@@ -3488,6 +3643,9 @@ export interface components {
         DeploymentId: string;
         ReportId: string;
         ConnectorId: string;
+        DestinationId: string;
+        ChannelId: string;
+        RuleId: string;
     };
     requestBodies: never;
     headers: never;
@@ -6098,6 +6256,144 @@ export interface operations {
             };
         };
     };
+    configureSiemDestination: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                destinationId: components["parameters"]["DestinationId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiemConfigInput"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiemDestination"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    testSiemDestination: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                destinationId: components["parameters"]["DestinationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryAttempt"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description The destination is not configured, so there is nothing to test. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listNotificationChannels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Channels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"][];
+                };
+            };
+        };
+    };
+    configureNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectorConfigInput"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    testNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryAttempt"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description The channel is not configured, so there is nothing to test. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     listNotificationRules: {
         parameters: {
             query?: never;
@@ -6118,12 +6414,90 @@ export interface operations {
             };
         };
     };
+    createNotificationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    deleteNotificationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: components["parameters"]["RuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setNotificationRuleEnabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: components["parameters"]["RuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationRulePatch"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationRule"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
     listDeliveryLog: {
         parameters: {
             query?: {
                 /** @description Opaque cursor from the previous page. */
                 cursor?: components["parameters"]["Cursor"];
                 limit?: components["parameters"]["Limit"];
+                /** @description Free-text search. */
+                q?: components["parameters"]["Q"];
+                connector?: string;
+                eventType?: string;
+                result?: "delivered" | "failed" | "retrying";
             };
             header?: never;
             path?: never;

@@ -538,3 +538,31 @@ you.
     return the measures that produced the original answer rather than
     re-diagnosing against today's, which means snapshotting the checks at
     submit time.
+54. **Third-party logos are missing on the Connectors cards.** v129 prints the
+    ServiceNow, Splunk, Teams, Slack and Entra marks; those assets are not in
+    this repository and the brief forbids redrawing a logo, so all three card
+    grids use the monogram tile the reference itself uses on its SIEM and
+    Notifications cards. Shipping real vendor marks is a licensing question
+    as much as a design one, and needs an answer from both sides. The
+    `Connector.logoUrl` field is declared and always null.
+55. **Configure and Set Up have no dialog.** Both buttons are on every card,
+    permission-gated, with `PUT /integrations/connectors/{id}`,
+    `/siem/{id}` and `/channels/{id}` served behind them — but the reference
+    is a preview and its own buttons open nothing, so there is no approved
+    form to restore. What fields each kind of target needs (an endpoint and a
+    token for an HEC, a host and port for syslog, a webhook URL for chat) is a
+    design question, not a guess.
+56. **The delivery log cannot be exported.** The reference has an Export
+    button; the contract has no export route for `/integrations/deliveries`,
+    and the reports export pipeline is keyed to report ids rather than
+    arbitrary queries. The button is present and disabled rather than wired
+    to something invented.
+57. **Relative timestamps age out of the fixture.** The seed's "now" is frozen
+    at `2026-11-01T09:30:00+05:30` for determinism (`docs/seed.md`), and
+    `relative()` falls back to an absolute date past seven days. So every
+    "2 min ago" and "Just Now" the reference prints reads as "01 Nov 2026"
+    once the fixture is more than a week old — on this page's Last Sync and
+    Last Sent, and on every other relative column in the console. Either the
+    seed's clock follows the run date (losing byte-for-byte determinism) or
+    the screenshots must be taken against a fresh seed. This one is worth
+    settling before the full screenshot sweep.

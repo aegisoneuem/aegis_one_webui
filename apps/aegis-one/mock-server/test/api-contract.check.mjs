@@ -744,6 +744,197 @@ const run = async () => {
     `HTTP ${remediationRes.status}`,
   );
 
+  // --- Integrations --------------------------------------------------------
+  const connectors = await fetch(`${API}/integrations/connectors`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the connectors come back with the card fields',
+    connectors.length === 6 &&
+      connectors.every(
+        (c) =>
+          typeof c.purpose === 'string' &&
+          ['itsm', 'siem', 'chat', 'webhook', 'identity'].includes(c.kind) &&
+          ['connected', 'attention', 'disabled', 'not-configured', 'error'].includes(c.status),
+      ),
+    `${connectors.length} connectors`,
+  );
+  // A disabled connector has nothing to report, and the card prints a dash.
+  check(
+    'a disabled connector carries no scope or sync time',
+    connectors
+      .filter((c) => c.status === 'disabled')
+      .every((c) => c.scope === null && c.lastActivity === null),
+  );
+
+  const siem = await fetch(`${API}/integrations/siem`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'the SIEM destinations come back with their transport and rate',
+    siem.length === 5 && siem.every((d) => typeof d.transport === 'string' && d.eventTypes === 3),
+    `${siem.length} destinations`,
+  );
+  /*
+   * The page's own argument: a destination that was never set up has no host,
+   * no rate and nothing in the log — which is why the log's empty state
+   * exists at all.
+   */
+  check(
+    'an unconfigured destination has no host and no rate',
+    siem
+      .filter((d) => d.status !== 'connected')
+      .every((d) => d.host === null && d.ratePerHour === null && d.lastSentAt === null),
+  );
+
+  const notConfigured = siem.find((d) => d.status !== 'connected');
+  const earlyTest = await fetch(
+    `${API}/integrations/siem/${encodeURIComponent(notConfigured.id)}/test`,
+    {
+      method: 'POST',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: '{}',
+    },
+  );
+  check(
+    'testing an unconfigured destination is refused — HTTP 409',
+    earlyTest.status === 409,
+    `HTTP ${earlyTest.status}`,
+  );
+
+  const channels = await fetch(`${API}/integrations/channels`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'the notification channels come back',
+    channels.length === 5 && channels.every((c) => typeof c.transport === 'string'),
+    `${channels.length} channels`,
+  );
+
+  const rules = await fetch(`${API}/integrations/notifications`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'an alert rule carries every channel it sends to',
+    rules.length === 4 && rules.some((r) => r.channels.length === 2),
+    `${rules.length} rules`,
+  );
+  // The Channel Status column is the channel's own state, not the rule's.
+  check(
+    'a rule reports each channel state from the channel itself',
+    rules.every((r) =>
+      r.channels.every((rc) => channels.find((c) => c.id === rc.id)?.status === rc.status),
+    ),
+  );
+
+  const newRule = await fetch(`${API}/integrations/notifications`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ event: 'Agent offline over 7 days', channelIds: [channels[0].id] }),
+  });
+  const createdRule = await newRule.json();
+  check('an alert rule can be added — HTTP 201', newRule.status === 201, `HTTP ${newRule.status}`);
+  check('a new rule arrives switched on', createdRule.enabled === true);
+
+  const offRes = await fetch(
+    `${API}/integrations/notifications/${encodeURIComponent(createdRule.id)}`,
+    {
+      method: 'PATCH',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: JSON.stringify({ enabled: false }),
+    },
+  );
+  check(
+    'a rule can be switched off',
+    offRes.status === 200 && (await offRes.json()).enabled === false,
+  );
+
+  const delRes = await fetch(
+    `${API}/integrations/notifications/${encodeURIComponent(createdRule.id)}`,
+    {
+      method: 'DELETE',
+      headers: authed(token, { 'x-csrf-token': session.csrfToken }),
+    },
+  );
+  check('a rule can be removed — HTTP 204', delRes.status === 204, `HTTP ${delRes.status}`);
+
+  const deliveries = await fetch(`${API}/integrations/deliveries?limit=50`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the delivery log pages and carries its own columns',
+    deliveries.items.length === 50 &&
+      deliveries.items.every(
+        (d) =>
+          ['Audit Trail', 'Deployments', 'Compliance'].includes(d.eventType) &&
+          ['delivered', 'failed', 'retrying'].includes(d.outcome),
+      ),
+    `${deliveries.page.total} attempts`,
+  );
+  // Only a configured target can have delivered anything.
+  const configuredNames = new Set(
+    [...siem, ...channels].filter((t) => t.status === 'connected').map((t) => t.name),
+  );
+  check(
+    'every logged delivery belongs to a configured target',
+    deliveries.items.every((d) => configuredNames.has(d.connector)),
+  );
+
+  const retrying = await fetch(`${API}/integrations/deliveries?limit=10&result=retrying`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the log filters by result',
+    retrying.items.every((d) => d.outcome === 'retrying') &&
+      retrying.page.total < deliveries.page.total,
+    `${retrying.page.total} retrying of ${deliveries.page.total}`,
+  );
+
+  // A webhook that posts inside the estate is an egress hole, not a webhook.
+  const privateHook = await fetch(`${API}/integrations/connectors`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      name: 'Internal hook',
+      url: 'https://10.0.0.5/hook',
+      events: ['deployment.completed'],
+    }),
+  });
+  check(
+    'a webhook pointing inside the estate is refused — HTTP 400',
+    privateHook.status === 400,
+    `HTTP ${privateHook.status}`,
+  );
+  const plainHook = await fetch(`${API}/integrations/connectors`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      name: 'Plain hook',
+      url: 'http://hooks.corp.example/hook',
+      events: ['deployment.completed'],
+    }),
+  });
+  check(
+    'a webhook over plain http is refused — HTTP 400',
+    plainHook.status === 400,
+    `HTTP ${plainHook.status}`,
+  );
+
   // --- Device detail -------------------------------------------------------
   const firstId = (
     await fetch(`${API}/devices?limit=1&fields=id`, { headers: authed(token) }).then((r) =>

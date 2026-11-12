@@ -824,13 +824,68 @@ export type Report = {
   custom: boolean;
 };
 
-export type Integration = {
+/** Every state a connector, destination or channel can report. */
+export type IntegrationStatus = 'connected' | 'attention' | 'disabled' | 'not-configured' | 'error';
+
+/** One card on the Connectors tab: what it is for, and what it was granted. */
+export type Connector = {
   id: string;
   name: string;
-  kind: string;
-  status: string;
-  lastEventAt: string | null;
-  events24h: number;
+  kind: 'itsm' | 'siem' | 'chat' | 'webhook' | 'identity';
+  status: IntegrationStatus;
+  purpose: string;
+  scope: string | null;
+  lastActivity: string | null;
+  logoUrl: string | null;
+};
+
+/** A log target on the SIEM & Syslog tab. */
+export type SiemDestination = {
+  id: string;
+  name: string;
+  transport: string;
+  protocol: 'syslog-tls' | 'syslog-udp' | 'https';
+  status: 'connected' | 'not-configured' | 'error';
+  host: string | null;
+  port: number | null;
+  eventTypes: number;
+  lastSentAt: string | null;
+  ratePerHour: number | null;
+  enabled: boolean;
+};
+
+/** A place an alert rule can send to. */
+export type NotificationChannel = {
+  id: string;
+  name: string;
+  transport: string;
+  status: 'connected' | 'not-configured' | 'error';
+  eventTypes: number | null;
+  lastSentAt: string | null;
+  ratePerHour: number | null;
+};
+
+/**
+ * One row of the Alert Rules table. A rule fans out to several channels,
+ * which is why Send To lists more than one and Channel Status lists a state
+ * for each.
+ */
+export type NotificationRule = {
+  id: string;
+  event: string;
+  channels: { id: string; name: string; status: 'connected' | 'not-configured' | 'error' }[];
+  enabled: boolean;
+};
+
+/** One attempt at forwarding one event. */
+export type DeliveryAttempt = {
+  id: string;
+  connector: string;
+  eventType: string;
+  event: string;
+  at: string;
+  outcome: 'delivered' | 'failed' | 'retrying';
+  httpStatus: number | null;
 };
 
 export type ConsoleUser = {

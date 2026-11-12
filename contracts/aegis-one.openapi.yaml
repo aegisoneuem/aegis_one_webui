@@ -2533,6 +2533,122 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SiemDestination'
+  /integrations/siem/{destinationId}:
+    put:
+      tags:
+      - integrations
+      operationId: configureSiemDestination
+      summary: Set up a SIEM or syslog destination. Secrets are write-only.
+      x-required-permission: integrations:write
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/DestinationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiemConfigInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiemDestination'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /integrations/siem/{destinationId}/test:
+    post:
+      tags:
+      - integrations
+      operationId: testSiemDestination
+      summary: Send a test event to a destination.
+      x-required-permission: integrations:write
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/DestinationId'
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAttempt'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: The destination is not configured, so there is nothing to test.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /integrations/channels:
+    get:
+      tags:
+      - integrations
+      operationId: listNotificationChannels
+      summary: Notification channels (mail, chat and issue trackers) with their delivery state.
+      x-required-permission: integrations:read
+      responses:
+        '200':
+          description: Channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationChannel'
+  /integrations/channels/{channelId}:
+    put:
+      tags:
+      - integrations
+      operationId: configureNotificationChannel
+      summary: Set up a notification channel. Secrets are write-only.
+      x-required-permission: integrations:write
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/ChannelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorConfigInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannel'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /integrations/channels/{channelId}/test:
+    post:
+      tags:
+      - integrations
+      operationId: testNotificationChannel
+      summary: Send a test notification.
+      x-required-permission: integrations:write
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/ChannelId'
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAttempt'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: The channel is not configured, so there is nothing to test.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /integrations/notifications:
     get:
       tags:
@@ -2549,16 +2665,96 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/NotificationRule'
+    post:
+      tags:
+      - integrations
+      operationId: createNotificationRule
+      summary: Add an alert rule.
+      x-required-permission: integrations:write
+      x-csrf: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRuleInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /integrations/notifications/{ruleId}:
+    patch:
+      tags:
+      - integrations
+      operationId: setNotificationRuleEnabled
+      summary: Turn an alert rule on or off.
+      x-required-permission: integrations:write
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/RuleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRulePatch'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+      - integrations
+      operationId: deleteNotificationRule
+      summary: Remove an alert rule.
+      x-required-permission: integrations:write
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/RuleId'
+      responses:
+        '204':
+          description: Removed
+        '404':
+          $ref: '#/components/responses/NotFound'
   /integrations/deliveries:
     get:
       tags:
       - integrations
       operationId: listDeliveryLog
-      summary: Delivery log.
+      summary: Delivery log, filtered as the tab's own controls filter it.
       x-required-permission: integrations:read
       parameters:
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Q'
+      - name: connector
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+      - name: eventType
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+      - name: result
+        in: query
+        schema:
+          type: string
+          enum:
+          - delivered
+          - failed
+          - retrying
       responses:
         '200':
           description: Deliveries
@@ -3035,6 +3231,27 @@ components:
         pattern: ^[A-Za-z0-9._-]{1,64}$
     ConnectorId:
       name: connectorId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9._-]{1,64}$
+    DestinationId:
+      name: destinationId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9._-]{1,64}$
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9._-]{1,64}$
+    RuleId:
+      name: ruleId
       in: path
       required: true
       schema:
@@ -6810,8 +7027,18 @@ components:
           type: string
           enum:
           - connected
+          - attention
+          - disabled
           - not-configured
           - error
+        purpose:
+          description: What this connector is for, as the card's second line prints it.
+          type: string
+        scope:
+          description: 'The permissions it was granted, for example: Vulnerability Read, Devices Read.'
+          type:
+          - string
+          - 'null'
         lastActivity:
           type:
           - string
@@ -6872,14 +7099,18 @@ components:
       required:
       - id
       - name
+      - transport
       - protocol
-      - host
-      - port
+      - status
+      - eventTypes
       - enabled
       properties:
         id:
           type: string
         name:
+          type: string
+        transport:
+          description: How it is reached, e.g. "HTTP Event Collector" or "Syslog (LEEF)".
           type: string
         protocol:
           type: string
@@ -6887,27 +7118,155 @@ components:
           - syslog-tls
           - syslog-udp
           - https
-        host:
+        status:
           type: string
+          enum:
+          - connected
+          - not-configured
+          - error
+        host:
+          type:
+          - string
+          - 'null'
         port:
+          type:
+          - integer
+          - 'null'
+        eventTypes:
+          description: How many event types this destination is subscribed to.
           type: integer
+        lastSentAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        ratePerHour:
+          description: Events forwarded in the last hour, or null when nothing is flowing.
+          type:
+          - integer
+          - 'null'
         enabled:
           type: boolean
+    SiemConfigInput:
+      type: object
+      additionalProperties: false
+      properties:
+        host:
+          type: string
+          maxLength: 253
+        port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        protocol:
+          type: string
+          enum:
+          - syslog-tls
+          - syslog-udp
+          - https
+        secret:
+          type: string
+          maxLength: 1024
+          writeOnly: true
+        enabled:
+          type: boolean
+    NotificationChannel:
+      description: A delivery channel for alert rules — email, chat or an issue tracker.
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - transport
+      - status
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        transport:
+          description: How it delivers, e.g. "Incoming Webhook" or "Create Issues".
+          type: string
+        status:
+          type: string
+          enum:
+          - connected
+          - not-configured
+          - error
+        eventTypes:
+          type:
+          - integer
+          - 'null'
+        lastSentAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        ratePerHour:
+          type:
+          - integer
+          - 'null'
     NotificationRule:
       type: object
       additionalProperties: false
       required:
       - id
       - event
-      - channel
+      - channels
       - enabled
       properties:
         id:
           type: string
         event:
+          description: The condition, as the When column prints it.
           type: string
-        channel:
+        channels:
+          description: The channels it sends to, in the order the Send To column prints them.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - name
+            - status
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              status:
+                type: string
+                enum:
+                - connected
+                - not-configured
+                - error
+        enabled:
+          type: boolean
+    NotificationRuleInput:
+      type: object
+      additionalProperties: false
+      required:
+      - event
+      - channelIds
+      properties:
+        event:
           type: string
+          minLength: 1
+          maxLength: 120
+        channelIds:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            maxLength: 64
+    NotificationRulePatch:
+      type: object
+      additionalProperties: false
+      required:
+      - enabled
+      properties:
         enabled:
           type: boolean
     DeliveryAttempt:
@@ -6916,6 +7275,7 @@ components:
       required:
       - id
       - connector
+      - eventType
       - event
       - at
       - outcome
@@ -6923,6 +7283,9 @@ components:
         id:
           type: string
         connector:
+          type: string
+        eventType:
+          description: The family the event belongs to, as the Event Type column prints it.
           type: string
         event:
           type: string

@@ -660,14 +660,77 @@ CREATE TABLE peers (
   last_seen_at TEXT NOT NULL
 );
 
-CREATE TABLE integrations (
+-- Integrations is four different things, and the flat `integrations` table it
+-- replaced could only be one of them. A connector is an outbound integration
+-- with a scope; a SIEM destination is a log target; a notification channel is
+-- a place an alert rule can send to; a delivery is one attempt at one event.
+CREATE TABLE connectors (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  kind TEXT NOT NULL,
-  status TEXT NOT NULL,
-  last_event_at TEXT,
-  events_24h INTEGER NOT NULL DEFAULT 0
+  kind TEXT NOT NULL,                 -- itsm | siem | chat | webhook | identity
+  status TEXT NOT NULL,               -- connected | attention | disabled | not-configured | error
+  -- The card's second line: what this connector is actually for.
+  purpose TEXT NOT NULL DEFAULT '',
+  -- The permissions it was granted, printed verbatim on the card.
+  scope TEXT,
+  last_sync_at TEXT,
+  seq INTEGER NOT NULL
 );
+
+CREATE TABLE siem_destinations (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  transport TEXT NOT NULL,            -- "HTTP Event Collector", "Syslog (LEEF)"
+  protocol TEXT NOT NULL,             -- syslog-tls | syslog-udp | https
+  status TEXT NOT NULL,               -- connected | not-configured | error
+  host TEXT,
+  port INTEGER,
+  event_types INTEGER NOT NULL DEFAULT 0,
+  last_sent_at TEXT,
+  rate_per_hour INTEGER,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  seq INTEGER NOT NULL
+);
+
+CREATE TABLE notification_channels (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  transport TEXT NOT NULL,            -- "Incoming Webhook", "Create Issues"
+  status TEXT NOT NULL,               -- connected | not-configured | error
+  event_types INTEGER,
+  last_sent_at TEXT,
+  rate_per_hour INTEGER,
+  seq INTEGER NOT NULL
+);
+
+CREATE TABLE notification_rules (
+  id TEXT PRIMARY KEY,
+  event TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  seq INTEGER NOT NULL
+);
+
+-- A rule fans out to several channels, which is why the Send To column lists
+-- more than one and the Channel Status column lists one state per channel.
+CREATE TABLE notification_rule_channels (
+  rule_id TEXT NOT NULL REFERENCES notification_rules(id) ON DELETE CASCADE,
+  channel_id TEXT NOT NULL REFERENCES notification_channels(id),
+  seq INTEGER NOT NULL,
+  PRIMARY KEY (rule_id, channel_id)
+);
+
+CREATE TABLE deliveries (
+  id TEXT PRIMARY KEY,
+  connector_id TEXT NOT NULL,
+  connector_name TEXT NOT NULL,
+  event_type TEXT NOT NULL,           -- Audit Trail | Deployments | Compliance
+  event TEXT NOT NULL,
+  at TEXT NOT NULL,
+  outcome TEXT NOT NULL,              -- delivered | failed | retrying
+  http_status INTEGER
+);
+
+CREATE INDEX idx_deliveries_at ON deliveries(at DESC);
 
 CREATE TABLE api_tokens (
   id TEXT PRIMARY KEY,

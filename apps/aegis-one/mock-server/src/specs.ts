@@ -345,21 +345,6 @@ export const reportsSpec: TableSpec = {
   },
 };
 
-export const integrationsSpec: TableSpec = {
-  table: 'integrations',
-  idColumn: 'id',
-  searchColumns: ['name'],
-  defaultSort: { field: 'name' },
-  columns: {
-    id,
-    name: { column: 'name', sortable: true, filters: ['like'] },
-    kind: { column: 'kind', sortable: true, filters: ['eq', 'in'] },
-    status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
-    lastEventAt: { column: 'last_event_at', sortable: true },
-    events24h: { column: 'events_24h', sortable: true },
-  },
-};
-
 export const usersSpec: TableSpec = {
   table: 'users',
   idColumn: 'id',

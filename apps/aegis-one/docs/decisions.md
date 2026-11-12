@@ -766,3 +766,44 @@ This is the same boundary every other action in the console observes, and it
 is the reason the recommendations carry an `expected` figure ("+5 DEX
 points") rather than a progress bar: the page states what the action should
 achieve and then hands it to the job pipeline.
+
+## D-048 — Integrations is wired up, where the reference contradicts itself
+
+v129's Integrations page disagrees with itself. Its Connectors tab shows six
+working connectors, Splunk among them. Its SIEM & Syslog tab shows five "Not
+Configured" cards and `Connected 0/5` — including Splunk. Its delivery log is
+empty, under the line "Connect a SIEM or Syslog target to start forwarding".
+
+Both readings cannot be true, and the preview explains why: nothing in it is
+wired up, and it says as much in its own footnote. The inconsistency is an
+artefact of a static mock, not a design decision about what an estate looks
+like.
+
+Reproducing the zeros verbatim would have shipped three tabs that are blank
+for ever: a counter row of four noughts, ten cards that can never be tested,
+and a log table whose only possible content is its empty state. That is the
+same mistake as hard-coding a diagnosis on AEGIS Insight (D-046) — a layout
+restored and a page that cannot do its job.
+
+So the connectors and the four alert rules are the reference's own, verbatim,
+and the destinations and channels those connectors imply are configured: two
+of five destinations, three of five channels, 1,061 logged attempts in a
+93 / 5 / 2 delivered / retrying / failed split. Three destinations and two
+channels remain unconfigured, which keeps every "Not Configured" state and
+the disabled Test button on the page, and the log's empty state is still
+reachable by filtering to a target that never sent anything.
+
+## D-049 — A test event is a delivery, not a dialog
+
+Testing a connector, a destination or a channel appends a row to the same
+delivery log the fourth tab reads, and returns it. It does not pop a result
+dialog that disappears.
+
+Two reasons. A test that lands where real events land is a test of the thing
+the operator cares about — the path — rather than of a button. And a test
+that leaves a trace is auditable: "someone tested this at 14:02 and it
+delivered" is a fact the log already knows how to record.
+
+Testing a target that was never set up is refused with HTTP 409 rather than
+being recorded as a failure, because there is nothing to deliver to and a
+failed row would misrepresent a configuration gap as a delivery problem.

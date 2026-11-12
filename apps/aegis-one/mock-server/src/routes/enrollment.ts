@@ -65,7 +65,7 @@ export function registerEnrollmentRoutes(
      * configure, and nothing here accepts a serial-number CSV.
      */
     const identity = db
-      .prepare(`SELECT COUNT(*) AS n FROM integrations WHERE kind = 'identity' AND status = ?`)
+      .prepare(`SELECT COUNT(*) AS n FROM connectors WHERE kind = 'identity' AND status = ?`)
       .get('connected') as { n: number };
 
     return {

@@ -14,7 +14,6 @@ import {
   deploymentsSpec,
   devicesSpec,
   findingsSpec,
-  integrationsSpec,
   liveJobsSpec,
   logBundlesSpec,
   patchesSpec,
@@ -294,7 +293,6 @@ const RESOURCES: readonly ResourceDef[] = [
     envelope: logStats,
   },
   { path: 'liveops/audit', spec: auditSpec, derive: deriveLiveAuditFilters },
-  { path: 'integrations', spec: integrationsSpec },
   { path: 'admin/users', spec: usersSpec, jsonFields: ['zoneIds'] },
   { path: 'admin/tokens', spec: apiTokensSpec, jsonFields: ['scopes'] },
 ];

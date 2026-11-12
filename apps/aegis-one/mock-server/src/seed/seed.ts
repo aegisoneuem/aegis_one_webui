@@ -9,7 +9,6 @@ import {
   CVES,
   DEPARTMENTS,
   FIRST_NAMES,
-  INTEGRATIONS,
   LAST_NAMES,
   OPERATING_SYSTEMS,
   SERVER_MODELS,
@@ -18,6 +17,14 @@ import {
   ZONES,
   type CveDef,
 } from './catalog';
+import {
+  ALERT_RULES,
+  CONNECTORS,
+  EVENT_NAMES,
+  EVENT_TYPES,
+  NOTIFICATION_CHANNELS,
+  SIEM_DESTINATIONS,
+} from './integration-catalog';
 import { CONFIG_CHECKS } from './config-catalog';
 
 /**
@@ -79,7 +86,7 @@ export function seedDatabase({
   seedPeers(db, rng);
   rollUpDelivery(db);
   seedInsightTemplates(db);
-  seedIntegrations(db, rng);
+  seedIntegrations(db);
   seedUsersAndRoles(db, rng);
   seedTokens(db, rng);
   seedLicenses(db, deviceStats.total);
@@ -2438,22 +2445,147 @@ function seedPeers(db: Db, rng: Rng): void {
   })();
 }
 
-function seedIntegrations(db: Db, rng: Rng): void {
-  const insert = db.prepare(
-    `INSERT INTO integrations (id,name,kind,status,last_event_at,events_24h) VALUES (?,?,?,?,?,?)`,
-  );
+/**
+ * Integrations, as four kinds of thing rather than one flat list.
+ *
+ * Nothing here draws from the shared rng. The delivery log is derived from a
+ * multiplicative hash of the row index, so a destination's mix of delivered,
+ * retrying and failed attempts is stable across reseeds and does not shift
+ * every other fixture's random stream.
+ */
+function seedIntegrations(db: Db): void {
+  const minutesAgo = (m: number | null): string | null =>
+    m === null ? null : iso(NOW - m * 60_000);
+
   db.transaction(() => {
-    for (const int of INTEGRATIONS) {
+    const connector = db.prepare(
+      `INSERT INTO connectors (id,name,kind,status,purpose,scope,last_sync_at,seq)
+       VALUES (?,?,?,?,?,?,?,?)`,
+    );
+    CONNECTORS.forEach((c, i) =>
+      connector.run(
+        c.id,
+        c.name,
+        c.kind,
+        c.status,
+        c.purpose,
+        c.scope,
+        minutesAgo(c.syncedMinutesAgo),
+        i,
+      ),
+    );
+
+    const siem = db.prepare(
+      `INSERT INTO siem_destinations
+         (id,name,transport,protocol,status,host,port,event_types,last_sent_at,rate_per_hour,enabled,seq)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    );
+    SIEM_DESTINATIONS.forEach((d, i) =>
+      siem.run(
+        d.id,
+        d.name,
+        d.transport,
+        d.protocol,
+        d.configured ? 'connected' : 'not-configured',
+        d.host,
+        d.port,
+        // Every destination subscribes to the three event families; the
+        // reference prints "Events 3 types" on all five of its cards.
+        EVENT_TYPES.length,
+        minutesAgo(d.sentMinutesAgo),
+        d.ratePerHour,
+        d.configured ? 1 : 0,
+        i,
+      ),
+    );
+
+    const channel = db.prepare(
+      `INSERT INTO notification_channels
+         (id,name,transport,status,event_types,last_sent_at,rate_per_hour,seq)
+       VALUES (?,?,?,?,?,?,?,?)`,
+    );
+    NOTIFICATION_CHANNELS.forEach((c, i) =>
+      channel.run(
+        c.id,
+        c.name,
+        c.transport,
+        c.configured ? 'connected' : 'not-configured',
+        c.eventTypes,
+        minutesAgo(c.sentMinutesAgo),
+        c.ratePerHour,
+        i,
+      ),
+    );
+
+    const rule = db.prepare(
+      `INSERT INTO notification_rules (id,event,enabled,seq) VALUES (?,?,?,?)`,
+    );
+    const ruleChannel = db.prepare(
+      `INSERT INTO notification_rule_channels (rule_id,channel_id,seq) VALUES (?,?,?)`,
+    );
+    ALERT_RULES.forEach((r, i) => {
+      rule.run(r.id, r.event, r.enabled ? 1 : 0, i);
+      r.channelIds.forEach((id, j) => ruleChannel.run(r.id, id, j));
+    });
+
+    seedDeliveryLog(db);
+  })();
+}
+
+/**
+ * One row per forwarded event over the last 24 hours, for the destinations
+ * and channels that are actually configured. A destination that was never set
+ * up has no deliveries, which is why the log's empty state exists.
+ */
+function seedDeliveryLog(db: Db): void {
+  const targets = [
+    ...SIEM_DESTINATIONS.filter((d) => d.configured).map((d) => ({
+      id: d.id,
+      name: d.name,
+      perHour: d.ratePerHour ?? 0,
+    })),
+    ...NOTIFICATION_CHANNELS.filter((c) => c.configured).map((c) => ({
+      id: c.id,
+      name: c.name,
+      perHour: c.ratePerHour ?? 0,
+    })),
+  ];
+
+  const insert = db.prepare(
+    `INSERT INTO deliveries (id,connector_id,connector_name,event_type,event,at,outcome,http_status)
+     VALUES (?,?,?,?,?,?,?,?)`,
+  );
+
+  let n = 0;
+  for (const target of targets) {
+    /*
+     * The stored rate is per hour; the log keeps a sampled slice rather than
+     * a full day of it, because 1,243 events an hour is 29,832 rows nobody
+     * reads. One in forty is enough to fill every filter combination.
+     */
+    const rows = Math.max(6, Math.round((target.perHour * 24) / 40));
+    for (let i = 0; i < rows; i++) {
+      n += 1;
+      const mix = (salt: number): number => (n * 2654435761 + salt) % 1000000007;
+      const family = EVENT_TYPES[mix(11) % EVENT_TYPES.length] ?? 'Audit Trail';
+      const names = EVENT_NAMES[family] ?? [];
+      const event = names[mix(23) % Math.max(1, names.length)] ?? 'event';
+      // Delivery is the normal case; a small tail retries, and a smaller one
+      // gives up. 93 / 5 / 2 across the estate.
+      const roll = mix(37) % 100;
+      const outcome = roll < 93 ? 'delivered' : roll < 98 ? 'retrying' : 'failed';
       insert.run(
-        int.id,
-        int.name,
-        int.kind,
-        int.status,
-        int.status === 'disconnected' ? daysAgo(4) : iso(NOW - rng.int(5_000, 900_000)),
-        int.status === 'disconnected' ? 0 : rng.int(40, 184_000),
+        `del-${String(n).padStart(6, '0')}`,
+        target.id,
+        target.name,
+        family,
+        event,
+        iso(NOW - (mix(53) % (24 * 60)) * 60_000),
+        outcome,
+        outcome === 'delivered' ? 200 : outcome === 'retrying' ? 503 : 500,
       );
     }
-  })();
+  }
 }
 
 /**

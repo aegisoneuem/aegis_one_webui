@@ -1154,6 +1154,108 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('button', { name: 'Remediation queued' })).toBeDisabled();
   });
 
+  test('Integrations opens on the approved four tabs', async ({ page }) => {
+    await page.goto('/integrations');
+
+    for (const tab of ['Connectors', 'SIEM & Syslog', 'Notifications', 'Delivery Log'])
+      await expect(page.getByRole('tab', { name: tab, exact: true })).toBeVisible();
+
+    // The Connectors tab: its own status filter, and the reference's six cards.
+    for (const f of ['All', 'Connected', 'Attention', 'Disabled'])
+      await expect(page.getByRole('tab', { name: f, exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '+ Custom Webhook' })).toBeVisible();
+    await expect(page.locator('section').filter({ hasText: 'Last Sync' })).toHaveCount(6);
+
+    // Each card prints what it is for and what it was granted.
+    await expect(page.getByText('Incidents for Critical CVEs')).toBeVisible();
+    await expect(page.getByText('Vulnerability: Read · Devices: Read')).toBeVisible();
+  });
+
+  test('the connector filter narrows to one status', async ({ page }) => {
+    await page.goto('/integrations');
+    await expect(page.locator('section').filter({ hasText: 'Last Sync' })).toHaveCount(6);
+
+    await page.getByRole('tab', { name: 'Attention', exact: true }).click();
+    const cards = page.locator('section').filter({ hasText: 'Last Sync' });
+    await expect(cards).toHaveCount(1);
+    await expect(cards.getByText('Microsoft Teams')).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Disabled', exact: true }).click();
+    await expect(page.locator('section').filter({ hasText: 'Last Sync' })).toHaveCount(1);
+    await expect(page.getByText('Deployment Alerts')).toBeVisible();
+  });
+
+  test('SIEM & Syslog counts what was forwarded, not what was configured', async ({ page }) => {
+    await page.goto('/integrations?tab=siem');
+
+    /*
+     * "Connected" is both a counter label and a card status, so the counter
+     * assertions are scoped to the counter row.
+     */
+    const kpis = page.locator('div[class*="kpis"]');
+    for (const kpi of ['Connected', 'Events Forwarded', 'Retrying', 'Errors'])
+      await expect(kpis.getByText(kpi, { exact: true })).toBeVisible();
+
+    // Five destinations, and a target that was never set up cannot be tested.
+    await expect(page.getByRole('button', { name: 'Set Up' })).toHaveCount(5);
+    const tests = page.getByRole('button', { name: 'Test', exact: true });
+    await expect(tests).toHaveCount(5);
+    await expect(page.getByText('IBM QRadar')).toBeVisible();
+
+    // The footnote is the page's security claim, so it must be on the page.
+    await expect(page.getByText(/never stored in this browser/)).toBeVisible();
+  });
+
+  test('an alert rule can be added, switched off and removed', async ({ page }) => {
+    await page.goto('/integrations?tab=notifications');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['When', 'Send To', 'Channel Status', 'Enabled'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    // A seeded rule that fans out to two channels prints both, in order.
+    await expect(
+      grid.locator('tr').filter({ hasText: 'Deployment Failed' }).locator('td').nth(1),
+    ).toHaveText('SMTP Mail Server, Microsoft Teams');
+
+    /*
+     * The rest of this test adds its own rule rather than touching a seeded
+     * one, so it leaves the fixture exactly as it found it and can be run
+     * twice in a row.
+     */
+    await page.getByLabel('Event').selectOption('Agent offline over 7 days');
+    await page.getByRole('button', { name: 'Add Rule' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Alert rule added'),
+    ).toBeVisible();
+
+    const mine = grid.locator('tr', { hasText: 'Agent offline over 7 days' });
+    await expect(mine.getByRole('button', { name: 'On' })).toBeVisible();
+    await mine.getByRole('button', { name: 'On' }).click();
+    await expect(mine.getByRole('button', { name: 'Off' })).toBeVisible();
+
+    await mine.getByRole('button', { name: 'Remove' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Alert rule removed'),
+    ).toBeVisible();
+    await expect(grid.locator('tr', { hasText: 'Agent offline over 7 days' })).toHaveCount(0);
+  });
+
+  test('the delivery log filters by result', async ({ page }) => {
+    await page.goto('/integrations?tab=log');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Time', 'Connector', 'Event Type', 'Event', 'Result'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(grid.locator('tbody tr').first()).toBeVisible();
+    const all = await grid.locator('tbody tr').count();
+
+    await page.getByLabel('Result').selectOption('retrying');
+    await expect(grid.getByText('Delivered').first()).toHaveCount(0);
+    expect(await grid.locator('tbody tr').count()).toBeLessThanOrEqual(all);
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

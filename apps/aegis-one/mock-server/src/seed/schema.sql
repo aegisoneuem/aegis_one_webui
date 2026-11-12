@@ -647,8 +647,14 @@ CREATE TABLE log_bundles (
   emailed INTEGER NOT NULL DEFAULT 0
 );
 
+-- A peer cache is a regular endpoint agent that was elected to cache content
+-- for its zone, which is what the approved Peer Cache page says it is. So each
+-- row points at a real device and takes that device's hostname; one per zone
+-- carries `elected`, and re-electing moves the flag rather than building a
+-- node. There are no dedicated distribution servers in this schema.
 CREATE TABLE peers (
   id TEXT PRIMARY KEY,
+  device_id TEXT NOT NULL REFERENCES devices(id),
   hostname TEXT NOT NULL,
   zone_id TEXT NOT NULL REFERENCES zones(id),
   zone_name TEXT NOT NULL,
@@ -657,7 +663,22 @@ CREATE TABLE peers (
   served_gb INTEGER NOT NULL,
   peers_served INTEGER NOT NULL,
   status TEXT NOT NULL,
+  elected INTEGER NOT NULL DEFAULT 0,
+  last_transfer_at TEXT,
   last_seen_at TEXT NOT NULL
+);
+
+CREATE INDEX idx_peers_elected ON peers(zone_id, elected);
+
+-- What each zone's cache is holding, materialised at seed time from the
+-- deployments that actually reached devices in that zone. The column prints
+-- the names, so the names are stored; deriving them per request would be a
+-- join across deployment_results for a line of text.
+CREATE TABLE peer_cache_content (
+  zone_id TEXT NOT NULL REFERENCES zones(id),
+  label TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  PRIMARY KEY (zone_id, label)
 );
 
 -- Integrations is four different things, and the flat `integrations` table it

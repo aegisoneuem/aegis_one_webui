@@ -17,7 +17,6 @@ import {
   liveJobsSpec,
   logBundlesSpec,
   patchesSpec,
-  peersSpec,
   softwareSpec,
   usersSpec,
   scansSpec,
@@ -284,7 +283,6 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'vulnerabilities/scans', spec: scansSpec },
   { path: 'deployments', spec: deploymentsSpec, shape: shapeDeployment },
   { path: 'liveops/script-jobs', spec: liveJobsSpec, shape: shapeLiveJob },
-  { path: 'peercache/peers', spec: peersSpec, zoneScoped: true },
   {
     path: 'liveops/logs',
     spec: logBundlesSpec,

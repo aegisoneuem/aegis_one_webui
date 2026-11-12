@@ -3180,14 +3180,23 @@ export interface components {
             zone: string;
             enabled: boolean;
             currentPeer?: string | null;
-            /** @enum {string} */
-            agentHealth?: "healthy" | "degraded" | "unreachable";
-            contentCached?: number;
+            /**
+             * @description The elected endpoint's own agent state, or null where nothing is elected.
+             * @enum {string|null}
+             */
+            agentHealth?: "healthy" | "degraded" | "unreachable" | null;
+            /** @description The endpoint elected as the cache. Peer caching uses a regular agent, not an appliance. */
+            deviceId?: string | null;
+            /** @description What the cache is holding, as the Content Cached column prints it. */
+            contentCached?: string[];
             cacheSizeGb?: number;
             /** Format: date-time */
             lastTransfer?: string | null;
-            /** @enum {string} */
-            status: "active" | "idle" | "disabled";
+            /**
+             * @description The health the Status column prints, not a lifecycle state.
+             * @enum {string}
+             */
+            status: "healthy" | "warning" | "disabled";
         };
         ReportDef: {
             id: string;

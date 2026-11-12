@@ -2410,23 +2410,53 @@ function seedLogBundles(db: Db, rng: Rng): void {
   })();
 }
 
+/**
+ * Peer caches, elected from the estate's own endpoints.
+ *
+ * The approved Peer Cache page states the rule in its own words: no dedicated
+ * distribution servers, a regular endpoint agent is elected to cache content
+ * for its zone. So each row points at a real device and borrows that device's
+ * hostname — the previous fixture invented appliances called DEL-CACHE-01,
+ * which contradicted the page it was feeding.
+ *
+ * The candidate is the zone's steadiest endpoint: online, on the current
+ * agent, with the most free disk. That is also the election a real
+ * implementation would make, so the stored choice and the Re-elect route
+ * agree on what "best" means.
+ */
 function seedPeers(db: Db, rng: Rng): void {
   const insert = db.prepare(
-    `INSERT INTO peers (id,hostname,zone_id,zone_name,cache_size_gb,cache_used_gb,served_gb,peers_served,status,last_seen_at) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO peers
+       (id,device_id,hostname,zone_id,zone_name,cache_size_gb,cache_used_gb,
+        served_gb,peers_served,status,elected,last_transfer_at,last_seen_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
+
+  /*
+   * Candidates per zone, best first. `disk_free_pct DESC` is the tie-break
+   * that matters: a cache fills a hundred gigabytes, and electing an endpoint
+   * that is nearly full would be electing a failure.
+   */
+  const candidates = db.prepare(
+    `SELECT id, hostname FROM devices
+      WHERE zone_id = ? AND status = 'online'
+      ORDER BY disk_free_pct DESC, dex_score DESC, rowid
+      LIMIT ?`,
+  );
+
   db.transaction(() => {
     let n = 0;
     for (const zone of ZONES) {
       if (!zone.peerCache) continue;
       const count = Math.max(2, Math.round(zone.weight / 4));
-      for (let i = 0; i < count; i++) {
+      const picks = candidates.all(zone.id, count) as { id: string; hostname: string }[];
+
+      picks.forEach((device, i) => {
         const size = rng.pick([100, 200, 500]);
         insert.run(
           `peer-${String(300 + n++)}`,
-          `${zone.name
-            .replace(/[^A-Za-z]/g, '')
-            .slice(0, 3)
-            .toUpperCase()}-CACHE-${String(i + 1).padStart(2, '0')}`,
+          device.id,
+          device.hostname,
           zone.id,
           zone.name,
           size,
@@ -2438,11 +2468,58 @@ function seedPeers(db: Db, rng: Rng): void {
             ['degraded', 10],
             ['offline', 4],
           ] as const),
+          // The first candidate is the one currently serving the zone.
+          i === 0 ? 1 : 0,
+          iso(NOW - rng.int(30_000, 7_200_000)),
           iso(NOW - rng.int(30_000, 7_200_000)),
         );
-      }
+      });
     }
+
+    seedPeerCacheContent(db);
   })();
+}
+
+/**
+ * What each zone's cache is holding: the packages that actually reached
+ * devices in that zone, most recent first. A cache holds what was delivered
+ * through it, so this is read from `deployment_results` rather than drawn.
+ */
+function seedPeerCacheContent(db: Db): void {
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO peer_cache_content (zone_id,label,seq) VALUES (?,?,?)`,
+  );
+
+  /*
+   * A deployment's package is a KB for a patch and a title for an application,
+   * which is exactly the two forms the Content Cached column prints. Only
+   * succeeded results count: a pending deployment has not been cached yet,
+   * and a failed one may never have arrived.
+   *
+   * Only the three types that carry a payload count. A script or a log
+   * collection is a few kilobytes sent to each endpoint — there is nothing
+   * for a cache to hold, and listing one would misdescribe what the cache
+   * is doing.
+   */
+  const delivered = db.prepare(
+    `SELECT DISTINCT d.package AS label, MAX(dr.finished_at) AS at
+       FROM deployment_results dr
+       JOIN deployments d ON d.id = dr.deployment_id
+       JOIN devices dev ON dev.id = dr.device_id
+      WHERE dev.zone_id = ?
+        AND dr.state = 'succeeded'
+        AND dr.finished_at IS NOT NULL
+        AND d.type IN ('deploy-patches', 'install-software', 'update-software')
+      GROUP BY d.package
+      ORDER BY at DESC
+      LIMIT 4`,
+  );
+
+  for (const zone of ZONES) {
+    if (!zone.peerCache) continue;
+    const rows = delivered.all(zone.id) as { label: string }[];
+    rows.forEach((row, i) => insert.run(zone.id, row.label, i));
+  }
 }
 
 /**

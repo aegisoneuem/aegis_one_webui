@@ -742,17 +742,25 @@ export type ZoneList = {
   };
 };
 
-export type Peer = {
-  id: string;
-  hostname: string;
+/**
+ * One zone's peer cache: the endpoint currently elected to cache for it, and
+ * what that endpoint is holding. A peer cache is a regular agent, not an
+ * appliance, so `deviceId` points at a device the Devices page also knows.
+ */
+export type PeerCache = {
   zoneId: string;
-  zoneName: string;
+  zone: string;
+  enabled: boolean;
+  deviceId: string | null;
+  currentPeer: string | null;
+  /** null where nothing is elected: there is no agent to report on. */
+  agentHealth: 'healthy' | 'degraded' | 'unreachable' | null;
+  /** What the cache holds, as the Content Cached column prints it. */
+  contentCached: string[];
   cacheSizeGb: number;
-  cacheUsedGb: number;
-  servedGb: number;
-  peersServed: number;
-  status: string;
-  lastSeenAt: string;
+  lastTransfer: string | null;
+  /** The health the Status column prints, not a lifecycle state. */
+  status: 'healthy' | 'warning' | 'disabled';
 };
 
 export type AuditEntry = {

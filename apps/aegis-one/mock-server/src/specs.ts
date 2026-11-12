@@ -272,25 +272,6 @@ export const groupsSpec: TableSpec = {
   },
 };
 
-export const peersSpec: TableSpec = {
-  table: 'peers',
-  idColumn: 'id',
-  searchColumns: ['hostname'],
-  defaultSort: { field: 'servedGb', desc: true },
-  columns: {
-    id,
-    hostname: { column: 'hostname', sortable: true, filters: ['like'] },
-    zoneId: { column: 'zone_id', filters: ['eq', 'in'] },
-    zoneName: { column: 'zone_name', sortable: true, filters: ['eq', 'in'] },
-    cacheSizeGb: { column: 'cache_size_gb', sortable: true },
-    cacheUsedGb: { column: 'cache_used_gb', sortable: true },
-    servedGb: { column: 'served_gb', sortable: true },
-    peersServed: { column: 'peers_served', sortable: true },
-    status: { column: 'status', sortable: true, filters: ['eq', 'in'] },
-    lastSeenAt: { column: 'last_seen_at', sortable: true },
-  },
-};
-
 export const auditSpec: TableSpec = {
   table: 'audit_log',
   idColumn: 'id',

@@ -1,0 +1,183 @@
+/*
+ * Peer Cache, on the reference's own shape: a title and one table. No
+ * counters, no filter bar, no tabs — the reference has none, and a zone's
+ * delivery figures belong on Aegis Zones, which already prints them.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.panel {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grid thead th {
+  padding: 10px 14px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ao-track);
+  color: var(--ao-navy-mid);
+  vertical-align: middle;
+}
+
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grid tbody tr:hover td {
+  background: var(--ui-surface-hover);
+}
+
+.grid b {
+  font-weight: 650;
+}
+
+.grid tbody td:first-child b {
+  color: var(--ao-navy-ink);
+}
+
+.numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The elected endpoint opens the device it is, so it is a link. */
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--st-info);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: underline;
+}
+
+.link:hover {
+  text-decoration: none;
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+/* Disable and Activity live behind the ⋯, as the reference keeps them. */
+.menuWrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 150px;
+  padding: 4px;
+  border: 1px solid var(--ao-border);
+  margin: 0;
+  background: var(--ao-surface);
+  box-shadow: var(--ui-shadow-menu, 0 6px 16px rgb(16 24 40 / 12%));
+  list-style: none;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  color: var(--ao-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.menu button:hover:not(:disabled) {
+  background: var(--ui-surface-hover);
+}
+
+.menu button:disabled {
+  color: var(--ao-muted);
+  cursor: default;
+}
+
+.empty {
+  padding: 28px 14px;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.bad {
+  color: var(--st-bad);
+}
+
+.muted {
+  color: var(--ao-muted);
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

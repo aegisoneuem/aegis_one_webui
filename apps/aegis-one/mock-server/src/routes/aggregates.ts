@@ -819,24 +819,6 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
     };
   }
 
-  app.get(`${basePath}/peercache/summary`, async (request) => {
-    const scope = zoneScope({ zoneIds: request.auth?.zoneIds ?? [] });
-    const where = scope ? `WHERE ${scope.sql}` : '';
-    return {
-      totals: one(
-        `SELECT COUNT(*) AS peers, SUM(served_gb) AS servedGb, SUM(cache_used_gb) AS usedGb,
-                SUM(cache_size_gb) AS capacityGb, SUM(peers_served) AS peersServed
-         FROM peers ${where}`,
-        scope?.params ?? [],
-      ),
-      byZone: many(
-        `SELECT zone_name AS zoneName, COUNT(*) AS peers, SUM(served_gb) AS servedGb
-         FROM peers ${where} GROUP BY 1 ORDER BY servedGb DESC`,
-        scope?.params ?? [],
-      ),
-    };
-  });
-
   app.get(`${basePath}/admin/roles`, async () =>
     many(
       `SELECT id, name, permissions, system, zone_ids AS zoneIds, user_count AS userCount FROM roles ORDER BY system DESC, name`,

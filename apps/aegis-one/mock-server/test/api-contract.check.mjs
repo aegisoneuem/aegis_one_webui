@@ -935,6 +935,111 @@ const run = async () => {
     `HTTP ${plainHook.status}`,
   );
 
+  // --- Peer cache ----------------------------------------------------------
+  const peerCaches = await fetch(`${API}/peercache`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'peercache returns one row per zone',
+    peerCaches.length === 9,
+    `${peerCaches.length} zones`,
+  );
+  /*
+   * The page's whole claim: a peer cache is a regular endpoint agent, not an
+   * appliance. So every elected cache must be a device the Devices page also
+   * knows, by the id this row carries.
+   */
+  const elected = peerCaches.filter((c) => c.currentPeer !== null);
+  check(
+    'every elected cache names a real endpoint',
+    elected.length > 0 && elected.every((c) => typeof c.deviceId === 'string'),
+    `${elected.length} elected`,
+  );
+  const firstElected = elected[0];
+  const asDevice = await fetch(`${API}/devices/${encodeURIComponent(firstElected.deviceId)}`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the elected cache resolves as a device, with the same hostname',
+    asDevice.hostname === firstElected.currentPeer,
+    `${asDevice.hostname}`,
+  );
+
+  // A zone with nothing elected reports no agent and no content, not a fault.
+  check(
+    'a zone with no cache reports nothing rather than a failure',
+    peerCaches
+      .filter((c) => c.currentPeer === null)
+      .every(
+        (c) =>
+          c.agentHealth === null &&
+          c.contentCached.length === 0 &&
+          c.lastTransfer === null &&
+          c.status === 'disabled',
+      ),
+  );
+  check(
+    'a cache holds content that was actually delivered to its zone',
+    elected.every((c) => c.contentCached.length > 0 && c.contentCached.length <= 4),
+    `${elected[0].contentCached.length} items on ${elected[0].zone}`,
+  );
+
+  // Re-electing moves the cache to another endpoint in the same zone, and the
+  // new one has transferred nothing yet — so it reports a warning, truthfully.
+  const before = firstElected.currentPeer;
+  const electRes = await fetch(
+    `${API}/peercache/${encodeURIComponent(firstElected.zoneId)}/elect`,
+    {
+      method: 'POST',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: '{}',
+    },
+  );
+  const reelected = await electRes.json();
+  check('a cache can be re-elected', electRes.status === 200, `HTTP ${electRes.status}`);
+  check(
+    're-electing picks a different endpoint in the same zone',
+    reelected.currentPeer !== before && reelected.zoneId === firstElected.zoneId,
+    `${before} -> ${reelected.currentPeer}`,
+  );
+  check(
+    'a freshly elected cache reports a warning until it has transferred',
+    reelected.lastTransfer === null && reelected.status === 'warning',
+  );
+
+  // Switching a zone off is refused nothing, but switching an empty zone on is.
+  const emptyZone = peerCaches.find((c) => c.currentPeer === null);
+  const enableRes = await fetch(`${API}/peercache/${encodeURIComponent(emptyZone.zoneId)}/state`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ enabled: true }),
+  });
+  check(
+    'enabling a zone with no eligible endpoint is refused — HTTP 409',
+    enableRes.status === 409,
+    `HTTP ${enableRes.status}`,
+  );
+
+  const unknownZone = await fetch(`${API}/peercache/zn-does-not-exist/elect`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: '{}',
+  });
+  check(
+    'an unknown zone is 404, not 500',
+    unknownZone.status === 404,
+    `HTTP ${unknownZone.status}`,
+  );
+
   // --- Device detail -------------------------------------------------------
   const firstId = (
     await fetch(`${API}/devices?limit=1&fields=id`, { headers: authed(token) }).then((r) =>

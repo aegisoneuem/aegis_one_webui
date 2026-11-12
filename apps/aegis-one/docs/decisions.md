@@ -807,3 +807,46 @@ delivered" is a fact the log already knows how to record.
 Testing a target that was never set up is refused with HTTP 409 rather than
 being recorded as a failure, because there is nothing to deliver to and a
 failed row would misrepresent a configuration gap as a delivery problem.
+
+## D-050 — The peer cache is an endpoint, and the election is real
+
+The approved Peer Cache page states the product's model in its own words: no
+dedicated distribution servers, a regular endpoint agent is elected to cache
+content for its zone, and it can be re-elected at any time.
+
+The fixture feeding the old page contradicted that. It invented appliances —
+`DEL-CACHE-01`, `MUM-CACHE-02` — with made-up hostnames belonging to no
+device, which is precisely the dedicated distribution server the product does
+not have. A page cannot claim peer caching while listing hardware.
+
+So every peer row points at a real device and borrows its hostname, and the
+Current Peer Cache column links to it. The candidate is the zone's steadiest
+endpoint: online, most free disk, then best DEX score. Free disk leads because
+a cache fills a hundred gigabytes and electing a nearly-full endpoint is
+electing a failure.
+
+The seed and the `/elect` route use the same rule. That matters more than it
+looks: if the fixture picked by one standard and the button by another, the
+page would quietly disagree with itself about what a good cache is.
+
+Re-electing clears the transfer time, so the new cache reports **Warning**
+rather than Healthy until it has actually served something. A contract
+assertion checks this. It would have been easy to carry the old timestamp
+across and show an unbroken green column; it would also have been a lie.
+
+## D-051 — Staleness is judged against the fixture's clock
+
+A peer cache whose last transfer is two hours behind the estate's most recent
+one is warned about. The comparison is against the newest transfer in the
+data, not `Date.now()`.
+
+The fixture's "now" is frozen at `2026-11-01T09:30:00+05:30` for determinism
+(`docs/seed.md`). The first restored build compared against the wall clock and
+reported every cache in the estate as stale — nine Warnings, no Healthy — a
+few hours after the seed was built. That is a fixture artefact dressed as an
+estate-wide fault, and it is worse than a formatting drift: it changes a
+status value, not just how a date is printed.
+
+A real backend compares against now. In a fixture, the newest row _is_ now.
+The frozen clock still shows through wherever a date is merely formatted —
+handover question 57 — but it no longer invents findings.

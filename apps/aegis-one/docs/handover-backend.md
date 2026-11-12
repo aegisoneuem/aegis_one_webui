@@ -566,3 +566,16 @@ you.
     seed's clock follows the run date (losing byte-for-byte determinism) or
     the screenshots must be taken against a fresh seed. This one is worth
     settling before the full screenshot sweep.
+58. **Zones without a cache are listed here as a judgement, not a copy.** The
+    reference's table has three rows, all with elected caches, because its
+    fixture has only three; it does not settle what a cacheless zone looks
+    like on this page. The restored page lists all nine, showing the four
+    without a cache as "None elected" and "Disabled" — which keeps Enable
+    reachable and matches how Aegis Zones already reports them ("Not
+    required"). If the approved design means this page to list only zones that
+    have a cache, the Enable action needs a home somewhere else.
+59. **Activity has nowhere of its own to go.** The row menu's Activity action
+    opens the elected endpoint's device page, because the reference's own
+    Activity opens nothing and no contract route describes a per-cache
+    activity feed. What it should show — transfers served, peers fed, bytes
+    avoided over time — exists per zone on Aegis Zones but not per cache.

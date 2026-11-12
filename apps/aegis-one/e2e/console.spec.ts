@@ -1256,6 +1256,56 @@ test.describe('signed in as Super Admin', () => {
     expect(await grid.locator('tbody tr').count()).toBeLessThanOrEqual(all);
   });
 
+  test('Peer Cache opens on the approved seven columns', async ({ page }) => {
+    await page.goto('/peercache');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of [
+      'Aegis Zone',
+      'Current Peer Cache',
+      'Agent Health',
+      'Content Cached',
+      'Cache Size',
+      'Last Transfer',
+      'Status',
+    ])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    // Every row offers Re-elect; Disable and Activity live behind the ⋯.
+    await expect(grid.getByRole('button', { name: 'Re-elect' }).first()).toBeVisible();
+    await expect(page.getByText('None elected').first()).toBeVisible();
+  });
+
+  test('an elected peer cache is a real endpoint, and opens it', async ({ page }) => {
+    await page.goto('/peercache');
+
+    /*
+     * The page's whole claim is that a peer cache is a regular agent rather
+     * than an appliance, so the hostname has to open that device.
+     */
+    const grid = page.locator('table[class*="grid"]');
+    const peer = grid.locator('button[class*="link"]').first();
+    const hostname = await peer.innerText();
+    await peer.click();
+
+    await expect(page).toHaveURL(/\/devices\/[^/]+$/);
+    await expect(page.getByRole('heading', { name: hostname })).toBeVisible();
+  });
+
+  test('a zone with no cache offers no re-election', async ({ page }) => {
+    await page.goto('/peercache');
+
+    const grid = page.locator('table[class*="grid"]');
+    const row = grid.locator('tr').filter({ hasText: 'None elected' }).first();
+    await expect(row.getByText('Disabled')).toBeVisible();
+    await expect(row.getByRole('button', { name: 'Re-elect' })).toBeDisabled();
+
+    // Its ⋯ offers Enable rather than Disable, and Activity is unavailable.
+    await row.getByRole('button', { name: /More actions/ }).click();
+    await expect(page.getByRole('button', { name: 'Enable' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Activity' })).toBeDisabled();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

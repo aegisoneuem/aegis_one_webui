@@ -974,3 +974,36 @@ shifts the whole chart by a column.
 The reference agrees, in its own way: its System Health counters carry a
 "Checked 02:29 AM" line, hidden in the markup. The page was always meant to
 date its figures from the check, not from the viewer.
+
+## D-058 — Patch defaults are saved on the server, not in the browser
+
+The approved Global Settings sub-tab says so itself, twice: "Saved in this
+browser (preview)". Nothing in the reference persists, because nothing in a
+static mock can.
+
+Reproducing that would have meant estate-wide patch defaults that are not
+estate-wide — one administrator sets a maintenance window, another opens the
+page and sees the shipped one. The settings are saved on the server through
+`PUT /patches/settings`, like every other write in this console.
+
+This is the fourth time a preview artefact has had to be decided rather than
+copied: the hard-coded diagnosis on AEGIS Insight (D-046), the unwired
+Integrations tabs (D-048), the invented peer-cache appliances (D-050), and
+now this. The pattern is the same each time — the layout is the design, and
+the emptiness behind it is the mock.
+
+## D-059 — One definition of "highly vulnerable"
+
+The Patch Policies tab showed **14,107** highly vulnerable endpoints above a
+panel that said **1,131**. Both were honest about their own arithmetic: the
+counter came from a materialised patch roll-up, the panel from the thresholds
+the sub-tab exists to set.
+
+The panel defines the term, so the counter counts what the panel defines. A
+contract assertion and an e2e test both require them to match, because this is
+exactly the kind of disagreement that survives a review — each figure looks
+right beside the code that produced it, and only looks wrong beside the other.
+
+The general rule, stated once for the next page: where a console lets an
+administrator define a word, every figure using that word is counted under
+their definition, not under a second one that happens to be cheaper to read.

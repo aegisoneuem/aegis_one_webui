@@ -33,11 +33,7 @@ const POLICY_FIELDS = `id, name, content, patch_count AS patchCount, rollout,
 
 const RINGS = new Set(['pilot', 'broad', 'late']);
 
-export function registerPatchPolicyRoutes(
-  app: FastifyInstance,
-  db: Db,
-  basePath: string,
-): void {
+export function registerPatchPolicyRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   const shape = (row: PolicyRow) => ({
     id: row.id,
     name: row.name,
@@ -53,8 +49,7 @@ export function registerPatchPolicyRoutes(
 
   const read = (id: string) =>
     db.prepare(`SELECT ${POLICY_FIELDS} FROM patch_policies WHERE id = ?`).get(id) as
-      | PolicyRow
-      | undefined;
+      PolicyRow | undefined;
 
   app.get(`${basePath}/patch-policies/:policyId`, async (request) => {
     const { policyId } = request.params as { policyId: string };

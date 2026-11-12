@@ -133,9 +133,9 @@ with the gold button. See `decisions.md` D-026.
 
 | Missing                              | Why                                                                                                                                                                                               |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Global Settings` sub-tab contents   | Estate-wide patch defaults — maintenance windows, restart behaviour, bandwidth. No endpoint in the contract carries any of them.                                                                  |
+| `Global Settings` sub-tab contents   | **Closed.** All seven panels are restored, and `GET`/`PUT /patches/settings` is declared and served. See below.                                                                                   |
 | Policy row `…` menu                  | Run now, suspend and edit. `/patch-policies` is read-only in the contract; rendering the menu would be three buttons that do nothing.                                                             |
-| `New Policy` and `Open`              | Rendered and permission-gated, but there is no create or detail endpoint behind either.                                                                                                           |
+| `New Policy` and `Open`              | **Closed.** Create, detail, suspend/resume and delete are declared and served; the row menu carries Suspend, Copy and Delete beside Open.                                                         |
 | Remediated counts on superseded rows | v129 shows a superseded update still remediated on its estate. The fixture has no record of installs from before it was replaced, so these read 0 rather than a number nobody computed.           |
 | The age spread                       | v129 spreads outstanding updates across the 8–14 and 15–30 day buckets. Ours concentrates in 0–7 d, because an update is outstanding only while it is current. The figures are the fixture's own. |
 
@@ -149,3 +149,64 @@ The page-level tab strip and the severity segmented control are in the page's
 own stylesheet rather than in `@aegis/ui`: only this page uses them so far, and
 promoting either means adding to the token contract. If a second page asks for
 the same strip, that is when it should move.
+
+## Global Settings, restored
+
+The third sub-tab under Patch Policies, with the reference's seven panels:
+System Health Policy, Device Controls, Group Overrides, OS Versions &
+Upgrades, Default Rings, Maintenance Window & Restarts, and Approval &
+Third-Party Apps — about twenty-five controls in all.
+
+Nothing was declared for any of it, so `PatchSettings` and
+`GET`/`PUT /patches/settings` were added.
+
+### The thresholds store a rule, not a verdict
+
+The three numbers at the top of System Health Policy are the point of the
+panel. They do not store "25 endpoints are highly vulnerable" — they store
+_what makes_ an endpoint highly vulnerable, and the four counters beside them
+are counted against the devices table every time the page is read. Change a
+threshold, save, and the counters move. A contract assertion checks the three
+bands add up to the fleet; lowering the thresholds in the check takes the
+highly-vulnerable count from 1,131 to 20,876.
+
+### A disagreement this surfaced
+
+The **Highly Vulnerable** counter above the policies table read **14,107**
+while the panel below it read **1,131**. Two figures with the same name on one
+screen, computed from different rules: the counter came from a materialised
+patch roll-up, the panel from these thresholds.
+
+The panel defines the term, so the counter now follows it. A contract
+assertion and an e2e test both require the two to match.
+
+### What the reference does not settle, and what was decided
+
+v129 says **"Saved in this browser (preview)"** under this sub-tab, twice. Its
+settings persist nowhere — which is honest about a static mock and useless as
+a product. These are saved on the server: a patch default that lives in one
+administrator's browser is not an estate-wide default, and the next
+administrator to open the page would see something else. Recorded as D-058.
+
+### Three fixture corrections the panels forced
+
+- **The rings targeted groups that did not exist.** The reference's own group
+  ids belong to its fixture; every ring read "0 endpoints" until they pointed
+  at this console's groups.
+- **The OS lifecycle table joined nothing.** It was keyed on vendor names
+  ("Windows 11", "Ubuntu") while every device reports `os_family` and
+  `os_version` ("Windows", "24H2"), so the Vendor Support column was a column
+  of dashes.
+- **The exclusion and override pickers need real sources.** Excluded patches
+  come from the catalogue and overrides from the device groups, so neither can
+  name something the estate does not have.
+
+### What is not restored
+
+- **Group Overrides adds a row but has no editor.** `+ Add Override` appends a
+  row with the estate default; the reference gives no form for choosing a
+  window or a restart rule per group. See handover question 70.
+- **Nothing acts on these settings yet.** They are stored and read back, and
+  the health thresholds genuinely drive the counters — but no deployment
+  consults the rings, the maintenance window or the approval policy. See
+  handover question 71.

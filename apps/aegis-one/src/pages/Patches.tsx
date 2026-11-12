@@ -18,6 +18,7 @@ import {
   useToast,
 } from '@aegis/ui';
 import { api } from '../api/client';
+import PatchGlobalSettings from './PatchGlobalSettings';
 import { useListController, useResource } from '../app/useListController';
 import { useCan } from '../app/auth';
 import { date, dateTime, num } from '../app/format';
@@ -979,16 +980,7 @@ function PoliciesTab({
       </div>
 
       {pane === 'settings' ? (
-        <section className={styles.card}>
-          <header className={styles.cardHead}>
-            <h2 className={styles.cardTitle}>Global Settings</h2>
-          </header>
-          <p className={styles.notYet}>
-            The approved design shows estate-wide patch defaults here — maintenance windows, restart
-            behaviour and bandwidth limits. The contract declares no endpoint for them, so they are
-            not invented: see docs/patches-restoration.md.
-          </p>
-        </section>
+        <PatchGlobalSettings canEdit={canEdit} />
       ) : (
         <section className={styles.card}>
           <header className={styles.policyBar}>

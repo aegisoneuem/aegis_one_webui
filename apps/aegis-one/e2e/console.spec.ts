@@ -1578,6 +1578,60 @@ test.describe('signed in as Super Admin', () => {
     ).toBeVisible();
   });
 
+  test('Global Settings carries the approved seven panels', async ({ page }) => {
+    await page.goto('/patches?tab=policies');
+    await page.getByRole('tab', { name: 'Global Settings' }).click();
+
+    for (const panel of [
+      'System Health Policy',
+      'Device Controls',
+      'Group Overrides',
+      'OS Versions & Upgrades',
+      'Default Rings',
+      'Maintenance Window & Restarts',
+      'Approval & Third-Party Apps',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // Three rings, each naming a real group with a real endpoint count.
+    await expect(page.locator('article')).toHaveCount(3);
+    await expect(page.getByText(/endpoints$/).first()).toBeVisible();
+
+    // The window is Tuesday to Thursday, as the reference highlights it.
+    for (const day of ['Tue', 'Wed', 'Thu'])
+      await expect(page.getByRole('button', { name: day })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Mon' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  test('the health bands are counted from the thresholds, and agree with the counter', async ({
+    page,
+  }) => {
+    await page.goto('/patches?tab=policies');
+    await page.getByRole('tab', { name: 'Global Settings' }).click();
+
+    /*
+     * The panel defines what "highly vulnerable" means, so the counter above
+     * the table has to count the same thing. These two disagreed once —
+     * 14,107 against 1,131 — and the same words meant two different things.
+     */
+    const panel = await page
+      .locator('div[class*="band"]')
+      .filter({ hasText: 'Highly Vulnerable' })
+      .last()
+      .innerText();
+    const counter = await page
+      .locator('div[class*="kpi"]')
+      .filter({ hasText: 'Highly Vulnerable' })
+      .last()
+      .innerText();
+    const digits = (text: string) => text.replace(/[^\d]/g, '');
+    expect(digits(panel)).toBe(digits(counter));
+    expect(digits(panel).length).toBeGreaterThan(0);
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

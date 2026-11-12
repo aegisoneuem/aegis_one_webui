@@ -520,6 +520,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/patches/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estate-wide patch defaults (Global Settings), and the health counts the thresholds produce. */
+        get: operations["getPatchSettings"];
+        /** Save the estate-wide patch defaults. */
+        put: operations["putPatchSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/patch-policies": {
         parameters: {
             query?: never;
@@ -2343,6 +2361,85 @@ export interface components {
         PatchPage: {
             items: components["schemas"]["Patch"][];
             page: components["schemas"]["PageInfo"];
+        };
+        /** @description One rollout ring. Patches reach its group after `deferDays` and must be installed by `deadlineDays`. */
+        PatchRing: {
+            id: string;
+            name: string;
+            groupId: string;
+            deferDays: number;
+            deadlineDays: number;
+            excludedPatchIds?: string[];
+        };
+        /** @description A device group that patches on its own window rather than the estate default. */
+        PatchGroupOverride: {
+            groupId: string;
+            window: string;
+            restart: string;
+        };
+        PatchSettingsInput: {
+            /** @description How many missing updates make an endpoint vulnerable, and how many make it highly vulnerable. */
+            health: {
+                highlyVulnerableCritical: number;
+                highlyVulnerableTotal: number;
+                vulnerableTotal: number;
+            };
+            deviceControls: {
+                disableBuiltInUpdates: boolean;
+                hideCheckForUpdates: boolean;
+            };
+            groupOverrides?: components["schemas"]["PatchGroupOverride"][];
+            /** @description How long a new major OS release is held back, per platform. */
+            majorVersions: {
+                windows: components["schemas"]["PatchMajorVersionHold"];
+                macos: components["schemas"]["PatchMajorVersionHold"];
+                linux: components["schemas"]["PatchMajorVersionHold"];
+            };
+            rings: components["schemas"]["PatchRing"][];
+            maintenance: {
+                /** @description Weekdays the install window is open, Mon=0. */
+                days: number[];
+                from: string;
+                to: string;
+                /** @enum {string} */
+                restartBehaviour: "prompt" | "automatic" | "never";
+                wakeOnLan: boolean;
+                userPostponesAllowed: number;
+            };
+            approval: {
+                autoApproveAfterFirstRing: boolean;
+                observationDays: number;
+                /** @enum {string} */
+                thirdPartyUpdates: "approval" | "automatic";
+                /** @enum {integer} */
+                catalogSyncHours: 12 | 24;
+                declinedVendors?: string[];
+            };
+        };
+        PatchMajorVersionHold: {
+            holdDays: number;
+            stayOnVersion?: string | null;
+        };
+        PatchSettings: components["schemas"]["PatchSettingsInput"] & {
+            /** @description The thresholds, plus the counts they produce against the estate right now. */
+            health: {
+                highlyVulnerableCritical: number;
+                highlyVulnerableTotal: number;
+                vulnerableTotal: number;
+                healthy: number;
+                vulnerable: number;
+                highlyVulnerable: number;
+                fleet: number;
+            };
+            /** @description What the estate is running, with the vendor's published support position. */
+            osVersions: {
+                os: string;
+                version: string;
+                computers: number;
+                /** @description Reference text only; verify with the vendor. */
+                vendorSupport?: string | null;
+                endOfLife?: boolean;
+            }[];
         };
         PatchPolicyInput: {
             name: string;
@@ -4593,6 +4690,51 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
+        };
+    };
+    getPatchSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatchSettings"];
+                };
+            };
+        };
+    };
+    putPatchSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchSettingsInput"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatchSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
         };
     };
     listPatchPolicies: {

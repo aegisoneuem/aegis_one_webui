@@ -652,3 +652,20 @@ you.
     rule for matching a bundle's files to catalogue titles — none of which the
     contract or the fixture describes. `logoUrl` is already read, so a card
     shows an icon the moment one exists.
+70. **Group Overrides has no editor.** `+ Add Override` appends a row carrying
+    the estate default, and the row is then read-only: the reference gives no
+    form for choosing a window or a restart rule per group, so there was
+    nothing to restore. The shape is declared (`PatchGroupOverride`), so a
+    form is all that is missing.
+71. **Nothing acts on the patch settings yet.** They are stored, read back and
+    validated, and the health thresholds really do drive the counters — but no
+    deployment consults the rings, the maintenance window, the postpone
+    allowance or the approval policy. The settings describe an intent the
+    deployment pipeline does not yet honour, which is worth closing before
+    anyone relies on a maintenance window to protect working hours.
+72. **The e2e suite is sensitive to machine load.** A run during this work
+    reported six scattered failures and took 26 minutes rather than 11; each
+    failure passed when run alone, and all tests passed on a quiet machine.
+    The cause was orphaned node processes from repeated server restarts. Check
+    the wall time before trusting a red run, and check for stray `tsx` and
+    `vite` processes.

@@ -971,6 +971,42 @@ paths:
                 $ref: '#/components/schemas/Patch'
         '404':
           $ref: '#/components/responses/NotFound'
+  /patches/settings:
+    get:
+      tags:
+      - patches
+      operationId: getPatchSettings
+      summary: Estate-wide patch defaults (Global Settings), and the health counts the thresholds produce.
+      x-required-permission: patches:read
+      responses:
+        '200':
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchSettings'
+    put:
+      tags:
+      - patches
+      operationId: putPatchSettings
+      summary: Save the estate-wide patch defaults.
+      x-required-permission: patches:deploy
+      x-csrf: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchSettingsInput'
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /patch-policies:
     get:
       tags:
@@ -4520,6 +4556,269 @@ components:
             $ref: '#/components/schemas/Patch'
         page:
           $ref: '#/components/schemas/PageInfo'
+    PatchRing:
+      description: One rollout ring. Patches reach its group after `deferDays` and must be installed by `deadlineDays`.
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - groupId
+      - deferDays
+      - deadlineDays
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        groupId:
+          type: string
+          maxLength: 64
+        deferDays:
+          type: integer
+          minimum: 0
+          maximum: 180
+        deadlineDays:
+          type: integer
+          minimum: 0
+          maximum: 180
+        excludedPatchIds:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+            maxLength: 64
+    PatchGroupOverride:
+      description: A device group that patches on its own window rather than the estate default.
+      type: object
+      additionalProperties: false
+      required:
+      - groupId
+      - window
+      - restart
+      properties:
+        groupId:
+          type: string
+          maxLength: 64
+        window:
+          type: string
+          maxLength: 64
+        restart:
+          type: string
+          maxLength: 64
+    PatchSettingsInput:
+      type: object
+      additionalProperties: false
+      required:
+      - health
+      - deviceControls
+      - majorVersions
+      - rings
+      - maintenance
+      - approval
+      properties:
+        health:
+          description: How many missing updates make an endpoint vulnerable, and how many make it highly vulnerable.
+          type: object
+          additionalProperties: false
+          required:
+          - highlyVulnerableCritical
+          - highlyVulnerableTotal
+          - vulnerableTotal
+          properties:
+            highlyVulnerableCritical:
+              type: integer
+              minimum: 1
+              maximum: 100
+            highlyVulnerableTotal:
+              type: integer
+              minimum: 1
+              maximum: 500
+            vulnerableTotal:
+              type: integer
+              minimum: 1
+              maximum: 500
+        deviceControls:
+          type: object
+          additionalProperties: false
+          required:
+          - disableBuiltInUpdates
+          - hideCheckForUpdates
+          properties:
+            disableBuiltInUpdates:
+              type: boolean
+            hideCheckForUpdates:
+              type: boolean
+        groupOverrides:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/PatchGroupOverride'
+        majorVersions:
+          description: How long a new major OS release is held back, per platform.
+          type: object
+          additionalProperties: false
+          required:
+          - windows
+          - macos
+          - linux
+          properties:
+            windows:
+              $ref: '#/components/schemas/PatchMajorVersionHold'
+            macos:
+              $ref: '#/components/schemas/PatchMajorVersionHold'
+            linux:
+              $ref: '#/components/schemas/PatchMajorVersionHold'
+        rings:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/PatchRing'
+        maintenance:
+          type: object
+          additionalProperties: false
+          required:
+          - days
+          - from
+          - to
+          - restartBehaviour
+          - wakeOnLan
+          - userPostponesAllowed
+          properties:
+            days:
+              description: Weekdays the install window is open, Mon=0.
+              type: array
+              maxItems: 7
+              items:
+                type: integer
+                minimum: 0
+                maximum: 6
+            from:
+              type: string
+              pattern: ^[0-2][0-9]:[0-5][0-9]$
+            to:
+              type: string
+              pattern: ^[0-2][0-9]:[0-5][0-9]$
+            restartBehaviour:
+              type: string
+              enum:
+              - prompt
+              - automatic
+              - never
+            wakeOnLan:
+              type: boolean
+            userPostponesAllowed:
+              type: integer
+              minimum: 0
+              maximum: 5
+        approval:
+          type: object
+          additionalProperties: false
+          required:
+          - autoApproveAfterFirstRing
+          - observationDays
+          - thirdPartyUpdates
+          - catalogSyncHours
+          properties:
+            autoApproveAfterFirstRing:
+              type: boolean
+            observationDays:
+              type: integer
+              minimum: 0
+              maximum: 90
+            thirdPartyUpdates:
+              type: string
+              enum:
+              - approval
+              - automatic
+            catalogSyncHours:
+              type: integer
+              enum:
+              - 12
+              - 24
+            declinedVendors:
+              type: array
+              maxItems: 50
+              items:
+                type: string
+                maxLength: 64
+    PatchMajorVersionHold:
+      type: object
+      additionalProperties: false
+      required:
+      - holdDays
+      properties:
+        holdDays:
+          type: integer
+          minimum: 0
+          maximum: 365
+        stayOnVersion:
+          type:
+          - string
+          - 'null'
+          maxLength: 32
+    PatchSettings:
+      allOf:
+      - $ref: '#/components/schemas/PatchSettingsInput'
+      - type: object
+        required:
+        - health
+        - osVersions
+        properties:
+          health:
+            description: The thresholds, plus the counts they produce against the estate right now.
+            type: object
+            additionalProperties: false
+            required:
+            - highlyVulnerableCritical
+            - highlyVulnerableTotal
+            - vulnerableTotal
+            - healthy
+            - vulnerable
+            - highlyVulnerable
+            - fleet
+            properties:
+              highlyVulnerableCritical:
+                type: integer
+              highlyVulnerableTotal:
+                type: integer
+              vulnerableTotal:
+                type: integer
+              healthy:
+                type: integer
+              vulnerable:
+                type: integer
+              highlyVulnerable:
+                type: integer
+              fleet:
+                type: integer
+          osVersions:
+            description: What the estate is running, with the vendor's published support position.
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              required:
+              - os
+              - version
+              - computers
+              properties:
+                os:
+                  type: string
+                version:
+                  type: string
+                computers:
+                  type: integer
+                vendorSupport:
+                  type:
+                  - string
+                  - 'null'
+                  description: Reference text only; verify with the vendor.
+                endOfLife:
+                  type: boolean
     PatchPolicyInput:
       type: object
       additionalProperties: false

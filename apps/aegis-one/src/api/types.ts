@@ -1132,3 +1132,68 @@ export type InsightFinding = {
   detail: string;
   action?: { label: string; page: string; filter?: Record<string, string> };
 };
+
+/** One rollout ring on the Patches Global Settings sub-tab. */
+export type PatchRing = {
+  id: string;
+  name: string;
+  groupId: string;
+  deferDays: number;
+  deadlineDays: number;
+  excludedPatchIds: string[];
+};
+
+/** How long a new major OS release is held back, per platform. */
+export type PatchMajorVersionHold = {
+  holdDays: number;
+  stayOnVersion: string | null;
+};
+
+/**
+ * The estate-wide patch defaults. The three thresholds store the rule that
+ * classifies an endpoint; the four counts beside them are counted against the
+ * estate when the page is read, so changing a threshold moves them.
+ */
+export type PatchSettings = {
+  health: {
+    highlyVulnerableCritical: number;
+    highlyVulnerableTotal: number;
+    vulnerableTotal: number;
+    healthy: number;
+    vulnerable: number;
+    highlyVulnerable: number;
+    fleet: number;
+  };
+  deviceControls: { disableBuiltInUpdates: boolean; hideCheckForUpdates: boolean };
+  groupOverrides: { groupId: string; window: string; restart: string }[];
+  majorVersions: {
+    windows: PatchMajorVersionHold;
+    macos: PatchMajorVersionHold;
+    linux: PatchMajorVersionHold;
+  };
+  rings: PatchRing[];
+  maintenance: {
+    /** Weekdays the window is open, Mon = 0. */
+    days: number[];
+    from: string;
+    to: string;
+    restartBehaviour: 'prompt' | 'automatic' | 'never';
+    wakeOnLan: boolean;
+    userPostponesAllowed: number;
+  };
+  approval: {
+    autoApproveAfterFirstRing: boolean;
+    observationDays: number;
+    thirdPartyUpdates: 'approval' | 'automatic';
+    catalogSyncHours: 12 | 24;
+    declinedVendors: string[];
+  };
+  /** What the estate runs, with the vendor's published position. Reference only. */
+  osVersions: {
+    os: string;
+    version: string;
+    computers: number;
+    vendorSupport: string | null;
+    endOfLife: boolean;
+  }[];
+};

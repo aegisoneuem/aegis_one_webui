@@ -828,6 +828,40 @@ CREATE TABLE roles (
 -- replaced held one row per product with its own entitlement and expiry,
 -- which could not answer "how many days until renewal" or "which plan is
 -- this" — the two things the page leads with.
+-- The estate-wide patch defaults the approved Global Settings sub-tab edits.
+--
+-- One row. The three thresholds are the interesting part: they do not store a
+-- health verdict, they store the rule that produces one, and the counters
+-- beside them are counted against the estate every time the page is read. A
+-- stored "25 highly vulnerable" would be a number nobody could re-derive.
+--
+-- The arrays — rings, group overrides and declined vendors — are JSON because
+-- they are edited and saved as wholes, never queried across.
+CREATE TABLE patch_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  highly_vulnerable_critical INTEGER NOT NULL,
+  highly_vulnerable_total INTEGER NOT NULL,
+  vulnerable_total INTEGER NOT NULL,
+  disable_built_in_updates INTEGER NOT NULL DEFAULT 1,
+  hide_check_for_updates INTEGER NOT NULL DEFAULT 1,
+  group_overrides TEXT NOT NULL DEFAULT '[]',
+  major_versions TEXT NOT NULL,
+  rings TEXT NOT NULL,
+  maintenance TEXT NOT NULL,
+  approval TEXT NOT NULL
+);
+
+-- What a vendor has published about a release, for the OS Versions table.
+-- Reference text only, which the panel says in so many words: the console
+-- cannot verify a vendor's lifecycle page and does not pretend to.
+CREATE TABLE os_lifecycle (
+  os TEXT NOT NULL,
+  version TEXT NOT NULL,
+  vendor_support TEXT,
+  end_of_life INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (os, version)
+);
+
 CREATE TABLE license (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   plan TEXT NOT NULL,

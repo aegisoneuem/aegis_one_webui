@@ -33,6 +33,7 @@ import { registerLicensingRoutes } from './routes/licensing';
 import { registerDiagnosticsRoutes } from './routes/diagnostics';
 import { registerSoftwareWriteRoutes } from './routes/software';
 import { registerPatchPolicyRoutes } from './routes/patch-policies';
+import { registerPatchSettingsRoutes } from './routes/patch-settings';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../../..');
@@ -165,6 +166,7 @@ export async function start(): Promise<void> {
   registerDiagnosticsRoutes(app, db, BASE_PATH);
   registerSoftwareWriteRoutes(app, db, BASE_PATH);
   registerPatchPolicyRoutes(app, db, BASE_PATH);
+  registerPatchSettingsRoutes(app, db, BASE_PATH);
   // Last, so its generic `/:id` detail routes cannot shadow a specific one
   // such as `/devices/facets`.
   registerResourceRoutes(app, db, BASE_PATH);

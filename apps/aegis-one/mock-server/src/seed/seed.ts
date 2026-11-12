@@ -106,6 +106,7 @@ export function seedDatabase({
   seedUsersAndRoles(db, rng);
   seedIdentityProviders(db);
   seedTokens(db, rng);
+  seedPatchSettings(db);
   seedLicenses(db, deviceStats.total);
   seedServiceHealth(db, rng);
   seedReports(db);
@@ -2917,6 +2918,120 @@ function seedTokens(db: Db, rng: Rng): void {
  * as many seats as endpoints has no headroom, and the page's whole purpose is
  * to show how much is left — a donut reading 100% would say nothing.
  */
+/**
+ * The estate-wide patch defaults, and the vendor lifecycle text beside them.
+ *
+ * Every value is the approved Global Settings sub-tab's own: three rings at
+ * 0/2, 7/7 and 14/10 days, a 20:00–02:00 window on Tuesday to Thursday,
+ * prompt-and-force restarts, three postponements, and third-party updates
+ * held for admin approval after a five-day observation.
+ *
+ * The lifecycle rows are reference text, which is why the panel says so:
+ * the console cannot verify a vendor's published dates and does not pretend
+ * to. Only Windows 10's is a hard fact with a date attached, because it has
+ * actually ended.
+ */
+function seedPatchSettings(db: Db): void {
+  /*
+   * The rings target real device groups. The reference's own ids belong to
+   * its fixture, not this one, so each ring takes a group the console
+   * actually has — a ring pointing at a group that does not exist patches
+   * nobody, and every ring would read "0 endpoints".
+   */
+  const rings = [
+    {
+      id: 'ring-pilot',
+      name: 'Pilot',
+      groupId: 'grp-finance',
+      deferDays: 0,
+      deadlineDays: 2,
+      excludedPatchIds: [],
+    },
+    {
+      id: 'ring-broad',
+      name: 'Broad',
+      groupId: 'grp-win-ws',
+      deferDays: 7,
+      deadlineDays: 7,
+      excludedPatchIds: [],
+    },
+    {
+      id: 'ring-late',
+      name: 'Late',
+      groupId: 'grp-linux',
+      deferDays: 14,
+      deadlineDays: 10,
+      excludedPatchIds: [],
+    },
+  ];
+
+  db.prepare(
+    `INSERT INTO patch_settings
+       (id, highly_vulnerable_critical, highly_vulnerable_total, vulnerable_total,
+        disable_built_in_updates, hide_check_for_updates,
+        group_overrides, major_versions, rings, maintenance, approval)
+     VALUES (1,?,?,?,1,1,'[]',?,?,?,?)`,
+  ).run(
+    2,
+    6,
+    2,
+    JSON.stringify({
+      windows: { holdDays: 90, stayOnVersion: null },
+      macos: { holdDays: 60, stayOnVersion: null },
+      linux: { holdDays: 30, stayOnVersion: null },
+    }),
+    JSON.stringify(rings),
+    JSON.stringify({
+      // Tuesday to Thursday, as the reference highlights them.
+      days: [1, 2, 3],
+      from: '20:00',
+      to: '02:00',
+      restartBehaviour: 'prompt',
+      wakeOnLan: false,
+      userPostponesAllowed: 3,
+    }),
+    JSON.stringify({
+      autoApproveAfterFirstRing: true,
+      observationDays: 5,
+      thirdPartyUpdates: 'approval',
+      catalogSyncHours: 24,
+      declinedVendors: ['Zoom'],
+    }),
+  );
+
+  /*
+   * Keyed on what the estate reports — `os_family` and `os_version` — not on
+   * the vendor's marketing name. A row reading "Windows 11" joins nothing
+   * when every device says "Windows" and "24H2", which is how this table
+   * first rendered a column of dashes.
+   */
+  const lifecycle: readonly (readonly [string, string, string | null, boolean])[] = [
+    ['Windows', '24H2', 'Oct 2027 (Enterprise/Education) · Oct 2026 (Home/Pro)', false],
+    ['Windows', '23H2', 'Nov 2026 (Enterprise/Education) · Nov 2025 (Home/Pro)', false],
+    ['Windows', '22H2', 'Ended 14 Oct 2025 · security only with ESU', true],
+    ['Windows Server', '21H2', 'Mainstream to Oct 2026 · extended to Oct 2031', false],
+    ['Windows Server', '1809', 'Ended 9 Jan 2024', true],
+    ['Windows Server', '1607', 'Extended support to Jan 2027', false],
+    ['macOS', '15.1', 'Apple does not publish dates; recent versions get security updates', false],
+    ['macOS', '14.7', 'Apple does not publish dates; recent versions get security updates', false],
+    ['macOS', '13.7', 'Two releases behind; security updates are not guaranteed', true],
+    ['Linux', '9.4', 'Standard support to Apr 2029', false],
+    ['Linux', '8.10', 'Standard support to May 2029', false],
+    ['Linux', '24.04 LTS', 'Standard support to Apr 2029', false],
+    ['Linux', '22.04 LTS', 'Standard support to Apr 2027', false],
+    ['Linux', '20.04 LTS', 'Ended 31 May 2025 · ESM only', true],
+    ['AIX', '7.3 TL2', 'Supported; verify the technology level with IBM', false],
+  ];
+
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO os_lifecycle (os,version,vendor_support,end_of_life) VALUES (?,?,?,?)`,
+  );
+  db.transaction(() => {
+    for (const [os, version, support, eol] of lifecycle)
+      insert.run(os, version, support, eol ? 1 : 0);
+  })();
+}
+
 function seedLicenses(db: Db, deviceCount: number): void {
   const modules: readonly (readonly [string, string, 'included' | 'add-on' | 'preview'])[] = [
     ['mod-endpoint', 'Endpoint Management', 'included'],

@@ -789,7 +789,18 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
         total: policyRow.total,
         computersCovered: estate.total,
         computersTotal: estate.total,
-        highlyVulnerable: allDevices?.criticalDevices ?? 0,
+        /*
+         * Counted under the thresholds the Global Settings sub-tab defines,
+         * not from the patch roll-up. Those two rules disagreed — 14,107
+         * against 1,131 — and the same words meant two different things on
+         * one screen. The panel owns the definition, so the counter follows
+         * it.
+         */
+        highlyVulnerable: one<{ n: number }>(
+          `SELECT COUNT(*) AS n FROM devices
+            WHERE critical_vulns >= (SELECT highly_vulnerable_critical FROM patch_settings WHERE id = 1)
+               OR pending_patches >= (SELECT highly_vulnerable_total FROM patch_settings WHERE id = 1)`,
+        ).n,
       },
     };
   }

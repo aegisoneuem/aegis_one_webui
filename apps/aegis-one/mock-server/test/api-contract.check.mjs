@@ -1552,6 +1552,117 @@ const run = async () => {
     );
   }
 
+  // --- Patch global settings -----------------------------------------------
+  const patchSettings = await fetch(`${API}/patches/settings`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'the patch settings come back with every panel the page edits',
+    patchSettings.rings.length === 3 &&
+      patchSettings.maintenance.from === '20:00' &&
+      patchSettings.approval.catalogSyncHours === 24 &&
+      patchSettings.osVersions.length > 0,
+    `${patchSettings.rings.length} rings, ${patchSettings.osVersions.length} OS versions`,
+  );
+  /*
+   * The three thresholds store the rule, not a verdict. The four counts
+   * beside them are counted under that rule, so they have to add up to the
+   * fleet — a band that lost endpoints would be a rule nobody could trust.
+   */
+  check(
+    'the health bands add up to the fleet',
+    patchSettings.health.healthy +
+      patchSettings.health.vulnerable +
+      patchSettings.health.highlyVulnerable ===
+      patchSettings.health.fleet,
+    `${patchSettings.health.healthy} + ${patchSettings.health.vulnerable} + ${patchSettings.health.highlyVulnerable} = ${patchSettings.health.fleet}`,
+  );
+  // And the counter above the table counts the same thing the panel defines.
+  const patchSummary = await fetch(`${API}/patches/summary`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'the policies counter uses the thresholds the panel defines',
+    patchSummary.policies.highlyVulnerable === patchSettings.health.highlyVulnerable,
+    `${patchSummary.policies.highlyVulnerable} against ${patchSettings.health.highlyVulnerable}`,
+  );
+  // Every ring has to target a group that exists, or it patches nobody.
+  const allGroups = await fetch(`${API}/groups?limit=100`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  const groupIds = new Set(allGroups.items.map((g) => g.id));
+  check(
+    'every ring targets a device group that exists',
+    patchSettings.rings.every((ring) => groupIds.has(ring.groupId)),
+  );
+  // The lifecycle text has to join what the estate actually reports.
+  check(
+    'the OS table carries vendor support for what the estate runs',
+    patchSettings.osVersions.filter((v) => v.vendorSupport !== null).length >=
+      patchSettings.osVersions.length - 1,
+    `${patchSettings.osVersions.filter((v) => v.vendorSupport !== null).length} of ${patchSettings.osVersions.length} with vendor text`,
+  );
+
+  /*
+   * A band nothing can land in describes nothing: if "vulnerable" needs as
+   * many missing updates as "highly vulnerable", the middle band is always
+   * empty.
+   */
+  const badThresholds = await fetch(`${API}/patches/settings`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      ...patchSettings,
+      osVersions: undefined,
+      health: { highlyVulnerableCritical: 2, highlyVulnerableTotal: 6, vulnerableTotal: 6 },
+    }),
+  });
+  check(
+    'a vulnerable threshold at or above the highly vulnerable one is refused',
+    badThresholds.status === 400,
+    `HTTP ${badThresholds.status}`,
+  );
+
+  // Changing a threshold moves the counts, which is why they are counted.
+  const widened = await fetch(`${API}/patches/settings`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      ...patchSettings,
+      osVersions: undefined,
+      health: { highlyVulnerableCritical: 1, highlyVulnerableTotal: 2, vulnerableTotal: 1 },
+    }),
+  }).then((r) => r.json());
+  check(
+    'lowering the thresholds moves the counts',
+    widened.health.highlyVulnerable > patchSettings.health.highlyVulnerable,
+    `${patchSettings.health.highlyVulnerable} -> ${widened.health.highlyVulnerable}`,
+  );
+
+  // Put them back, so the fixture is as it was found.
+  await fetch(`${API}/patches/settings`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      ...patchSettings,
+      osVersions: undefined,
+      health: {
+        highlyVulnerableCritical: patchSettings.health.highlyVulnerableCritical,
+        highlyVulnerableTotal: patchSettings.health.highlyVulnerableTotal,
+        vulnerableTotal: patchSettings.health.vulnerableTotal,
+      },
+    }),
+  });
+
   // --- Device detail -------------------------------------------------------
   const firstId = (
     await fetch(`${API}/devices?limit=1&fields=id`, { headers: authed(token) }).then((r) =>

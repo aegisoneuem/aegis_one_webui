@@ -46,7 +46,8 @@ export const PAGES = [
   { path: '/liveops', heading: 'Live Activity' },
   { path: '/deployments', heading: 'Deployments' },
   { path: '/vulns', heading: 'Vulnerabilities' },
-  { path: '/profiles', heading: 'Configuration' },
+  // The sidebar says Configuration; the approved page's own title is longer.
+  { path: '/profiles', heading: 'Configuration Compliance' },
   { path: '/dex', heading: 'DEX' },
   { path: '/insight', heading: 'AEGIS Insight' },
   { path: '/sites', heading: 'Aegis Zones' },

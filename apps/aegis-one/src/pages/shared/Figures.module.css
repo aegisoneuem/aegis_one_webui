@@ -50,6 +50,11 @@
   color: var(--ao-warning);
 }
 
+/* The darkest navy step, for a figure drawn in the heading navy. */
+.deep {
+  color: var(--chart-navy-1);
+}
+
 /* `currentColor` is what makes one tone class serve a stroke, a fill and a
    text colour at once, so a slice and its legend swatch can never drift. */
 .arc {

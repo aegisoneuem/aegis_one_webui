@@ -31,9 +31,12 @@ Override any of it with environment variables:
 MOCK_SEED=20260401 MOCK_DEVICES=5000 pnpm mock:seed
 ```
 
-A 50,000-device seed takes about 19 seconds and produces a database of roughly
-200 MB. `MOCK_DEVICES=2000` is enough for day-to-day work on the console and
-takes under two seconds.
+A 50,000-device seed takes a little over two minutes on a developer laptop and
+produces a database of roughly 250 MB. About half of that is the configuration
+roll-up: the check library is evaluated against every device it applies to, once
+for the estate and once per device group, because those counts cannot be
+computed per request (see decisions D-039 and D-040). `MOCK_DEVICES=2000` is
+enough for day-to-day work on the console and takes a few seconds.
 
 ## What gets generated
 
@@ -47,7 +50,10 @@ takes under two seconds.
 | `software`               | 32                     | With publisher, category and size                                                                                |
 | `patches`                | 31                     | Windows, Linux, macOS, third-party and firmware                                                                  |
 | `vulnerabilities`        | 16                     | CVEs with CVSS and a known-exploited flag                                                                        |
-| `config_checks`          | 200                    | Against CIS and an internal baseline                                                                             |
+| `config_checks`          | 200                    | The reference's own library: 120 Windows, 40 macOS, 40 Linux, over 21 categories                                 |
+| `config_check_groups`    | 2,520                  | The same three counts per device group, for the Device Group filter                                              |
+| `config_benchmarks`      | 6                      | CIS Windows and macOS and Linux, DISA STIG, PCI DSS, HIPAA                                                       |
+| `config_profiles`        | 4                      | With the most revised one's setting history                                                                      |
 | `device_groups`          | 12                     | Static and rule-based                                                                                            |
 | `deployments`            | 15                     | With ~4,500 per-endpoint results                                                                                 |
 | `live_jobs`              | 8                      | Script, live-data and log-collection jobs, with per-endpoint output                                              |

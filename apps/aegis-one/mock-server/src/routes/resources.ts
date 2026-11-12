@@ -11,7 +11,6 @@ import { shapeFinding } from './vulnerabilities';
 import {
   apiTokensSpec,
   auditSpec,
-  configChecksSpec,
   deploymentsSpec,
   devicesSpec,
   findingsSpec,
@@ -288,7 +287,6 @@ const RESOURCES: readonly ResourceDef[] = [
   { path: 'vulnerabilities/scans', spec: scansSpec },
   { path: 'deployments', spec: deploymentsSpec, shape: shapeDeployment },
   { path: 'liveops/script-jobs', spec: liveJobsSpec, shape: shapeLiveJob },
-  { path: 'profiles/checks', spec: configChecksSpec },
   { path: 'sites', spec: zonesSpec },
   { path: 'peercache/peers', spec: peersSpec, zoneScoped: true },
   {

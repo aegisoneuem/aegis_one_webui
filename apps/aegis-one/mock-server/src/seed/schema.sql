@@ -64,7 +64,16 @@ CREATE TABLE devices (
   criticality INTEGER NOT NULL DEFAULT 5,
   scan_method TEXT NOT NULL DEFAULT 'agent',
   last_scan_at TEXT NOT NULL DEFAULT '',
-  exposure INTEGER NOT NULL DEFAULT 0
+  exposure INTEGER NOT NULL DEFAULT 0,
+  -- What the Configuration page needs of a device. These are rolled up from
+  -- the check library once the estate is seeded, which is also where
+  -- `config_pass_pct` now comes from: it used to be a random figure, so the
+  -- Devices grid and this page disagreed about the same device.
+  -- `config_checks_total` is 0 for a platform the library has no checks for.
+  config_checks_total INTEGER NOT NULL DEFAULT 0,
+  config_fail INTEGER NOT NULL DEFAULT 0,
+  config_high_fail INTEGER NOT NULL DEFAULT 0,
+  config_exceptions INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_devices_zone ON devices(zone_id);
@@ -309,15 +318,106 @@ CREATE TABLE group_members (
 
 CREATE INDEX idx_group_members_device ON group_members(device_id);
 
+-- The benchmark check library the Configuration page evaluates: 200 checks
+-- over three platforms, each with the value it expects, the value a failing
+-- device reports instead, and its mapping into the four frameworks.
+--
+-- `seq` is the check's position within its platform. It is the hash input for
+-- the deterministic spread that decides a device's result for a setting this
+-- console does not inventory, so it must stay stable across a reseed.
+--
+-- The three result counts are stored rather than summed per request: the grid
+-- ranks 200 checks over an estate of 50,000, and recomputing that join on
+-- every page would cost millions of row visits. See decision D-039.
 CREATE TABLE config_checks (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
-  benchmark TEXT NOT NULL,
-  severity TEXT NOT NULL,
+  category TEXT NOT NULL,
   platform TEXT NOT NULL,
-  pass_count INTEGER NOT NULL,
-  fail_count INTEGER NOT NULL,
-  exception_count INTEGER NOT NULL
+  severity TEXT NOT NULL,
+  expected TEXT NOT NULL,
+  bad TEXT NOT NULL,
+  check_key TEXT NOT NULL DEFAULT '',
+  cis TEXT NOT NULL DEFAULT '',
+  stig TEXT NOT NULL DEFAULT '',
+  pci TEXT NOT NULL DEFAULT '',
+  hipaa TEXT NOT NULL DEFAULT '',
+  remediable INTEGER NOT NULL DEFAULT 1,
+  custom INTEGER NOT NULL DEFAULT 0,
+  seq INTEGER NOT NULL,
+  pass_count INTEGER NOT NULL DEFAULT 0,
+  fail_count INTEGER NOT NULL DEFAULT 0,
+  exception_count INTEGER NOT NULL DEFAULT 0,
+  compliance_pct INTEGER
+);
+
+CREATE INDEX idx_config_checks_platform ON config_checks(platform);
+CREATE INDEX idx_config_checks_fail ON config_checks(fail_count DESC);
+
+-- The same three counts again, per device group.
+--
+-- The page's Device Group filter narrows every figure on the page, not just
+-- the rows, and the counts cannot be decomposed from the estate-wide ones. A
+-- live aggregate over the largest group takes seven seconds, so it is rolled
+-- up once here instead — 16 groups by 200 checks is 3,200 rows.
+CREATE TABLE config_check_groups (
+  group_id TEXT NOT NULL REFERENCES device_groups(id),
+  check_id TEXT NOT NULL REFERENCES config_checks(id),
+  pass_count INTEGER NOT NULL DEFAULT 0,
+  fail_count INTEGER NOT NULL DEFAULT 0,
+  exception_count INTEGER NOT NULL DEFAULT 0,
+  compliance_pct INTEGER,
+  PRIMARY KEY (group_id, check_id)
+);
+
+-- The benchmarks the library rolls up into. `platform` is null for one that
+-- applies to every platform, which is how the reference lists PCI DSS and
+-- HIPAA.
+CREATE TABLE config_benchmarks (
+  id TEXT PRIMARY KEY,
+  framework TEXT NOT NULL,
+  name TEXT NOT NULL,
+  version TEXT NOT NULL,
+  platform TEXT,
+  assigned_group_id TEXT REFERENCES device_groups(id)
+);
+
+-- An exception suppresses a check over a scope. `expires_at` is null for one
+-- granted with no expiry.
+CREATE TABLE config_exceptions (
+  id TEXT PRIMARY KEY,
+  check_id TEXT NOT NULL REFERENCES config_checks(id),
+  scope_group_id TEXT REFERENCES device_groups(id),
+  reason TEXT NOT NULL,
+  granted_by TEXT NOT NULL,
+  granted_at TEXT NOT NULL,
+  expires_at TEXT
+);
+
+CREATE INDEX idx_config_exceptions_check ON config_exceptions(check_id);
+
+CREATE TABLE config_profiles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  status TEXT NOT NULL,
+  version INTEGER NOT NULL,
+  -- The group the profile is assigned to. A profile only applies to the
+  -- members on its own platform, which is what `assigned_devices` counts.
+  target_group_id TEXT REFERENCES device_groups(id),
+  assigned_devices INTEGER NOT NULL DEFAULT 0,
+  compliance_pct INTEGER NOT NULL DEFAULT 0,
+  modified_at TEXT NOT NULL
+);
+
+-- One row per setting per version, which is what the Version History panel
+-- lays out side by side: the setting down the left, a column per version.
+CREATE TABLE config_profile_settings (
+  profile_id TEXT NOT NULL REFERENCES config_profiles(id),
+  setting TEXT NOT NULL,
+  version INTEGER NOT NULL,
+  value TEXT NOT NULL,
+  PRIMARY KEY (profile_id, setting, version)
 );
 
 -- Column names follow the contract's DeploymentSummary: the action's package,

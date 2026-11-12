@@ -16,9 +16,10 @@ import styles from './Figures.module.css';
  *
  * `sand` and `amber` are the two lighter steps of the warm ramp. They exist
  * because a severity or age ramp needs four warm steps, and good/warn/bad
- * only gives it two.
+ * only gives it two. `deep` is the darkest navy step, for a figure the
+ * reference draws in the navy the page's own headings use.
  */
-export type Tone = 'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral' | 'sand' | 'amber';
+export type Tone = 'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral' | 'sand' | 'amber' | 'deep';
 
 export type Datum = {
   key: string;
@@ -44,6 +45,7 @@ const TONE_CLASS: Record<Tone, string> = {
   neutral: styles.neutral as string,
   sand: styles.sand as string,
   amber: styles.amber as string,
+  deep: styles.deep as string,
 };
 
 /** High is good: the band the approved design colours a percentage by. */

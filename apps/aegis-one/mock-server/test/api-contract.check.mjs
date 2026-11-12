@@ -256,6 +256,150 @@ const run = async () => {
   // Accepted for later, like every other job the console submits.
   check('a scan is accepted with a CSRF header', scanRes.status === 202, `HTTP ${scanRes.status}`);
 
+  // --- Configuration compliance -------------------------------------------
+  const config = await fetch(`${API}/configuration/summary`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'configuration summary reports an overall percentage and the library size',
+    config.overallPct > 0 && config.overallPct <= 100 && config.checksInScope === 200,
+    `${config.overallPct}% over ${config.checksInScope} checks`,
+  );
+  check(
+    'the four widgets and the Security Posture controls are all present',
+    config.byFramework.length === 4 &&
+      config.byPlatform.length === 3 &&
+      config.byCategory.length > 10 &&
+      config.topFailing.length > 0 &&
+      config.posture.controls.length === 3,
+  );
+  // The bands behind the Device Compliance donut add up to the devices the
+  // library has a check for, which is the counter's own denominator.
+  check(
+    'the device bands add up to the evaluated estate',
+    config.deviceBands.high + config.deviceBands.medium + config.deviceBands.low ===
+      config.nonCompliantDevices.total,
+  );
+
+  const checksPage = await fetch(`${API}/configuration/checks?limit=50`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the checks grid opens on the Windows library, 50 of 200',
+    checksPage.page.total === 200 &&
+      checksPage.items.length === 50 &&
+      checksPage.items[0].id === 'AEG-WIN-001',
+    `${checksPage.items[0]?.id}`,
+  );
+  check(
+    'every check carries the drawer fields and its framework mapping',
+    checksPage.items.every(
+      (c) =>
+        typeof c.expected === 'string' &&
+        c.expected.length > 0 &&
+        ['automatic', 'manual'].includes(c.remediation) &&
+        Array.isArray(c.frameworks) &&
+        c.frameworks.length > 0 &&
+        c.passing + c.failing > 0,
+    ),
+  );
+
+  // A check's compliance is its own pass share, so the figure and the two
+  // counts behind it cannot drift.
+  check(
+    'a check percentage agrees with its own pass and fail counts',
+    checksPage.items.every(
+      (c) => c.compliancePct === Math.round((c.passing / (c.passing + c.failing)) * 100),
+    ),
+  );
+
+  const failing = await fetch(`${API}/configuration/checks?result=fail&severity=high`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the Result and Severity filters compose',
+    failing.items.length > 0 && failing.items.every((c) => c.severity === 'high' && c.failing > 0),
+  );
+
+  const checkDetail = await fetch(
+    `${API}/configuration/checks/${checksPage.items[0].id}?limit=10`,
+    { headers: authed(token) },
+  ).then((r) => r.json());
+  check(
+    'a check drawer lists the devices behind the count, failures first',
+    checkDetail.results.length === 10 &&
+      checkDetail.results[0].result === 'fail' &&
+      checkDetail.results.every((r) => typeof r.actual === 'string' && r.actual.length > 0),
+  );
+
+  const configDevices = await fetch(`${API}/configuration/devices?limit=5`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'configuration devices rank worst-compliance first',
+    configDevices.items.length === 5 &&
+      configDevices.items.every((d, i, a) => i === 0 || a[i - 1].compliancePct <= d.compliancePct),
+  );
+
+  const configDevice = await fetch(
+    `${API}/configuration/devices/${configDevices.items[0].deviceId}`,
+    { headers: authed(token) },
+  ).then((r) => r.json());
+  check(
+    'a device drawer lists every check it fails',
+    configDevice.failedChecks.length === configDevices.items[0].failing,
+    `${configDevice.failedChecks.length} of ${configDevices.items[0].failing}`,
+  );
+
+  const benchmarks = await fetch(`${API}/configuration/benchmarks`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'six benchmarks report their checks, devices and compliance',
+    benchmarks.length === 6 &&
+      benchmarks.every((b) => b.checks > 0 && b.devices > 0 && b.compliancePct > 0),
+  );
+
+  const profiles = await fetch(`${API}/configuration/profiles`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check('four configuration profiles are returned', profiles.length === 4);
+  const profileDetail = await fetch(
+    `${API}/configuration/profiles/${profiles.find((p) => p.version === 8).id}`,
+    { headers: authed(token) },
+  ).then((r) => r.json());
+  check(
+    'the most revised profile carries its version history',
+    profileDetail.settings.length === 3 &&
+      profileDetail.settings.every((row) => row.values.length === 3),
+  );
+
+  // The group filter narrows the figures, not only the rows: the counters
+  // read from the same per-group roll-up the grid does.
+  const scopedConfig = await fetch(`${API}/configuration/summary?group=grp-pilot`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'the Device Group filter narrows the counters too',
+    scopedConfig.nonCompliantDevices.total < config.nonCompliantDevices.total &&
+      scopedConfig.failingChecks <= config.failingChecks,
+    `${scopedConfig.nonCompliantDevices.total} of ${config.nonCompliantDevices.total} devices`,
+  );
+
+  const evaluateRes = await fetch(`${API}/configuration/evaluate`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: '{}',
+  });
+  check(
+    'Evaluate Now is accepted with a CSRF header — HTTP 202',
+    evaluateRes.status === 202,
+    `HTTP ${evaluateRes.status}`,
+  );
+
   const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
   check('insight returns findings', insight.findings.length >= 5);
 

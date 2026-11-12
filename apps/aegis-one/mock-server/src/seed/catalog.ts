@@ -975,47 +975,6 @@ export const CVES: readonly CveDef[] = [
   },
 ];
 
-/** The 200 configuration checks the Configuration page reports against. */
-export const CONFIG_BENCHMARKS = [
-  'CIS Microsoft Windows 11 Enterprise v3.0.0',
-  'CIS Microsoft Windows Server 2022 v3.0.0',
-  'CIS Red Hat Enterprise Linux 9 v2.0.0',
-  'CIS Ubuntu Linux 24.04 LTS v1.0.0',
-  'CIS Apple macOS 15 Sequoia v1.0.0',
-  'Internal baseline — Aegis One Endpoint Hardening v4',
-] as const;
-
-export const CONFIG_CHECK_TITLES = [
-  'BitLocker enabled on the system drive',
-  'Secure Boot enabled',
-  'TPM 2.0 present and ready',
-  'Local administrator password solution in use',
-  'Guest account disabled',
-  'SMBv1 removed',
-  'PowerShell script block logging enabled',
-  'Windows Firewall enabled on all profiles',
-  'Screen lock after 15 minutes of inactivity',
-  'Removable storage write access restricted',
-  'Audit logon events — success and failure',
-  'NTLMv1 disabled',
-  'LLMNR disabled',
-  'AutoPlay disabled for all drives',
-  'Password minimum length at least 14',
-  'Account lockout threshold at most 5',
-  'Remote registry service disabled',
-  'Unquoted service paths remediated',
-  'SSH root login disabled',
-  'SSH password authentication disabled',
-  'Automatic security updates enabled',
-  'Filesystem integrity checking scheduled',
-  'auditd running and enabled at boot',
-  'World-writable files reviewed',
-  'FileVault enabled',
-  'Gatekeeper enabled',
-  'System Integrity Protection enabled',
-  'Firmware password set',
-] as const;
-
 export const AGENT_VERSIONS = ['7.4.2', '7.4.1', '7.3.9', '7.3.4', '7.2.8'] as const;
 
 export const DEPLOYMENT_TYPES = [

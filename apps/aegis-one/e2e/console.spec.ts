@@ -718,6 +718,164 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('cell', { name: 'Platform: Windows' }).first()).toBeVisible();
   });
 
+  test('Configuration opens on the approved dashboard: five counters, four widgets', async ({
+    page,
+  }) => {
+    await page.goto('/profiles');
+
+    for (const kpi of [
+      'Overall Compliance',
+      'Checks in Scope',
+      'Failing Checks',
+      'Non-Compliant Devices',
+      'Exceptions',
+    ])
+      await expect(page.getByText(kpi, { exact: true }).first()).toBeVisible();
+
+    for (const widget of [
+      'Compliance by Framework',
+      'Compliance by Platform',
+      'Device Compliance',
+      'Compliance by Category',
+      'Top Failing Checks',
+    ])
+      await expect(page.getByRole('heading', { name: widget })).toBeVisible();
+
+    for (const tab of ['Overview', 'Checks', 'Devices', 'Exceptions', 'Benchmarks', 'Profiles'])
+      await expect(page.getByRole('tab', { name: tab })).toBeVisible();
+
+    // All six filters narrow the page, and the Device Group one narrows the
+    // counters too, not only the rows.
+    for (const filter of [
+      'Framework',
+      'Platform',
+      'Device Group',
+      'Category',
+      'Severity',
+      'Result',
+    ])
+      await expect(page.getByLabel(filter, { exact: true })).toBeVisible();
+  });
+
+  test('the Checks grid carries the reference ten columns and pages through 200', async ({
+    page,
+  }) => {
+    await page.goto('/profiles?tab=checks');
+
+    // Scoped to the real grid: the dashboard figures carry visually-hidden
+    // tables of their own for screen readers.
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of [
+      'Check',
+      'Platform',
+      'Severity',
+      'Expected',
+      'Frameworks',
+      'Pass',
+      'Fail',
+      'Exc.',
+      'Compliance',
+    ])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(page.getByText('1–50 of 200 checks')).toBeVisible();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(page.getByText('51–100 of 200 checks')).toBeVisible();
+    await expect(page.getByText('Page 2 of 4')).toBeVisible();
+  });
+
+  test('a Configuration counter narrows the grid to what it counted', async ({ page }) => {
+    await page.goto('/profiles');
+
+    const scope = await page
+      .getByRole('button', { name: /Checks in Scope/ })
+      .first()
+      .innerText();
+    const expected = Number(/(\d[\d,]*)/.exec(scope)?.[1]?.replace(/,/g, '') ?? '0');
+    expect(expected).toBeGreaterThan(0);
+
+    await page
+      .getByRole('button', { name: /Failing Checks/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/result=fail/);
+    await expect(page.getByRole('tab', { name: 'Checks', selected: true })).toBeVisible();
+    await expect(page.getByText('Result: Has Failures')).toBeVisible();
+  });
+
+  test('a check opens its drawer with the devices behind the count', async ({ page }) => {
+    await page.goto('/profiles?tab=checks');
+
+    await page.locator('table[class*="grid"] tbody tr button').first().click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+    for (const fact of [
+      'Expected',
+      'Severity',
+      'Compliance',
+      'Frameworks',
+      'Pass · Fail · Exception',
+      'Remediation',
+    ])
+      await expect(drawer.getByText(fact, { exact: true })).toBeVisible();
+
+    // The per-device rows are derived from the same expression the counts
+    // were rolled up with, so the drawer always has rows behind a failure.
+    await expect(drawer.getByRole('heading', { name: 'Devices evaluated' })).toBeVisible();
+    await expect(drawer.getByRole('columnheader', { name: 'Actual Value' })).toBeVisible();
+    await expect(drawer.locator('tbody tr').first()).toBeVisible();
+  });
+
+  test('the other four Configuration tabs carry their own columns', async ({ page }) => {
+    await page.goto('/profiles');
+    const grid = page.locator('table[class*="grid"]');
+
+    await page.getByRole('tab', { name: 'Devices' }).click();
+    for (const column of ['Compliance', 'Failed', 'High Failed', 'Last Evaluated'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Exceptions' }).click();
+    for (const column of ['Scope', 'Reason', 'Expires', 'Created By'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Benchmarks' }).click();
+    for (const column of ['Benchmark', 'Checks', 'Assigned To', 'Devices'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Profiles' }).click();
+    await expect(page.getByRole('heading', { name: 'Security Posture' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Version History/ })).toBeVisible();
+    for (const column of ['Profile', 'Assigned Devices', 'Status', 'Last Modified'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('the Device Group filter narrows the counters, not only the rows', async ({ page }) => {
+    await page.goto('/profiles');
+
+    const before = await page
+      .getByRole('button', { name: /Non-Compliant Devices/ })
+      .first()
+      .innerText();
+
+    await page.getByLabel('Device Group', { exact: true }).selectOption({ label: 'Pilot Ring' });
+    await expect(page.getByText('Device Group: Pilot Ring')).toBeVisible();
+
+    await expect(async () => {
+      const after = await page
+        .getByRole('button', { name: /Non-Compliant Devices/ })
+        .first()
+        .innerText();
+      expect(after).not.toBe(before);
+    }).toPass();
+  });
+
+  test('Evaluate Now is accepted', async ({ page }) => {
+    await page.goto('/profiles');
+
+    await page.getByRole('button', { name: 'Evaluate Now' }).click();
+    await expect(page.getByText('Evaluation queued')).toBeVisible();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

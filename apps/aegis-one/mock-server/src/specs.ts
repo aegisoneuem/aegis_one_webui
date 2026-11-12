@@ -272,23 +272,6 @@ export const groupsSpec: TableSpec = {
   },
 };
 
-export const configChecksSpec: TableSpec = {
-  table: 'config_checks',
-  idColumn: 'id',
-  searchColumns: ['title', 'benchmark'],
-  defaultSort: { field: 'failCount', desc: true },
-  columns: {
-    id,
-    title: { column: 'title', sortable: true, filters: ['like'] },
-    benchmark: { column: 'benchmark', sortable: true, filters: ['eq', 'in'] },
-    severity: { column: 'severity', sortable: true, filters: ['eq', 'in'] },
-    platform: { column: 'platform', sortable: true, filters: ['eq', 'in'] },
-    passCount: { column: 'pass_count', sortable: true },
-    failCount: { column: 'fail_count', sortable: true, filters: ['gte'] },
-    exceptionCount: { column: 'exception_count', sortable: true },
-  },
-};
-
 export const zonesSpec: TableSpec = {
   table: 'zones',
   idColumn: 'id',

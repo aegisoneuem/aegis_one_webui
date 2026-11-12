@@ -452,15 +452,150 @@ export type GroupDetail = DeviceGroup & {
   history: GroupHistoryEntry[];
 };
 
+/** The four frameworks the check library maps into. */
+export type Framework = 'cis' | 'stig' | 'pci-dss' | 'hipaa';
+
+export type PlatformFamily = 'windows' | 'macos' | 'linux' | 'aix';
+
+/** Checks carry High, Medium or Low; the Critical step is never used here. */
+export type CheckSeverity = 'high' | 'medium' | 'low';
+
+export type FrameworkTag = { framework: Framework; ref: string };
+
 export type ConfigCheck = {
   id: string;
   title: string;
-  benchmark: string;
-  severity: string;
-  platform: string;
-  passCount: number;
-  failCount: number;
-  exceptionCount: number;
+  category: string;
+  platform: PlatformFamily;
+  severity: CheckSeverity;
+  expected: string;
+  frameworks: FrameworkTag[];
+  passing: number;
+  failing: number;
+  exceptions: number;
+  /** Null where the library has no check for any device in scope. */
+  compliancePct: number | null;
+  remediation: 'automatic' | 'manual';
+  custom: boolean;
+};
+
+export type CheckResult = 'pass' | 'fail' | 'exception';
+
+export type ConfigCheckDetail = {
+  check: ConfigCheck;
+  results: {
+    deviceId: string;
+    name: string;
+    os: string;
+    site: string;
+    actual: string;
+    result: CheckResult;
+  }[];
+};
+
+export type ConfigDevice = {
+  deviceId: string;
+  name: string;
+  os: string;
+  site: string;
+  user: string;
+  compliancePct: number;
+  failing: number;
+  highFailing: number;
+  exceptions: number;
+  lastEvaluated: string;
+};
+
+export type ConfigDeviceDetail = {
+  deviceId: string;
+  name: string;
+  os: string;
+  site: string;
+  user: string;
+  compliancePct: number;
+  passing: number;
+  failing: number;
+  exceptions: number;
+  failedChecks: {
+    id: string;
+    title: string;
+    category: string;
+    severity: CheckSeverity;
+    expected: string;
+    actual: string;
+    remediation: 'automatic' | 'manual';
+  }[];
+};
+
+export type ConfigException = {
+  id: string;
+  checkId: string;
+  checkTitle: string;
+  scope: string;
+  reason: string;
+  grantedBy: string;
+  grantedAt: string;
+  /** Null for an exception granted with no expiry. */
+  expiresAt: string | null;
+};
+
+export type Benchmark = {
+  id: string;
+  framework: Framework;
+  name: string;
+  version: string;
+  /** Null for a benchmark that applies to every platform. */
+  platform: PlatformFamily | null;
+  assignedGroupId: string | null;
+  assignedTo: string;
+  devices: number;
+  checks: number;
+  compliancePct: number;
+};
+
+export type ConfigProfile = {
+  id: string;
+  name: string;
+  platform: PlatformFamily;
+  assignedDevices: number;
+  compliancePct: number;
+  status: 'active' | 'draft' | 'preview';
+  modifiedAt: string;
+  version: number;
+};
+
+export type ConfigProfileDetail = {
+  profile: ConfigProfile;
+  settings: { setting: string; values: { version: number; value: string }[] }[];
+};
+
+/**
+ * Everything above the Checks grid: the five counters, the four widgets and
+ * the Security Posture rings on the Profiles tab.
+ */
+export type ConfigurationSummary = {
+  overallPct: number;
+  checksInScope: number;
+  failingChecks: number;
+  nonCompliantDevices: { count: number; total: number };
+  exceptions: number;
+  byFramework: { framework: Framework; compliancePct: number }[];
+  byPlatform: { platform: PlatformFamily; compliancePct: number; devices: number }[];
+  deviceBands: { high: number; medium: number; low: number };
+  byCategory: { category: string; compliancePct: number }[];
+  topFailing: ConfigCheck[];
+  posture: {
+    protectedCount: number;
+    needsReview: number;
+    notProtected: number;
+    controls: {
+      control: 'disk-encryption' | 'antivirus' | 'firewall';
+      protectedCount: number;
+      notProtected: number;
+      compliancePct: number;
+    }[];
+    evaluatedDevices: number;
+  };
 };
 
 export type Zone = {

@@ -1850,6 +1850,76 @@ paths:
                 $ref: '#/components/schemas/ConfigCheck'
         '400':
           $ref: '#/components/responses/BadRequest'
+  /configuration/checks/{checkId}:
+    get:
+      tags:
+      - configuration
+      operationId: getConfigCheck
+      summary: One check with the devices evaluated against it.
+      x-required-permission: config:read
+      parameters:
+      - name: checkId
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigCheckDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /configuration/devices/{deviceId}:
+    get:
+      tags:
+      - configuration
+      operationId: getConfigDevice
+      summary: One device with the checks it fails.
+      x-required-permission: config:read
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+      responses:
+        '200':
+          description: Device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigDeviceDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /configuration/profiles/{profileId}:
+    get:
+      tags:
+      - configuration
+      operationId: getConfigProfile
+      summary: One profile with its setting history by version.
+      x-required-permission: config:read
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigProfileDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /configuration/devices:
     get:
       tags:
@@ -5542,10 +5612,25 @@ components:
                 $ref: '#/components/schemas/Framework'
               ref:
                 type: string
+        expected:
+          type: string
+          description: The value the check wants to see.
+          maxLength: 200
+        passing:
+          type: integer
         failing:
+          type: integer
+        exceptions:
           type: integer
         compliancePct:
           type: integer
+          description: Share of evaluated devices passing, excluding those under an exception.
+        remediation:
+          type: string
+          description: Whether the fix can be pushed, or an administrator has to make it.
+          enum:
+          - automatic
+          - manual
         custom:
           type: boolean
     ConfigCheckPage:
@@ -5607,15 +5692,123 @@ components:
                 type: string
               name:
                 type: string
+              os:
+                type: string
+              site:
+                type: string
+              user:
+                type: string
               compliancePct:
                 type: integer
               failing:
+                type: integer
+              highFailing:
+                type: integer
+                description: Failing checks of high severity.
+              exceptions:
                 type: integer
               lastEvaluated:
                 type: string
                 format: date-time
         page:
           $ref: '#/components/schemas/PageInfo'
+    ConfigCheckDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - check
+      - results
+      properties:
+        check:
+          $ref: '#/components/schemas/ConfigCheck'
+        results:
+          description: The devices evaluated against this check, failures first.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - deviceId
+            - name
+            - result
+            properties:
+              deviceId:
+                type: string
+              name:
+                type: string
+              os:
+                type: string
+              site:
+                type: string
+              actual:
+                type: string
+                description: What this device reports. The expected value when it passes.
+                maxLength: 200
+              result:
+                type: string
+                enum:
+                - pass
+                - fail
+                - exception
+    ConfigDeviceDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - deviceId
+      - name
+      - compliancePct
+      - passing
+      - failing
+      - exceptions
+      - failedChecks
+      properties:
+        deviceId:
+          type: string
+        name:
+          type: string
+        os:
+          type: string
+        site:
+          type: string
+        user:
+          type: string
+        compliancePct:
+          type: integer
+        passing:
+          type: integer
+        failing:
+          type: integer
+        exceptions:
+          type: integer
+        failedChecks:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - title
+            - severity
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              category:
+                type: string
+              severity:
+                $ref: '#/components/schemas/Severity'
+              expected:
+                type: string
+                maxLength: 200
+              actual:
+                type: string
+                maxLength: 200
+              remediation:
+                type: string
+                enum:
+                - automatic
+                - manual
     ConfigExceptionInput:
       type: object
       additionalProperties: false
@@ -5651,14 +5844,24 @@ components:
           type: string
         checkId:
           type: string
+        checkTitle:
+          type: string
+          description: The check's own title, so the grid need not fetch each one.
         scope:
           type: string
+          description: The device group's name, or "All devices".
         reason:
           type: string
         grantedBy:
           type: string
-        expiresAt:
+        grantedAt:
           type: string
+          format: date-time
+        expiresAt:
+          description: Null for an exception granted with no expiry.
+          type:
+          - string
+          - 'null'
           format: date
     Benchmark:
       type: object
@@ -5679,6 +5882,22 @@ components:
           type: string
         version:
           type: string
+        platform:
+          description: Null for a benchmark that applies to every platform.
+          oneOf:
+          - $ref: '#/components/schemas/PlatformFamily'
+          - type: 'null'
+        assignedGroupId:
+          description: The device group it is assigned to, or null for the whole estate.
+          type:
+          - string
+          - 'null'
+        assignedTo:
+          type: string
+          description: That group's name, or "All devices".
+        devices:
+          type: integer
+          description: Devices in scope for this benchmark.
         checks:
           type: integer
         compliancePct:
@@ -5835,10 +6054,75 @@ components:
           properties:
             protectedCount:
               type: integer
+              description: Devices passing all three controls.
             needsReview:
               type: integer
+              description: Devices passing some of the three.
             notProtected:
               type: integer
+              description: Devices passing none of the three.
+            controls:
+              description: Disk encryption, antivirus and firewall, in that order.
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - control
+                - protectedCount
+                - notProtected
+                - compliancePct
+                properties:
+                  control:
+                    type: string
+                    enum:
+                    - disk-encryption
+                    - antivirus
+                    - firewall
+                  protectedCount:
+                    type: integer
+                  notProtected:
+                    type: integer
+                  compliancePct:
+                    type: integer
+            evaluatedDevices:
+              type: integer
+              description: Devices the check library has at least one check for.
+    ConfigProfileDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - profile
+      - settings
+      properties:
+        profile:
+          $ref: '#/components/schemas/ConfigProfile'
+        settings:
+          description: One row per setting, with its value at each stored version.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - setting
+            - values
+            properties:
+              setting:
+                type: string
+              values:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                  - version
+                  - value
+                  properties:
+                    version:
+                      type: integer
+                    value:
+                      type: string
+                      maxLength: 120
     DexSummary:
       type: object
       additionalProperties: false

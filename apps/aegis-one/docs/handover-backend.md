@@ -402,3 +402,44 @@ you.
     run, which is what the reference's own data does. Sorted by that column
     the scheduled scan lands at the top. Either `Scan` needs a separate
     `nextRunAt`, or the grid needs a sort that puts what has run first.
+33. **"Failing Checks" reads 200 of 200 and cannot do otherwise.** On 50,000
+    endpoints every check in the library fails somewhere, so the counter is
+    pinned at the library size. The reference's 165 of 200 comes from
+    evaluating 32 computers. The counter is truthful and useless at this
+    scale. Either it should count checks below a compliance threshold rather
+    than checks with any failure at all, or it should report the share of
+    devices failing the worst check. The current page leaves it as a literal
+    count and leans on the per-check Compliance column for the ranking.
+34. **"Non-Compliant Devices" reads 49,399 of 49,542** — a device is
+    non-compliant below 90%, and with ~120 applicable checks at roughly a
+    4-in-5 pass rate almost every device fails something. The same shape as
+    the reference's 28 of 32, concentrated by the larger sample. The useful
+    figure is the band distribution in the Device Compliance donut. If the
+    counter is to stay, it needs a threshold that means something on a large
+    estate.
+35. **Nothing writes a check result, so nothing can grant an exception or add
+    a custom check.** `POST /configuration/exceptions` and
+    `POST /configuration/checks` are both declared and both unserved: a write
+    invalidates the estate-wide roll-up, the per-group roll-up and every
+    device's `config_pass_pct`, which together take about 95 seconds to
+    rebuild. A real backend recomputes incrementally — an exception touches
+    one check and one group — but the mock server has no incremental path.
+    One exception is seeded so the tab is not empty.
+36. **Benchmark assignment is read-only.** `config_benchmarks` carries an
+    `assigned_group_id` and the contract carries `assignedGroupId`, but
+    nothing sets it, so every benchmark reports "All devices". The reference
+    lets an administrator reassign a benchmark from the grid. This needs a
+    `PATCH /configuration/benchmarks/{id}` the contract does not declare.
+37. **A profile's version history is seeded, not derived.** Only the
+    most-revised profile carries one, and the Version History panel shows
+    that profile because it is the one with settings stored. The reference
+    hard-codes "Windows Security Profile". A real backend would keep a
+    revision per change; the contract has no shape for one beyond
+    `ConfigProfileDetail.settings`, and nothing writes a version, so
+    "Rollback to v7" is absent.
+38. **AIX endpoints have no checks.** The library covers Windows, macOS and
+    Linux, matching the reference. The estate's 458 AIX servers are therefore
+    absent from every configuration figure rather than counted as passing,
+    which is the honest reading but means the Configuration page's device
+    total (49,542) does not match the estate total (50,000) anywhere else in
+    the console.

@@ -570,3 +570,62 @@ So the server derives `ageDays`, `sla` and `dueInDays` and the page only
 reads them. Where the page still needs a day count — "23 d left" beside the
 SLA tag — it subtracts two figures the server already measured (the SLA
 window and the finding's age) rather than reaching for the clock.
+
+## D-039 — A device's check result is derived; the counts are stored
+
+The reference evaluates 32 computers against 200 checks on every render —
+6,400 decisions, which is nothing. This estate has 50,000 endpoints and the
+same 200 checks, which is five million, and the Checks grid ranks all 200 by
+how many devices fail them while the Devices tab ranks all 50,000 by how many
+checks they fail. Neither can be computed per request, and materialising five
+million results would make the fixture database an order of magnitude larger
+for data nobody reads a row at a time.
+
+So the decision is one SQL expression, `CHECK_PASS_SQL`, used twice. At seed
+time it rolls up `pass_count`, `fail_count` and `exception_count` on each
+check and `config_fail`, `config_high_fail` and `config_pass_pct` on each
+device. At request time the same expression lists the devices behind one
+check for the drawer, or the checks behind one device.
+
+The important property is that a count and the rows behind it come from the
+same predicate, so they cannot disagree. A counter an administrator cannot
+click through to is a counter nobody checks; a counter that disagrees with
+what it opens is worse than none.
+
+Where a check names an inventory column — encryption, antivirus, firewall,
+pending patches — the answer is read from it, so a device that is genuinely
+unencrypted fails the encryption check. The rest are spread over the device
+row and the check's position at the reference's own pass rates, with a device
+already carrying critical vulnerabilities faring worse, exactly as v129 does.
+
+This is only safe because nothing in this build writes a check result. See
+"What is not restored" in `configuration-restoration.md` for what that costs.
+
+## D-040 — The Device Group filter reads a materialised per-group roll-up
+
+The reference's Device Group filter narrows every figure on the page, not
+only the rows: pick a group and the overall percentage, the failing-check
+count, the four widgets and the grid all report that group. Those counts
+cannot be decomposed from the estate-wide ones.
+
+Measured on this estate, a live aggregate over the largest group — Windows
+Workstations, 32,761 devices against 120 applicable checks — takes 6.9
+seconds. That is not a request.
+
+So `config_check_groups` holds the same three counts per group per check:
+2,520 rows for the sixteen groups, which answers in under a millisecond. It
+costs 34 seconds on top of a 73-second seed, once.
+
+The alternative was to narrow only the rows and leave the counters reporting
+the whole estate, which would have put two different scopes on one screen.
+
+## D-041 — `config_pass_pct` is computed from the check library
+
+The column already existed on `devices` and was filled with a random figure.
+The Devices grid showed it, the device detail page showed it, and now the
+Configuration page computes the same thing properly — so the three would have
+disagreed about the same device.
+
+It is therefore recomputed in the configuration roll-up, from the checks that
+apply to that device minus the ones under an exception. The Devices grid and
+this page now answer the same question the same way.

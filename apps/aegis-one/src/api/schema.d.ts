@@ -1028,6 +1028,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/configuration/checks/{checkId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One check with the devices evaluated against it. */
+        get: operations["getConfigCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/configuration/devices/{deviceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One device with the checks it fails. */
+        get: operations["getConfigDevice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/configuration/profiles/{profileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One profile with its setting history by version. */
+        get: operations["getConfigProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/configuration/devices": {
         parameters: {
             query?: never;
@@ -2669,8 +2720,18 @@ export interface components {
                 framework: components["schemas"]["Framework"];
                 ref: string;
             }[];
+            /** @description The value the check wants to see. */
+            expected?: string;
+            passing?: number;
             failing: number;
+            exceptions?: number;
+            /** @description Share of evaluated devices passing, excluding those under an exception. */
             compliancePct: number;
+            /**
+             * @description Whether the fix can be pushed, or an administrator has to make it.
+             * @enum {string}
+             */
+            remediation?: "automatic" | "manual";
             custom?: boolean;
         };
         ConfigCheckPage: {
@@ -2689,12 +2750,53 @@ export interface components {
             items: {
                 deviceId: string;
                 name: string;
+                os?: string;
+                site?: string;
+                user?: string;
                 compliancePct: number;
                 failing: number;
+                /** @description Failing checks of high severity. */
+                highFailing?: number;
+                exceptions?: number;
                 /** Format: date-time */
                 lastEvaluated?: string;
             }[];
             page: components["schemas"]["PageInfo"];
+        };
+        ConfigCheckDetail: {
+            check: components["schemas"]["ConfigCheck"];
+            /** @description The devices evaluated against this check, failures first. */
+            results: {
+                deviceId: string;
+                name: string;
+                os?: string;
+                site?: string;
+                /** @description What this device reports. The expected value when it passes. */
+                actual?: string;
+                /** @enum {string} */
+                result: "pass" | "fail" | "exception";
+            }[];
+        };
+        ConfigDeviceDetail: {
+            deviceId: string;
+            name: string;
+            os?: string;
+            site?: string;
+            user?: string;
+            compliancePct: number;
+            passing: number;
+            failing: number;
+            exceptions: number;
+            failedChecks: {
+                id: string;
+                title: string;
+                category?: string;
+                severity: components["schemas"]["Severity"];
+                expected?: string;
+                actual?: string;
+                /** @enum {string} */
+                remediation?: "automatic" | "manual";
+            }[];
         };
         ConfigExceptionInput: {
             checkId: string;
@@ -2706,17 +2808,33 @@ export interface components {
         ConfigException: {
             id: string;
             checkId: string;
+            /** @description The check's own title, so the grid need not fetch each one. */
+            checkTitle?: string;
+            /** @description The device group's name, or "All devices". */
             scope: string;
             reason: string;
             grantedBy: string;
-            /** Format: date */
-            expiresAt: string;
+            /** Format: date-time */
+            grantedAt?: string;
+            /**
+             * Format: date
+             * @description Null for an exception granted with no expiry.
+             */
+            expiresAt: string | null;
         };
         Benchmark: {
             id: string;
             framework: components["schemas"]["Framework"];
             name: string;
             version: string;
+            /** @description Null for a benchmark that applies to every platform. */
+            platform?: components["schemas"]["PlatformFamily"] | null;
+            /** @description The device group it is assigned to, or null for the whole estate. */
+            assignedGroupId?: string | null;
+            /** @description That group's name, or "All devices". */
+            assignedTo?: string;
+            /** @description Devices in scope for this benchmark. */
+            devices?: number;
             checks: number;
             compliancePct: number;
         };
@@ -2766,10 +2884,34 @@ export interface components {
             }[];
             topFailing: components["schemas"]["ConfigCheck"][];
             posture: {
+                /** @description Devices passing all three controls. */
                 protectedCount?: number;
+                /** @description Devices passing some of the three. */
                 needsReview?: number;
+                /** @description Devices passing none of the three. */
                 notProtected?: number;
+                /** @description Disk encryption, antivirus and firewall, in that order. */
+                controls?: {
+                    /** @enum {string} */
+                    control: "disk-encryption" | "antivirus" | "firewall";
+                    protectedCount: number;
+                    notProtected: number;
+                    compliancePct: number;
+                }[];
+                /** @description Devices the check library has at least one check for. */
+                evaluatedDevices?: number;
             };
+        };
+        ConfigProfileDetail: {
+            profile: components["schemas"]["ConfigProfile"];
+            /** @description One row per setting, with its value at each stored version. */
+            settings: {
+                setting: string;
+                values: {
+                    version: number;
+                    value: string;
+                }[];
+            }[];
         };
         DexSummary: {
             score: number;
@@ -5068,6 +5210,77 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+        };
+    };
+    getConfigCheck: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path: {
+                checkId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigCheckDetail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getConfigDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Device */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigDeviceDetail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getConfigProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigProfileDetail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
     };
     listConfigDevices: {

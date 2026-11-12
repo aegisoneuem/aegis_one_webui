@@ -6,8 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { createRng, openDb, type Db, type Rng } from '@aegis/mock-core';
 import {
   AGENT_VERSIONS,
-  CONFIG_BENCHMARKS,
-  CONFIG_CHECK_TITLES,
   CVES,
   DEPARTMENTS,
   FIRST_NAMES,
@@ -20,6 +18,7 @@ import {
   ZONES,
   type CveDef,
 } from './catalog';
+import { CONFIG_CHECKS } from './config-catalog';
 
 /**
  * Builds the whole fixture estate from one integer seed.
@@ -68,7 +67,7 @@ export function seedDatabase({
 
   rollUpCounts(db);
   seedGroups(db, rng);
-  seedConfigChecks(db, rng, deviceCount);
+  seedConfiguration(db);
   seedDeployments(db, rng);
   seedLiveJobs(db, rng);
   seedLogBundles(db, rng);
@@ -1413,42 +1412,306 @@ function rollUpGroups(db: Db): void {
   `);
 }
 
-function seedConfigChecks(db: Db, rng: Rng, deviceCount: number): void {
-  const insert = db.prepare(
-    `INSERT INTO config_checks (id,title,benchmark,severity,platform,pass_count,fail_count,exception_count) VALUES (?,?,?,?,?,?,?,?)`,
+/**
+ * A device's result for one check, as one SQL expression.
+ *
+ * Where a check names an inventory column the answer is read from it, so a
+ * device that is genuinely unencrypted fails the encryption check. For a
+ * setting this console does not inventory the answer is spread
+ * deterministically over the device row and the check's position, at the
+ * reference's own pass rates — higher severities are configured more often,
+ * and a device already carrying critical vulnerabilities fares worse.
+ *
+ * It is one expression, used both to roll the counts up at seed time and to
+ * list the devices behind a check in the drawer, so a figure and the rows
+ * behind it can never disagree.
+ */
+export const CHECK_PASS_SQL = `CASE c.check_key
+    WHEN 'firewall'   THEN d.firewall_ok
+    WHEN 'av'         THEN d.antivirus_ok
+    WHEN 'avAge'      THEN d.antivirus_ok
+    WHEN 'enc'        THEN d.encrypted
+    WHEN 'patch'      THEN (d.pending_patches = 0)
+    WHEN 'usb'        THEN ((d.rowid * 7919 + c.seq * 40503) % 4 <> 0)
+    WHEN 'secureBoot' THEN ((d.rowid * 7919 + c.seq * 40503) % 10 <> 3)
+    ELSE ((d.rowid * 7919 + c.seq * 40503) % 100)
+         < (CASE c.severity WHEN 'high' THEN 88 WHEN 'medium' THEN 82 ELSE 76 END
+            - CASE WHEN d.critical_vulns > 0 THEN 12 ELSE 0 END)
+  END`;
+
+/**
+ * Which devices a check applies to. The library covers three platforms; the
+ * estate also holds AIX servers, which simply have no checks, so they are
+ * absent from the figures rather than counted as passing.
+ */
+export const CHECK_APPLIES_SQL = `(
+    (c.platform = 'windows' AND d.os_family IN ('Windows', 'Windows Server'))
+    OR (c.platform = 'macos' AND d.os_family = 'macOS')
+    OR (c.platform = 'linux' AND d.os_family = 'Linux')
+  )`;
+
+/** Whether an exception covers this device for this check. */
+export const CHECK_EXCEPTED_SQL = `EXISTS (
+    SELECT 1 FROM config_exceptions x
+     WHERE x.check_id = c.id
+       AND (x.expires_at IS NULL OR x.expires_at >= date('now'))
+       AND (x.scope_group_id IS NULL
+            OR EXISTS (SELECT 1 FROM group_members gm
+                        WHERE gm.group_id = x.scope_group_id AND gm.device_id = d.id))
+  )`;
+
+const BENCHMARKS: readonly (readonly [string, string, string, string, string | null])[] = [
+  ['b-cis-win', 'cis', 'CIS Windows Workstation L1', 'v3.0.0', 'windows'],
+  ['b-stig-win', 'stig', 'DISA STIG Windows 11', 'v2r4', 'windows'],
+  ['b-pci', 'pci-dss', 'PCI DSS Endpoint', 'v4.0', null],
+  ['b-hipaa', 'hipaa', 'HIPAA Endpoint', '2013 Omnibus', null],
+  ['b-cis-mac', 'cis', 'CIS Apple macOS', 'v1.0.0', 'macos'],
+  ['b-cis-lnx', 'cis', 'CIS Ubuntu Linux', 'v2.0.0', 'linux'],
+];
+
+/**
+ * The version history the Profiles tab lays out: one row per setting, one
+ * column per version, with the newest marked current.
+ */
+const PROFILE_SETTINGS: Readonly<Record<string, readonly (readonly [number, string])[]>> = {
+  'Password Length': [
+    [6, '8'],
+    [7, '10'],
+    [8, '14'],
+  ],
+  'USB Storage': [
+    [6, 'Allowed'],
+    [7, 'Allowed'],
+    [8, 'Blocked'],
+  ],
+  'Screen Lock': [
+    [6, '15 min'],
+    [7, '10 min'],
+    [8, '10 min'],
+  ],
+};
+
+/** name, platform, status, version, days since last change, target group. */
+const PROFILES: readonly (readonly [string, string, string, number, number, string])[] = [
+  ['Windows Security Profile', 'windows', 'active', 8, 2, 'grp-win-ws'],
+  ['Developer Workstation', 'windows', 'active', 3, 6, 'grp-pilot'],
+  ['Executive macOS', 'macos', 'active', 2, 12, 'grp-macos'],
+  ['Linux Workstation Profile', 'linux', 'active', 4, 1, 'grp-linux'],
+];
+
+function seedConfiguration(db: Db): void {
+  const insertCheck = db.prepare(
+    `INSERT INTO config_checks
+       (id,title,category,platform,severity,expected,bad,check_key,cis,stig,pci,hipaa,remediable,seq)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
+  const seqOf: Record<string, number> = { windows: 0, macos: 0, linux: 0 };
   db.transaction(() => {
-    // 200 checks, as the Configuration page reports.
-    for (let i = 0; i < 200; i++) {
-      const title = CONFIG_CHECK_TITLES[i % CONFIG_CHECK_TITLES.length] ?? 'Baseline check';
-      const benchmark = CONFIG_BENCHMARKS[i % CONFIG_BENCHMARKS.length] ?? CONFIG_BENCHMARKS[0];
-      const applicable = Math.round(deviceCount * (0.2 + rng.next() * 0.7));
-      const fail = Math.round(applicable * (rng.next() ** 2 * 0.3));
-      const exceptions = Math.round(fail * rng.next() * 0.2);
-      insert.run(
-        `chk-${String(i + 1).padStart(3, '0')}`,
-        i < CONFIG_CHECK_TITLES.length
-          ? title
-          : `${title} (${Math.floor(i / CONFIG_CHECK_TITLES.length) + 1})`,
-        benchmark,
-        rng.weighted([
-          ['high', 30],
-          ['medium', 45],
-          ['low', 25],
-        ] as const),
-        rng.pick(['Windows', 'Linux', 'macOS', 'All']),
-        applicable - fail,
-        fail,
-        exceptions,
+    for (const c of CONFIG_CHECKS) {
+      seqOf[c.platform] = (seqOf[c.platform] ?? 0) + 1;
+      insertCheck.run(
+        c.id,
+        c.title,
+        c.category,
+        c.platform,
+        c.severity,
+        c.expected,
+        c.bad,
+        c.key,
+        c.cis,
+        c.stig,
+        c.pci,
+        c.hipaa,
+        c.remediable ? 1 : 0,
+        seqOf[c.platform] ?? 0,
       );
     }
   })();
+
+  const groupIds = (
+    db.prepare(`SELECT id FROM device_groups ORDER BY id LIMIT 2`).all() as { id: string }[]
+  ).map((r) => r.id);
+
+  const insertBenchmark = db.prepare(
+    `INSERT INTO config_benchmarks (id,framework,name,version,platform,assigned_group_id)
+     VALUES (?,?,?,?,?,?)`,
+  );
+  db.transaction(() => {
+    for (const [id, framework, name, version, platform] of BENCHMARKS) {
+      insertBenchmark.run(id, framework, name, version, platform, null);
+    }
+  })();
+
+  // One exception, so the Exceptions tab and the Exc. column have something
+  // to show. The reference starts empty and fills from its own drawer; this
+  // build cannot write one back, so it is seeded instead.
+  const excepted = CONFIG_CHECKS.find((c) => c.id === 'AEG-WIN-030');
+  if (excepted) {
+    db.prepare(
+      `INSERT INTO config_exceptions
+         (id,check_id,scope_group_id,reason,granted_by,granted_at,expires_at)
+       VALUES (?,?,?,?,?,?,?)`,
+    ).run(
+      'cex-001',
+      excepted.id,
+      groupIds[0] ?? null,
+      'Signed off by the audit committee for the trading floor build; the control is met by a compensating network rule. Review AUD-2026-114.',
+      'Meera Subramanian',
+      daysAgo(14),
+      daysAgo(-120).slice(0, 10),
+    );
+  }
+
+  const insertProfile = db.prepare(
+    `INSERT INTO config_profiles
+       (id,name,platform,status,version,target_group_id,assigned_devices,compliance_pct,modified_at)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
+  );
+  const insertSetting = db.prepare(
+    `INSERT INTO config_profile_settings (profile_id,setting,version,value) VALUES (?,?,?,?)`,
+  );
+  db.transaction(() => {
+    PROFILES.forEach(([name, platform, status, version, changedDaysAgo, groupId], i) => {
+      const id = `cp-${String(i + 1).padStart(3, '0')}`;
+      insertProfile.run(
+        id,
+        name,
+        platform,
+        status,
+        version,
+        groupId,
+        0,
+        0,
+        daysAgo(changedDaysAgo),
+      );
+      // Only the first profile carries a version history; the reference shows
+      // one profile's history and names it in the panel title.
+      if (i === 0) {
+        for (const [setting, versions] of Object.entries(PROFILE_SETTINGS)) {
+          for (const [v, value] of versions) insertSetting.run(id, setting, v, value);
+        }
+      }
+    });
+  })();
+
+  rollUpConfiguration(db);
+}
+
+/**
+ * Rolls the check library up over the estate, once.
+ *
+ * Two passes over the same join — 200 checks against the devices each applies
+ * to — give the per-check counts the grid ranks on and the per-device counts
+ * the Devices tab ranks on. `config_pass_pct` is recomputed here too: it used
+ * to be a random figure, so the Devices grid and this page disagreed about
+ * the same device.
+ */
+function rollUpConfiguration(db: Db): void {
+  const pass = CHECK_PASS_SQL;
+  const applies = CHECK_APPLIES_SQL;
+  const excepted = CHECK_EXCEPTED_SQL;
+
+  db.exec(`
+    UPDATE config_checks SET
+      pass_count = (SELECT COUNT(*) FROM devices d, config_checks c
+                     WHERE c.id = config_checks.id AND ${applies}
+                       AND NOT ${excepted} AND ${pass}),
+      fail_count = (SELECT COUNT(*) FROM devices d, config_checks c
+                     WHERE c.id = config_checks.id AND ${applies}
+                       AND NOT ${excepted} AND NOT ${pass}),
+      exception_count = (SELECT COUNT(*) FROM devices d, config_checks c
+                          WHERE c.id = config_checks.id AND ${applies} AND ${excepted});
+
+    UPDATE config_checks SET compliance_pct = CASE
+      WHEN pass_count + fail_count = 0 THEN NULL
+      ELSE CAST(ROUND(pass_count * 100.0 / (pass_count + fail_count)) AS INTEGER) END;
+  `);
+
+  db.exec(`
+    UPDATE devices SET
+      config_checks_total = (SELECT COUNT(*) FROM config_checks c
+                              WHERE ${applies.replace(/\bd\./g, 'devices.')}),
+      config_fail = (SELECT COUNT(*) FROM config_checks c, devices d
+                      WHERE d.id = devices.id AND ${applies}
+                        AND NOT ${excepted} AND NOT ${pass}),
+      config_high_fail = (SELECT COUNT(*) FROM config_checks c, devices d
+                           WHERE d.id = devices.id AND ${applies} AND c.severity = 'high'
+                             AND NOT ${excepted} AND NOT ${pass}),
+      config_exceptions = (SELECT COUNT(*) FROM config_checks c, devices d
+                            WHERE d.id = devices.id AND ${applies} AND ${excepted});
+
+    UPDATE devices SET config_pass_pct = CASE
+      WHEN config_checks_total - config_exceptions <= 0 THEN 0
+      ELSE CAST(ROUND((config_checks_total - config_exceptions - config_fail) * 100.0
+                      / (config_checks_total - config_exceptions)) AS INTEGER) END;
+  `);
+
+  // The same counts again, per group, for the Device Group filter. One
+  // statement per group: a single statement over every membership at once
+  // builds a far larger intermediate result than SQLite handles well.
+  const perGroup = db.prepare(
+    `INSERT INTO config_check_groups (group_id, check_id, pass_count, fail_count, exception_count)
+     SELECT ?, c.id,
+            SUM(CASE WHEN NOT ${excepted} AND ${pass} THEN 1 ELSE 0 END),
+            SUM(CASE WHEN NOT ${excepted} AND NOT ${pass} THEN 1 ELSE 0 END),
+            SUM(CASE WHEN ${excepted} THEN 1 ELSE 0 END)
+       FROM config_checks c
+       JOIN group_members gm ON gm.group_id = ?
+       JOIN devices d ON d.id = gm.device_id
+      WHERE ${applies}
+      GROUP BY c.id`,
+  );
+  const groups = db.prepare(`SELECT id FROM device_groups`).all() as { id: string }[];
+  for (const g of groups) perGroup.run(g.id, g.id);
+
+  db.exec(`
+    UPDATE config_check_groups SET compliance_pct = CASE
+      WHEN pass_count + fail_count = 0 THEN NULL
+      ELSE CAST(ROUND(pass_count * 100.0 / (pass_count + fail_count)) AS INTEGER) END;
+  `);
+
+  // A profile covers the members of its group that run its own platform, so
+  // the four profiles report four different populations.
+  const inProfile = `d.config_checks_total > 0
+       AND EXISTS (SELECT 1 FROM group_members gm
+                    WHERE gm.group_id = config_profiles.target_group_id
+                      AND gm.device_id = d.id)
+       AND ((config_profiles.platform = 'windows' AND d.os_family IN ('Windows', 'Windows Server'))
+         OR (config_profiles.platform = 'macos' AND d.os_family = 'macOS')
+         OR (config_profiles.platform = 'linux' AND d.os_family = 'Linux'))`;
+
+  db.exec(`
+    UPDATE config_profiles SET
+      assigned_devices = (SELECT COUNT(*) FROM devices d WHERE ${inProfile}),
+      compliance_pct = COALESCE(
+        (SELECT CAST(ROUND(AVG(d.config_pass_pct)) AS INTEGER) FROM devices d WHERE ${inProfile}), 0);
+  `);
 }
 
 function seedDeployments(db: Db, rng: Rng): void {
   const insert = db.prepare(`INSERT INTO deployments
     (id,name,type,status,package,target_count,done,failed,pending,triggered_at,triggered_by,starts_at,completed_at,wake_offline_first,notes)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+
+  // One per plan below, in the same order: seven completed, three running,
+  // two scheduled, and one each failed, cancelled and paused.
+  const DEPLOYMENT_STATUSES = [
+    'completed',
+    'completed',
+    'scheduled',
+    'running',
+    'completed',
+    'failed',
+    'completed',
+    'running',
+    'cancelled',
+    'completed',
+    'scheduled',
+    'paused',
+    'completed',
+    'running',
+    'completed',
+  ] as const;
 
   const plans: readonly (readonly [string, string, string])[] = [
     ['Google Chrome 142.0 — broad ring', 'install-software', 'Google Chrome 142.0.7204.92'],
@@ -1471,14 +1734,12 @@ function seedDeployments(db: Db, rng: Rng): void {
   db.transaction(() => {
     plans.forEach(([name, type, packageLabel], i) => {
       const targets = rng.int(60, 9800);
-      const status = rng.weighted([
-        ['completed', 48],
-        ['running', 18],
-        ['scheduled', 16],
-        ['failed', 8],
-        ['cancelled', 4],
-        ['paused', 6],
-      ] as const);
+      // Fixed per row rather than drawn at random. The page's six counters
+      // each have to have rows behind them, and a weighted draw over fifteen
+      // actions left that to luck: a seed that happened to roll no scheduled
+      // action gave the Scheduled counter nothing to open. The mix still
+      // follows the intended weights.
+      const status = DEPLOYMENT_STATUSES[i] ?? 'completed';
 
       // How many endpoints have reported at all. The contract splits that into
       // `done` and `failed`, and whatever has not reported is `pending`.

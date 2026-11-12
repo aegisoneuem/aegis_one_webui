@@ -143,6 +143,26 @@ CREATE INDEX idx_usb_events_device ON usb_events(device_id);
 
 -- Which reports an administrator has starred. The reference keeps this in
 -- local storage; a console with named accounts keeps it per user.
+-- A diagnostic run, kept so remediation can refer back to one and so the
+-- verification it reports has somewhere to live.
+CREATE TABLE insight_runs (
+  id TEXT PRIMARY KEY,
+  device_id TEXT NOT NULL REFERENCES devices(id),
+  description TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  created_by TEXT NOT NULL
+);
+
+-- Saved descriptions, so a recurring complaint does not have to be retyped.
+CREATE TABLE insight_templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  owner TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE report_favorites (
   report_id TEXT NOT NULL,
   user_email TEXT NOT NULL,

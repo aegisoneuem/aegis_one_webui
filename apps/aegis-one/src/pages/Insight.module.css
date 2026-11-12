@@ -1,0 +1,365 @@
+/*
+ * AEGIS Insight, on the reference's own two-column split: the form on the
+ * left, and a right-hand column with three states — nothing yet, running, and
+ * the result under a dark root-cause banner.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+/* The reference badges this page as a preview. */
+.beta {
+  padding: 3px 8px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-bg);
+  color: var(--ao-navy-mid);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.grow {
+  flex: 1;
+}
+
+/* The form is the narrower half; the diagnosis needs the room. */
+.columns {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  align-items: start;
+}
+
+.panel,
+.panelPadded {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.panelPadded {
+  padding: 18px 20px;
+}
+
+.panelTitle {
+  margin: 0 0 14px;
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  color: var(--ao-navy);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+/* The form ---------------------------------------------------------------- */
+
+.endpoint {
+  margin: 0 0 12px;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+.endpointLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--st-info);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  text-decoration: underline;
+}
+
+.endpointLink:hover {
+  text-decoration: none;
+}
+
+.endpointLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.field textarea {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.field textarea:focus-visible {
+  outline: none;
+  border-color: var(--ao-brand);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.templates {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.templates > span {
+  color: var(--ao-navy-mid);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-transform: uppercase;
+}
+
+.templates select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.actionsWide {
+  display: flex;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ao-track);
+  margin-top: 14px;
+}
+
+.actionsWide > :first-child {
+  flex: 1;
+}
+
+.note {
+  padding-top: 14px;
+  border-top: 1px solid var(--ao-track);
+  margin: 18px 0 0;
+  color: var(--ao-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* The result column -------------------------------------------------------- */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Nothing run yet: the reference's plain box with one centred line. */
+.idle {
+  display: grid;
+  min-height: 130px;
+  padding: 24px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  place-items: center;
+}
+
+.idle b {
+  color: var(--ao-navy-mid);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.runSkeleton {
+  display: block;
+  height: 220px;
+}
+
+.running {
+  margin: 10px 0 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* The root-cause banner, on the near-black card under a gold rule. */
+.rootCause {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  border: 1px solid var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+}
+
+.rootCause > div:first-child {
+  flex: 1;
+}
+
+.rootEyebrow {
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+
+.rootCause p {
+  margin: 6px 0 0;
+  color: var(--ao-surface);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.confidence {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.confidence span {
+  color: var(--ao-sidebar-text);
+  font-size: 11px;
+  letter-spacing: 0.66px;
+  text-transform: uppercase;
+}
+
+.confidence strong {
+  color: var(--ao-brand-hi);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.row2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+/* Checks and recommendations ---------------------------------------------- */
+
+.checks,
+.recommendations {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.checks li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ao-track);
+}
+
+.checks li:last-child {
+  border-bottom: 0;
+}
+
+.checkName {
+  min-width: 0;
+  flex: 1;
+  color: var(--ao-navy-mid);
+  font-size: 13px;
+}
+
+.checks li b {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.recommendations li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ao-track);
+}
+
+.recommendations li:last-child {
+  border-bottom: 0;
+}
+
+.recommendations b {
+  display: block;
+  color: var(--ao-navy-ink);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.recommendations small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.clean {
+  margin: 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* The severity ramp -------------------------------------------------------- */
+
+.sevCritical {
+  color: var(--st-bad);
+}
+
+.sevHigh {
+  color: var(--st-bad);
+}
+
+.sevMedium {
+  color: var(--st-warn);
+}
+
+.sevLow {
+  color: var(--st-good);
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (width <= 1280px) {
+  .columns,
+  .row2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

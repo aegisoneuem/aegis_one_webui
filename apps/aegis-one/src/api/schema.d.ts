@@ -2984,15 +2984,36 @@ export interface components {
             id: string;
             /** @enum {string} */
             status: "running" | "completed" | "remediated" | "verified";
+            /** @description The endpoint the run was made against, for the context line. */
+            device?: {
+                id: string;
+                name: string;
+                user?: string;
+                os?: string;
+                dexScore?: number;
+            };
+            /** @description What the failing checks, taken together, point at. */
+            rootCause?: {
+                summary: string;
+                /** @description How far the checks agree, 0-100. */
+                confidencePct: number;
+            };
             checks: {
                 name: string;
                 /** @enum {string} */
                 result: "pass" | "fail" | "warn" | "pending";
+                /**
+                 * @description How bad this check's finding is, as the panel prints it.
+                 * @enum {string}
+                 */
+                severity?: "critical" | "high" | "medium" | "low";
                 detail?: string;
             }[];
             recommendations: {
                 id: string;
                 title: string;
+                /** @description What the action should achieve, e.g. "+8 DEX points". */
+                expected?: string;
                 /** @enum {string} */
                 risk?: "low" | "medium" | "high";
             }[];

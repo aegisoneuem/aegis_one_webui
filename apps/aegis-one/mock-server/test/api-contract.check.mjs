@@ -661,8 +661,88 @@ const run = async () => {
     `HTTP ${discoveryRes.status}`,
   );
 
-  const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
-  check('insight returns findings', insight.findings.length >= 5);
+  // --- AEGIS Insight -------------------------------------------------------
+  const worst = (
+    await fetch(`${API}/devices?limit=1&sort=dexScore&fields=id,dexScore`, {
+      headers: authed(token),
+    }).then((r) => r.json())
+  ).items[0];
+  const insightRunRes = await fetch(`${API}/insight/diagnostics`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      deviceId: worst.id,
+      description: 'User reports that the laptop is slow and applications take too long to open.',
+    }),
+  });
+  const insightRun = await insightRunRes.json();
+  check(
+    'a diagnostic run is accepted',
+    insightRunRes.status === 200 || insightRunRes.status === 201,
+  );
+  check(
+    'the run reports the endpoint it was made against',
+    insightRun.device?.id === worst.id && insightRun.checks.length >= 5,
+    `${insightRun.checks.length} checks on ${insightRun.device?.name}`,
+  );
+  /*
+   * The page's own argument: the root cause is the checks that actually
+   * failed, so it cannot name a finding that passed, and an endpoint with
+   * nothing wrong gets no root cause at all.
+   */
+  const failed = insightRun.checks.filter((c) => c.result !== 'pass');
+  check(
+    'every failing check carries a severity the panel can print',
+    failed.every((c) => ['critical', 'high', 'medium', 'low'].includes(c.severity)),
+  );
+  check(
+    'the root cause is drawn from the failing checks',
+    failed.length === 0
+      ? insightRun.rootCause === undefined
+      : failed.some((c) => insightRun.rootCause.summary.includes(c.name)),
+    insightRun.rootCause?.summary ?? 'no root cause',
+  );
+  check(
+    'confidence is a percentage, and never certainty',
+    failed.length === 0 ||
+      (insightRun.rootCause.confidencePct > 0 && insightRun.rootCause.confidencePct <= 94),
+    `${insightRun.rootCause?.confidencePct ?? 0}%`,
+  );
+  check(
+    'every recommendation answers a check that failed',
+    insightRun.recommendations.length <= failed.length &&
+      insightRun.recommendations.every((r) => r.title),
+    `${insightRun.recommendations.length} actions for ${failed.length} findings`,
+  );
+
+  const insightTemplates = await fetch(`${API}/insight/templates`, { headers: authed(token) }).then(
+    (r) => r.json(),
+  );
+  check(
+    'the saved diagnostic templates come back',
+    Array.isArray(insightTemplates) && insightTemplates.length >= 3,
+    `${insightTemplates.length} templates`,
+  );
+
+  const remediationRes = await fetch(
+    `${API}/insight/diagnostics/${encodeURIComponent(insightRun.id)}/remediation`,
+    {
+      method: 'POST',
+      headers: authed(token, {
+        'content-type': 'application/json',
+        'x-csrf-token': session.csrfToken,
+      }),
+      body: '{}',
+    },
+  );
+  check(
+    'Run Remediation is accepted — HTTP 202',
+    remediationRes.status === 202,
+    `HTTP ${remediationRes.status}`,
+  );
 
   // --- Device detail -------------------------------------------------------
   const firstId = (

@@ -6299,6 +6299,38 @@ components:
           - completed
           - remediated
           - verified
+        device:
+          description: The endpoint the run was made against, for the context line.
+          type: object
+          additionalProperties: false
+          required:
+          - id
+          - name
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            user:
+              type: string
+            os:
+              type: string
+            dexScore:
+              type: integer
+        rootCause:
+          description: What the failing checks, taken together, point at.
+          type: object
+          additionalProperties: false
+          required:
+          - summary
+          - confidencePct
+          properties:
+            summary:
+              type: string
+              maxLength: 200
+            confidencePct:
+              type: integer
+              description: How far the checks agree, 0-100.
         checks:
           type: array
           items:
@@ -6317,6 +6349,14 @@ components:
                 - fail
                 - warn
                 - pending
+              severity:
+                description: How bad this check's finding is, as the panel prints it.
+                type: string
+                enum:
+                - critical
+                - high
+                - medium
+                - low
               detail:
                 type: string
         recommendations:
@@ -6332,6 +6372,10 @@ components:
                 type: string
               title:
                 type: string
+              expected:
+                description: What the action should achieve, e.g. "+8 DEX points".
+                type: string
+                maxLength: 120
               risk:
                 type: string
                 enum:

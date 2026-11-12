@@ -511,3 +511,30 @@ you.
     either, so this is faithful, but a zone that opened the Devices page
     filtered to it is the obvious next step and needs the same bounded id
     filter as handover question 39.
+50. **Saved descriptions can be written but not read back.** v129 offers
+    **Save Diagnostic Template** and no picker to load one, so the restored
+    page matches it: `POST /insight/templates` stores a description and
+    `GET /insight/templates` serves the three seeded ones, but nothing in the
+    approved layout reads them. Either the reference is missing a control or
+    the templates are meant for somewhere else — this needs a design answer
+    before the GET has a purpose.
+51. **The checks panel prints less than the server knows.** Each check carries
+    a `detail` ("Memory is at 80%") and a pass/fail result, and the reference
+    prints neither — its rows are a name and a severity, and it lists only
+    findings. The detail is carried as the row's `title` and the passing
+    checks are dropped. Whether the approved design wants the detail line and
+    a count of what passed is a question for the design owner, not a guess.
+52. **Nothing scopes `/devices` to a form factor.** The page opens on the
+    worst-scoring endpoint, which on this estate is a Windows Server. Insight
+    is a service-desk tool for user-reported problems, so the sensible default
+    is the worst-scoring _user_ endpoint — but `chassis` is a stored column
+    with no declared query parameter, and `platform` only separates
+    windows/macos/linux. The same bounded-filter gap as handover question 39.
+53. **A run is not persisted beyond its id.** `insight_runs` records the id,
+    the endpoint, the description, the status and who ran it — not the checks
+    or the recommendations, which are computed in the response and then
+    discarded. There is no route to fetch a past run, so nothing reads what
+    is missing and nothing is broken; but the moment one exists it must
+    return the measures that produced the original answer rather than
+    re-diagnosing against today's, which means snapshotting the checks at
+    submit time.

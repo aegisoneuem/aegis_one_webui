@@ -724,3 +724,45 @@ A zone with no peer cache serves nothing locally and therefore saves nothing.
 Four of this estate's nine zones are in that position, and they report 0% with
 "Not required" rather than being hidden — a branch of a thousand endpoints does
 not warrant a cache node, and the page should say so rather than imply a fault.
+
+## D-046 — The diagnosis is computed, where the reference hard-codes it
+
+AEGIS Insight is the one page in v129 whose content is a literal. The root
+cause `"High Memory Pressure + Low Disk Space + Application Instability"` and
+the `"91%"` beside it are strings in the bundle, along with the five check
+rows and the three recommendations; the preview returns the same answer for
+every endpoint and every description typed into it.
+
+Restoring that verbatim would have meant shipping a page that lies about the
+endpoint on screen. So the layout is the reference's and the content is the
+endpoint's: ten checks read stored measures — memory, CPU, boot time, free
+disk, benchmark failures, open critical findings, outstanding updates, pending
+restart, endpoint protection, disk encryption — and the root cause names the
+three worst findings.
+
+Confidence is the sum of the findings' severity weights, capped at 94:
+
+    critical 34 · high 24 · medium 13 · low 5     confidence = min(94, Σ)
+
+The cap is the honest part. A correlation across ten measures is not
+certainty, and no run should print 100%. An endpoint whose every measure is
+inside its threshold gets no root cause at all and an empty actions panel,
+which the reference has no state for, because the reference never had to
+consider one.
+
+The problem description steers which family of checks is weighted — "slow" and
+"boot" raise the performance checks, "crash" the stability ones — but it
+cannot create a finding the measures do not support. A contract assertion
+holds the line: the root cause may only name checks that failed.
+
+## D-047 — A remediation is a job, not a session
+
+**Run Remediation** submits work and returns a job id. It does not open a
+shell, a remote desktop, or anything else interactive, and there is no
+"watch it run" view — the result appears under Live Activity like any other
+job, and the button reads "Remediation queued" afterwards.
+
+This is the same boundary every other action in the console observes, and it
+is the reason the recommendations carry an `expected` figure ("+5 DEX
+points") rather than a progress bar: the page states what the action should
+achieve and then hands it to the job pipeline.

@@ -78,6 +78,7 @@ export function seedDatabase({
   seedScans(db, rng);
   seedPeers(db, rng);
   rollUpDelivery(db);
+  seedInsightTemplates(db);
   seedIntegrations(db, rng);
   seedUsersAndRoles(db, rng);
   seedTokens(db, rng);
@@ -1168,6 +1169,35 @@ function rollUpEntitlements(db: Db): void {
  * A zone with no peer cache serves nothing locally, so it saves nothing and
  * its hit rate is zero — which is the finding the page exists to surface.
  */
+/** The saved descriptions a service desk reaches for most often. */
+function seedInsightTemplates(db: Db): void {
+  const insert = db.prepare(
+    `INSERT INTO insight_templates (id,name,description,owner,created_at) VALUES (?,?,?,?,?)`,
+  );
+  const templates: readonly (readonly [string, string])[] = [
+    ['Slow laptop', 'User reports that the laptop is slow and applications take too long to open.'],
+    [
+      'Applications crashing',
+      'Applications close unexpectedly several times a day, with no pattern the user can describe.',
+    ],
+    [
+      'Will not finish updates',
+      'The endpoint reports pending updates for weeks and never finishes installing them.',
+    ],
+  ];
+  db.transaction(() => {
+    templates.forEach(([name, description], i) => {
+      insert.run(
+        `itpl-${String(i + 1).padStart(3, '0')}`,
+        name,
+        description,
+        'Meera Subramanian',
+        daysAgo(40 - i * 9),
+      );
+    });
+  })();
+}
+
 function rollUpDelivery(db: Db): void {
   db.exec(`
     UPDATE zones SET

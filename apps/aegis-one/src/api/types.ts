@@ -666,6 +666,48 @@ export type ConfigurationSummary = {
   };
 };
 
+/**
+ * One diagnostic run: the endpoint it was made against, what the failing
+ * checks taken together point at, every check with its own severity, and the
+ * actions that would address them.
+ */
+export type InsightRun = {
+  id: string;
+  status: 'running' | 'completed' | 'remediated' | 'verified';
+  device?: {
+    id: string;
+    name: string;
+    user?: string;
+    os?: string;
+    dexScore?: number;
+  };
+  rootCause?: {
+    summary: string;
+    /** How far the failing checks agree, 0-100. */
+    confidencePct: number;
+  };
+  checks: {
+    name: string;
+    result: 'pass' | 'fail' | 'warn' | 'pending';
+    severity?: 'critical' | 'high' | 'medium' | 'low';
+    detail?: string;
+  }[];
+  recommendations: {
+    id: string;
+    title: string;
+    /** What the action should achieve, e.g. "+8 DEX points". */
+    expected?: string;
+    risk?: 'low' | 'medium' | 'high';
+  }[];
+};
+
+/** A saved problem description, so a common report need not be retyped. */
+export type InsightTemplate = {
+  id: string;
+  name: string;
+  description: string;
+};
+
 export type Zone = {
   id: string;
   name: string;

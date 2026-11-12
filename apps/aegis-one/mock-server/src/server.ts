@@ -25,6 +25,7 @@ import { registerConfigurationRoutes } from './routes/configuration';
 import { registerDexRoutes } from './routes/dex';
 import { registerReportRoutes } from './routes/reports';
 import { registerZoneRoutes } from './routes/zones';
+import { registerInsightRoutes } from './routes/insight';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../../..');
@@ -149,6 +150,7 @@ export async function start(): Promise<void> {
   registerDexRoutes(app, db, BASE_PATH);
   registerReportRoutes(app, db, BASE_PATH);
   registerZoneRoutes(app, db, BASE_PATH);
+  registerInsightRoutes(app, db, BASE_PATH);
   // Last, so its generic `/:id` detail routes cannot shadow a specific one
   // such as `/devices/facets`.
   registerResourceRoutes(app, db, BASE_PATH);

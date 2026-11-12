@@ -1095,6 +1095,65 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByText('Discovery queued')).toBeVisible();
   });
 
+  test('AEGIS Insight opens with no diagnosis, then reports a root cause', async ({ page }) => {
+    await page.goto('/insight');
+
+    // The reference's idle state: the form on the left, nothing on the right.
+    await expect(page.getByRole('heading', { name: 'Describe the Problem' })).toBeVisible();
+    await expect(page.getByText('No Diagnosis Yet')).toBeVisible();
+    await expect(page.getByText('Endpoint:')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Run Diagnostics' }).click();
+
+    await expect(page.getByText('Likely root cause')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Diagnostic Checks' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Recommended Actions' })).toBeVisible();
+    await expect(page.getByText(/^\d+%$/)).toBeVisible();
+
+    /*
+     * The checks panel lists findings, not a checklist: every row carries a
+     * severity, and none of them says "Pass".
+     */
+    const rows = page.locator('li', { hasText: /Critical|High|Medium|Low/ });
+    expect(await rows.count()).toBeGreaterThan(0);
+    await expect(page.getByText('Pass', { exact: true })).toHaveCount(0);
+  });
+
+  test('a diagnosis runs against the endpoint named in the URL', async ({ page }) => {
+    await page.goto('/insight');
+
+    // The endpoint link is the only place the page prints the device id, so
+    // follow it to learn the id and then come back with it in the URL.
+    const endpoint = page.getByText('Endpoint:').getByRole('button');
+    const hostname = await endpoint.innerText();
+    await endpoint.click();
+    await expect(page).toHaveURL(/\/devices\/[^/]+$/);
+    const id = new URL(page.url()).pathname.split('/').pop() ?? '';
+
+    await page.goto(`/insight?device=${id}`);
+    await expect(page.getByRole('button', { name: hostname })).toBeVisible();
+  });
+
+  test('Run Remediation queues a job rather than opening a session', async ({ page }) => {
+    await page.goto('/insight');
+    await page.getByRole('button', { name: 'Run Diagnostics' }).click();
+    await expect(page.getByText('Likely root cause')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Run Remediation' }).click();
+
+    // The toast and the button both read "Remediation queued", so scope the
+    // first assertion to the notification region.
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Remediation queued'),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText('It runs as a job; the result appears under Live Activity.'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Remediation queued' })).toBeDisabled();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

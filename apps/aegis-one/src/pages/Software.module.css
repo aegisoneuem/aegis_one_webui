@@ -308,3 +308,16 @@ button.kpiActive:focus-visible {
 .footnote i {
   font-style: normal;
 }
+
+/* The add-and-edit dialog's fields, two to a row where there is room. */
+.editor {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (width <= 640px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -530,11 +530,31 @@ export interface paths {
         /** Patch policies. */
         get: operations["listPatchPolicies"];
         put?: never;
-        post?: never;
+        /** Create a patch policy (New Policy), or copy an existing one. */
+        post: operations["createPatchPolicy"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/patch-policies/{policyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Policy detail (Open). */
+        get: operations["getPatchPolicy"];
+        put?: never;
+        post?: never;
+        /** Delete a policy. */
+        delete: operations["deletePatchPolicy"];
+        options?: never;
+        head?: never;
+        /** Suspend or resume a policy. */
+        patch: operations["setPatchPolicyStatus"];
         trace?: never;
     };
     "/software": {
@@ -1975,7 +1995,11 @@ export interface components {
             id: string;
             /** @enum {string} */
             status: "queued" | "running" | "ready" | "failed";
-            format?: components["schemas"]["ExportFormat"];
+            /**
+             * @description What came back. Wider than ExportFormat, which is what a caller may ask for: the diagnostic bundle is a zip, and nobody requests one.
+             * @enum {string}
+             */
+            format?: "csv" | "xlsx" | "pdf" | "html" | "zip";
             /** @description Short-lived signed path; absent until ready. */
             downloadUrl?: string | null;
             /** Format: date-time */
@@ -2319,6 +2343,14 @@ export interface components {
         PatchPage: {
             items: components["schemas"]["Patch"][];
             page: components["schemas"]["PageInfo"];
+        };
+        PatchPolicyInput: {
+            name: string;
+            content?: string;
+            rollout?: ("pilot" | "broad" | "late")[];
+            schedule?: string;
+            /** @description An existing policy to copy. Its content, rollout and schedule are taken unless overridden. */
+            copyOf?: string;
         };
         PatchPolicy: {
             id: string;
@@ -3472,14 +3504,21 @@ export interface components {
             secret: string;
         };
         License: {
+            /**
+             * Format: date-time
+             * @description When the licence was read. Days remaining are counted from this, not the browser clock.
+             */
+            asOf: string;
             plan: string;
             seats: {
                 inUse: number;
                 total: number;
+                /** @description Seats in use by platform. Windows Server counts as windows; `other` carries anything outside the three, so the split always adds up to `inUse` rather than quietly losing a platform. */
                 byPlatform: {
                     windows?: number;
                     macos?: number;
                     linux?: number;
+                    other?: number;
                 };
             };
             term: {
@@ -3489,11 +3528,24 @@ export interface components {
                 endsAt: string;
             };
             modules: {
+                id: string;
                 name: string;
+                /**
+                 * @description How the module is licensed, as the card's second line prints it.
+                 * @enum {string}
+                 */
+                tier: "included" | "add-on" | "preview";
                 enabled: boolean;
+                /** @description False for a preview module, which the card says is not counted. */
+                countsAgainstSeats: boolean;
             }[];
         };
         Health: {
+            /**
+             * Format: date-time
+             * @description When these checks ran. The page dates its figures from this, not the browser clock.
+             */
+            asOf: string;
             summary: {
                 servicesHealthy: number;
                 servicesTotal: number;
@@ -3669,6 +3721,7 @@ export interface components {
         JobId: string;
         DeploymentId: string;
         ReportId: string;
+        PolicyId: string;
         ConnectorId: string;
         DestinationId: string;
         ChannelId: string;
@@ -4560,6 +4613,114 @@ export interface operations {
                     "application/json": components["schemas"]["PatchPolicy"][];
                 };
             };
+        };
+    };
+    createPatchPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchPolicyInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatchPolicy"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getPatchPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policyId: components["parameters"]["PolicyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Policy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatchPolicy"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deletePatchPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policyId: components["parameters"]["PolicyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["NotFound"];
+            /** @description The policy is active, so it cannot be deleted. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setPatchPolicyStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policyId: components["parameters"]["PolicyId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "active" | "suspended";
+                };
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatchPolicy"];
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
     };
     listSoftware: {

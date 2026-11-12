@@ -11,7 +11,7 @@ makes a screenshot, a load-test result or a failing test worth anything.
 | Default seed         | **`20260401`**                                           |
 | Default device count | **50,000**                                               |
 | Generator            | `mulberry32`, in `packages/mock-core/src/db/rng.ts`      |
-| Fixed "now"          | `2026-11-01T09:30:00+05:30`                              |
+| "Now"                | the moment the seed ran (`AEGIS_SEED_NOW` pins it)       |
 | Output               | `apps/aegis-one/mock-server/data/aegis-mock.db` (SQLite) |
 
 `Math.random` is never used in seeding. Every value — a hostname, a last-seen

@@ -987,6 +987,99 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PatchPolicy'
+    post:
+      tags:
+      - patches
+      operationId: createPatchPolicy
+      summary: Create a patch policy (New Policy), or copy an existing one.
+      x-required-permission: patches:deploy
+      x-csrf: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchPolicyInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /patch-policies/{policyId}:
+    get:
+      tags:
+      - patches
+      operationId: getPatchPolicy
+      summary: Policy detail (Open).
+      x-required-permission: patches:read
+      parameters:
+      - $ref: '#/components/parameters/PolicyId'
+      responses:
+        '200':
+          description: Policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - patches
+      operationId: setPatchPolicyStatus
+      summary: Suspend or resume a policy.
+      x-required-permission: patches:deploy
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/PolicyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - suspended
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+      - patches
+      operationId: deletePatchPolicy
+      summary: Delete a policy.
+      x-required-permission: patches:deploy
+      x-csrf: true
+      parameters:
+      - $ref: '#/components/parameters/PolicyId'
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: The policy is active, so it cannot be deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /software:
     get:
       tags:
@@ -3231,6 +3324,13 @@ components:
       schema:
         type: string
         pattern: ^[A-Za-z0-9._-]{1,64}$
+    PolicyId:
+      name: policyId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9._-]{1,64}$
     ConnectorId:
       name: connectorId
       in: path
@@ -3459,7 +3559,16 @@ components:
           - ready
           - failed
         format:
-          $ref: '#/components/schemas/ExportFormat'
+          description: >-
+            What came back. Wider than ExportFormat, which is what a caller may
+            ask for: the diagnostic bundle is a zip, and nobody requests one.
+          type: string
+          enum:
+          - csv
+          - xlsx
+          - pdf
+          - html
+          - zip
         downloadUrl:
           type:
           - string
@@ -4411,6 +4520,35 @@ components:
             $ref: '#/components/schemas/Patch'
         page:
           $ref: '#/components/schemas/PageInfo'
+    PatchPolicyInput:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        content:
+          type: string
+          maxLength: 200
+        rollout:
+          type: array
+          maxItems: 3
+          items:
+            type: string
+            enum:
+            - pilot
+            - broad
+            - late
+        schedule:
+          type: string
+          maxLength: 120
+        copyOf:
+          description: An existing policy to copy. Its content, rollout and schedule are taken unless overridden.
+          type: string
+          maxLength: 64
     PatchPolicy:
       type: object
       additionalProperties: false
@@ -7583,11 +7721,16 @@ components:
       type: object
       additionalProperties: false
       required:
+      - asOf
       - plan
       - seats
       - term
       - modules
       properties:
+        asOf:
+          description: When the licence was read. Days remaining are counted from this, not the browser clock.
+          type: string
+          format: date-time
         plan:
           type: string
         seats:
@@ -7603,6 +7746,10 @@ components:
             total:
               type: integer
             byPlatform:
+              description: >-
+                Seats in use by platform. Windows Server counts as windows;
+                `other` carries anything outside the three, so the split always
+                adds up to `inUse` rather than quietly losing a platform.
               type: object
               additionalProperties: false
               properties:
@@ -7611,6 +7758,8 @@ components:
                 macos:
                   type: integer
                 linux:
+                  type: integer
+                other:
                   type: integer
         term:
           type: object
@@ -7631,21 +7780,41 @@ components:
             type: object
             additionalProperties: false
             required:
+            - id
             - name
+            - tier
             - enabled
+            - countsAgainstSeats
             properties:
+              id:
+                type: string
               name:
                 type: string
+              tier:
+                description: How the module is licensed, as the card's second line prints it.
+                type: string
+                enum:
+                - included
+                - add-on
+                - preview
               enabled:
+                type: boolean
+              countsAgainstSeats:
+                description: False for a preview module, which the card says is not counted.
                 type: boolean
     Health:
       type: object
       additionalProperties: false
       required:
+      - asOf
       - summary
       - services
       - events
       properties:
+        asOf:
+          description: When these checks ran. The page dates its figures from this, not the browser clock.
+          type: string
+          format: date-time
         summary:
           type: object
           additionalProperties: false

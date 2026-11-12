@@ -39,7 +39,23 @@ export const DEFAULT_SEED = 20_260_401;
 export const DEFAULT_DEVICE_COUNT = 50_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
-const NOW = Date.parse('2026-11-01T09:30:00+05:30');
+/*
+ * The fixture's "now" is the moment the seed ran.
+ *
+ * It used to be frozen at 2026-11-01T09:30:00+05:30, which made the database
+ * byte-for-byte reproducible. The cost was that every relative timestamp in
+ * the console decayed: `relative()` falls back to an absolute date past seven
+ * days, so a week after seeding, every "2 min ago" and "Just Now" the
+ * approved design prints read as "01 Nov 2026" instead. On Peer Cache it was
+ * worse than cosmetic — staleness judged against the wall clock reported
+ * every cache in the estate as stale.
+ *
+ * So the clock follows the run. Everything is still derived from this one
+ * constant, so the *shape* of the data is unchanged and reproducible for a
+ * given seed; only its absolute position on the calendar moves. Anything that
+ * needs the old behaviour can pin it with AEGIS_SEED_NOW.
+ */
+const NOW = process.env['AEGIS_SEED_NOW'] ? Date.parse(process.env['AEGIS_SEED_NOW']) : Date.now();
 
 const iso = (ms: number): string => new Date(ms).toISOString();
 const daysAgo = (n: number): string => iso(NOW - n * 86_400_000);
@@ -2889,67 +2905,162 @@ function seedTokens(db: Db, rng: Rng): void {
   })();
 }
 
+/**
+ * The licence: one agreement, its seats, its term and the modules it covers.
+ *
+ * The seven modules and their tiers are the approved Licensing page's own —
+ * five included, Vulnerability Management as an add-on, AEGIS Insight as a
+ * preview that is explicitly not counted against seats. Six of seven are
+ * active, which is what the panel's own count says.
+ *
+ * Seats are sized above the estate rather than at it. A licence with exactly
+ * as many seats as endpoints has no headroom, and the page's whole purpose is
+ * to show how much is left — a donut reading 100% would say nothing.
+ */
 function seedLicenses(db: Db, deviceCount: number): void {
-  const insert = db.prepare(
-    `INSERT INTO licenses (id,product,entitled,consumed,expires_at,support_tier) VALUES (?,?,?,?,?,?)`,
-  );
+  const modules: readonly (readonly [string, string, 'included' | 'add-on' | 'preview'])[] = [
+    ['mod-endpoint', 'Endpoint Management', 'included'],
+    ['mod-patch', 'Patch Management', 'included'],
+    ['mod-liveops', 'Live Activity', 'included'],
+    ['mod-dex', 'Digital Employee Experience', 'included'],
+    ['mod-zones', 'Aegis Zones & Peer Cache', 'included'],
+    ['mod-vuln', 'Vulnerability Management', 'add-on'],
+    ['mod-insight', 'AEGIS Insight', 'preview'],
+  ];
+
   db.transaction(() => {
-    insert.run(
-      'lic-core',
-      'Aegis One — Endpoint Management',
-      50_000,
-      deviceCount,
-      daysAgo(-214),
-      'Premium 24x7',
+    /*
+     * The term runs a financial year and the page counts the days left from
+     * it. Both ends are stored, so "renews in N days" is arithmetic against
+     * the clock rather than a number anyone had to maintain.
+     */
+    db.prepare(
+      `INSERT INTO license (id,plan,seats_total,starts_at,ends_at) VALUES (1,?,?,?,?)`,
+    ).run(
+      'Premium',
+      Math.round(deviceCount * 1.1),
+      iso(NOW - 226 * 86_400_000).slice(0, 10),
+      iso(NOW + 138 * 86_400_000).slice(0, 10),
     );
-    insert.run(
-      'lic-vuln',
-      'Aegis One — Vulnerability Management',
-      50_000,
-      Math.round(deviceCount * 0.94),
-      daysAgo(-214),
-      'Premium 24x7',
+
+    const insert = db.prepare(
+      `INSERT INTO license_modules (id,name,tier,enabled,counts_against_seats,seq)
+       VALUES (?,?,?,?,?,?)`,
     );
-    insert.run(
-      'lic-dex',
-      'Aegis One — Digital Experience',
-      20_000,
-      Math.round(deviceCount * 0.31),
-      daysAgo(-92),
-      'Standard',
+    modules.forEach(([id, name, tier], i) =>
+      insert.run(
+        id,
+        name,
+        tier,
+        // A preview is offered, not active: six of seven, as the page counts.
+        tier === 'preview' ? 0 : 1,
+        tier === 'preview' ? 0 : 1,
+        i,
+      ),
     );
-    insert.run('lic-insight', 'AEGIS Insight', 50_000, deviceCount, daysAgo(-214), 'Premium 24x7');
   })();
 }
 
+/**
+ * The seven services the approved System Health page lists, in its order.
+ *
+ * Three of the seven carry no stored signal: the agent gateway, the peer
+ * cache controller and the notification service are counted from the estate
+ * when the page is read, because the console already knows how many agents
+ * are online, how many zones are delivering badly and how many notifications
+ * are queued. Storing those would be storing an answer that can go stale
+ * against the data it came from. `derived` names which figure replaces the
+ * placeholder.
+ */
 function seedServiceHealth(db: Db, rng: Rng): void {
   const insert = db.prepare(
-    `INSERT INTO service_health (id,component,status,latency_ms,message,checked_at) VALUES (?,?,?,?,?,?)`,
+    `INSERT INTO service_health (id,component,status,signal,detail,derived,checked_at,seq)
+     VALUES (?,?,?,?,?,?,?,?)`,
   );
-  const components: readonly (readonly [string, string, string | null])[] = [
-    ['Console API', 'healthy', null],
-    ['Inventory ingest', 'healthy', null],
-    ['Patch catalogue sync', 'healthy', null],
-    ['Vulnerability feed', 'degraded', 'Last successful feed sync 3 hours ago.'],
-    ['Jaipur Branch relay', 'degraded', 'Relay reachable but 41 minutes behind.'],
-    ['Report generation', 'healthy', null],
-    ['Notification delivery', 'healthy', null],
-    ['Peer cache coordinator', 'healthy', null],
-    ['Identity provider', 'healthy', null],
-    ['Audit pipeline', 'healthy', null],
+
+  const services: readonly (readonly [string, string, string, string, string | null])[] = [
+    ['Console API', 'healthy', '31 ms', 'Responding Normally', null],
+    ['Agent Gateway', 'healthy', '—', 'Agents Connected', 'agents'],
+    ['Patch Catalog Sync', 'healthy', '25 min ago', 'Last Successful Sync', null],
+    ['Directory Sync', 'healthy', '7 min ago', 'Entra ID and LDAP', null],
+    ['Peer Cache Controller', 'degraded', '—', 'Below delivery threshold', 'peercache'],
+    ['Notification Service', 'healthy', '—', 'Email and Webhooks', 'notifications'],
+    ['Database', 'healthy', '59% used', 'Storage and Backups', null],
   ];
+
   db.transaction(() => {
-    components.forEach(([component, status, message], i) => {
+    services.forEach(([component, status, signal, detail, derived], i) =>
       insert.run(
         `svc-${i + 1}`,
         component,
         status,
-        rng.int(8, 640),
-        message,
-        iso(NOW - rng.int(10_000, 300_000)),
-      );
-    });
+        signal,
+        detail,
+        derived,
+        // Checked a few minutes ago, as a health page's own figures are.
+        iso(NOW - rng.int(60_000, 600_000)),
+        i,
+      ),
+    );
+
+    seedHealthEvents(db, rng);
   })();
+}
+
+/**
+ * A day of logged events for the Events panel.
+ *
+ * Warnings cluster and errors are rare, which is what a real day looks like:
+ * a handful of noisy hours rather than an even spread. The panel's whole
+ * point is to show when something went wrong, so an even spread would hide
+ * the only thing it has to say.
+ */
+function seedHealthEvents(db: Db, rng: Rng): void {
+  const insert = db.prepare(`INSERT INTO health_events (id,at,level,message) VALUES (?,?,?,?)`);
+
+  const warnings = [
+    'Agent check-in retried after timeout',
+    'Patch catalogue sync slower than expected',
+    'Peer cache delivery below threshold in Jaipur Branch',
+    'Notification webhook retried',
+    'Directory page fetch retried',
+  ];
+  const errors = [
+    'Peer cache election failed, retrying',
+    'Notification webhook gave up after 3 attempts',
+    'Patch catalogue sync failed',
+  ];
+
+  let n = 0;
+  for (let hour = 23; hour >= 0; hour--) {
+    /*
+     * Four hours of the day are busy and the rest are quiet. The busy hours
+     * are picked from the hour index rather than drawn, so the shape of the
+     * chart is the same for a given seed.
+     */
+    const busy = hour % 7 === 2 || hour % 11 === 3;
+    const warningCount = busy ? rng.int(3, 5) : rng.int(0, 2);
+    const errorCount = busy && hour % 7 === 2 ? 1 : 0;
+
+    for (let i = 0; i < warningCount; i++) {
+      n += 1;
+      insert.run(
+        `evt-${String(n).padStart(4, '0')}`,
+        iso(NOW - hour * 3_600_000 - rng.int(0, 3_500_000)),
+        'warning',
+        warnings[n % warnings.length] ?? 'Warning',
+      );
+    }
+    for (let i = 0; i < errorCount; i++) {
+      n += 1;
+      insert.run(
+        `evt-${String(n).padStart(4, '0')}`,
+        iso(NOW - hour * 3_600_000 - rng.int(0, 3_500_000)),
+        'error',
+        errors[n % errors.length] ?? 'Error',
+      );
+    }
+  }
 }
 
 function seedReports(db: Db): void {

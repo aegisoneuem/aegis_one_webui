@@ -821,23 +821,65 @@ CREATE TABLE roles (
   user_count INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE licenses (
-  id TEXT PRIMARY KEY,
-  product TEXT NOT NULL,
-  entitled INTEGER NOT NULL,
-  consumed INTEGER NOT NULL,
-  expires_at TEXT NOT NULL,
-  support_tier TEXT NOT NULL
+-- One licence, not a list of products.
+--
+-- The approved Licensing page describes a single agreement: a plan, a seat
+-- count, a term, and the modules that agreement covers. The table this
+-- replaced held one row per product with its own entitlement and expiry,
+-- which could not answer "how many days until renewal" or "which plan is
+-- this" — the two things the page leads with.
+CREATE TABLE license (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  plan TEXT NOT NULL,
+  seats_total INTEGER NOT NULL,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL
 );
 
+-- What the agreement covers. `tier` is what the card's second line prints:
+-- a module can be included in the plan, bought as an add-on, or offered as a
+-- preview — and a preview is explicitly not counted against seats, which the
+-- card says in so many words.
+CREATE TABLE license_modules (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  tier TEXT NOT NULL,                      -- included | add-on | preview
+  enabled INTEGER NOT NULL DEFAULT 1,
+  counts_against_seats INTEGER NOT NULL DEFAULT 1,
+  seq INTEGER NOT NULL
+);
+
+-- The Services table on the approved System Health page: a name, a state, a
+-- signal and a detail line. `signal` is deliberately a string rather than a
+-- number, because the four services print four different kinds of signal —
+-- a latency, a ratio, an age and a percentage — and forcing them into one
+-- numeric column is what made the old page print "31" with no unit.
+--
+-- Three of the seven signals are not stored at all: the agent gateway, the
+-- peer cache controller and the notification service are counted from the
+-- estate when the page is read. See routes/diagnostics.ts.
 CREATE TABLE service_health (
   id TEXT PRIMARY KEY,
   component TEXT NOT NULL,
-  status TEXT NOT NULL,
-  latency_ms INTEGER NOT NULL,
-  message TEXT,
-  checked_at TEXT NOT NULL
+  status TEXT NOT NULL,                  -- healthy | degraded | down
+  signal TEXT NOT NULL,
+  detail TEXT NOT NULL,
+  derived TEXT,                          -- which estate figure replaces the stored signal
+  checked_at TEXT NOT NULL,
+  seq INTEGER NOT NULL
 );
+
+-- One row per logged event in the last day, which the Events panel buckets
+-- by hour. Stored rather than derived: a warning is a thing that happened at
+-- a time, and bucketing a count into twenty-four columns needs the times.
+CREATE TABLE health_events (
+  id TEXT PRIMARY KEY,
+  at TEXT NOT NULL,
+  level TEXT NOT NULL,                   -- info | warning | error
+  message TEXT NOT NULL
+);
+
+CREATE INDEX idx_health_events_at ON health_events(at DESC);
 
 CREATE TABLE audit_log (
   id TEXT PRIMARY KEY,

@@ -1421,6 +1421,163 @@ test.describe('signed in as Super Admin', () => {
     await expect(row.getByText('Revoked')).toBeVisible();
   });
 
+  test('Licensing opens on the approved counters and panels', async ({ page }) => {
+    await page.goto('/licensing');
+
+    const kpis = page.locator('div[class*="kpis"]');
+    for (const kpi of ['Plan', 'Endpoints in Use', 'Renews in', 'Modules'])
+      await expect(kpis.getByText(kpi, { exact: true })).toBeVisible();
+
+    for (const panel of ['Seat Usage', 'Seats by Platform', 'License Term', 'Modules'])
+      await expect(page.getByRole('heading', { name: panel, exact: true })).toBeVisible();
+
+    // The three figures under each donut. These words also appear in the
+    // donut's own legend and in its visually-hidden table, so the assertion
+    // scopes to the description lists the panels print them in.
+    for (const fact of ['In Use', 'Available', 'Licensed Seats', 'Started', 'Ends', 'Term Elapsed'])
+      await expect(page.locator('dt').filter({ hasText: fact }).first()).toBeVisible();
+
+    await expect(page.getByRole('button', { name: 'Upload License' })).toBeVisible();
+  });
+
+  test('every licensed module says how it is licensed', async ({ page }) => {
+    await page.goto('/licensing');
+
+    const modules = page.locator('article');
+    await expect(modules).toHaveCount(7);
+
+    /*
+     * Several module names are also nav entries, so each assertion scopes to
+     * the module cards rather than the page.
+     */
+    for (const name of [
+      'Endpoint Management',
+      'Patch Management',
+      'Live Activity',
+      'Digital Employee Experience',
+      'Aegis Zones & Peer Cache',
+      'Vulnerability Management',
+      'AEGIS Insight',
+    ])
+      await expect(modules.filter({ hasText: name })).toHaveCount(1);
+
+    // The add-on and the preview are the two that are not simply included.
+    await expect(page.getByText('Add-on · Active')).toBeVisible();
+    await expect(page.getByText('Preview', { exact: true })).toBeVisible();
+    await expect(page.getByText('Not Counted in Licensed Seats')).toBeVisible();
+    await expect(page.getByText(/of 7 active/)).toBeVisible();
+  });
+
+  test('System Health opens on the approved counters, services and events', async ({ page }) => {
+    await page.goto('/diagnostics');
+
+    // The reference titles this page System Health; the nav says Diagnostics.
+    await expect(page.getByRole('heading', { name: 'System Health' })).toBeVisible();
+
+    const kpis = page.locator('div[class*="kpis"]');
+    for (const kpi of ['Services Healthy', 'Degraded', 'Agents Connected', 'Warnings (24 h)'])
+      await expect(kpis.getByText(kpi, { exact: true })).toBeVisible();
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Service', 'Status', 'Signal', 'Detail'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+    await expect(grid.locator('tbody tr')).toHaveCount(7);
+
+    // The events panel: the chart, its axis, its key and its three figures.
+    await expect(page.getByRole('heading', { name: 'Events, Last 24 Hours' })).toBeVisible();
+    await expect(page.getByText('24 h ago')).toBeVisible();
+    await expect(page.getByText('Now', { exact: true })).toBeVisible();
+    for (const fact of ['Warnings', 'Errors', 'Busiest Hour'])
+      await expect(page.getByText(fact, { exact: true }).last()).toBeVisible();
+  });
+
+  test('a service signal counted from the estate matches the counter above it', async ({
+    page,
+  }) => {
+    await page.goto('/diagnostics');
+
+    /*
+     * Agent Gateway's signal is counted from the devices table, not stored,
+     * so it has to equal the Agents Connected counter. If those two ever
+     * disagree the page is reporting two different estates.
+     */
+    const counter = await page
+      .locator('div[class*="kpi"]')
+      .filter({ hasText: 'Agents Connected' })
+      .last()
+      .innerText();
+    const connected = counter.match(/([\d,]+)\s*\/([\d,]+)/);
+    expect(connected).not.toBeNull();
+
+    const row = page.locator('tr').filter({ hasText: 'Agent Gateway' });
+    await expect(row.getByText(`${connected?.[1]}/${connected?.[2]}`)).toBeVisible();
+  });
+
+  test('Run Health Check and the diagnostic bundle are both accepted', async ({ page }) => {
+    await page.goto('/diagnostics');
+
+    await page.getByRole('button', { name: 'Run Health Check' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Health check queued'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Download Diagnostic Bundle' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Diagnostic bundle queued'),
+    ).toBeVisible();
+  });
+
+  test('a software package can be added and edited', async ({ page }) => {
+    await page.goto('/software');
+
+    // Import Icons has no endpoint behind it and says so rather than failing.
+    await expect(page.getByRole('button', { name: 'Import Icons' })).toBeDisabled();
+
+    /*
+     * Adds its own package and edits it, so the test never touches a seeded
+     * one. It leaves the package behind — the catalogue is additive and the
+     * seeded rows are untouched, which is what matters for a re-run.
+     */
+    const name = `E2E Tool ${Date.now()}`;
+    await page.getByRole('button', { name: '+ Add package' }).click();
+    /*
+     * The catalogue's own filter bar carries a Publisher select and a search
+     * box with "publisher" in its label, so the dialog's fields are addressed
+     * inside the dialog rather than on the page.
+     */
+    const form = page.getByRole('dialog');
+    await form.getByLabel('Name').fill(name);
+    await form.getByLabel('Publisher').fill('Aegis QA');
+    await form.getByLabel('Version').fill('1.0.0');
+    // "Add package" also names the header button, so the exact one is needed.
+    await page.getByRole('button', { name: 'Add package', exact: true }).click();
+
+    await expect(
+      page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText(`${name} added to the catalogue`),
+    ).toBeVisible();
+
+    // A new definition has no installer, so it cannot be deployed yet.
+    await page.getByLabel('Search software or publisher').fill(name);
+    const card = page.locator('li').filter({ hasText: name });
+    await expect(card.getByRole('button', { name: 'Deploy' })).toBeDisabled();
+
+    /*
+     * The shared Menu puts its label on the popover, not on the trigger, so
+     * the card's overflow button is addressed by the glyph it renders.
+     */
+    await card.getByRole('button', { name: '⋯' }).click();
+    await page.getByRole('menuitem', { name: 'Edit Package' }).click();
+    await page.getByRole('dialog').getByLabel('Version').fill('2.0.0');
+    await page.getByRole('button', { name: 'Save package' }).click();
+    await expect(
+      page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText('The version changed, so the installer has to be uploaded again.'),
+    ).toBeVisible();
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

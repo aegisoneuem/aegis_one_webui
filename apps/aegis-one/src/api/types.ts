@@ -991,22 +991,57 @@ export type RoleDefinition = {
   userCount: number;
 };
 
+/**
+ * The licence as the approved page reads it: one agreement, its seats, its
+ * term and the modules it covers. Seats and the platform split are counted
+ * from the estate, so they cannot disagree with the Devices page.
+ */
 export type License = {
-  id: string;
-  product: string;
-  entitled: number;
-  consumed: number;
-  expiresAt: string;
-  supportTier: string;
+  /** When the licence was read; days remaining count from this. */
+  asOf: string;
+  plan: string;
+  seats: {
+    inUse: number;
+    total: number;
+    /** `other` carries anything outside the three, so the split adds up. */
+    byPlatform: { windows?: number; macos?: number; linux?: number; other?: number };
+  };
+  term: { startsAt: string; endsAt: string };
+  modules: LicenseModule[];
 };
 
-export type ServiceHealth = {
+/** One module card. A preview is offered but not counted against seats. */
+export type LicenseModule = {
   id: string;
-  component: string;
-  status: string;
-  latencyMs: number;
-  message: string | null;
-  checkedAt: string;
+  name: string;
+  tier: 'included' | 'add-on' | 'preview';
+  enabled: boolean;
+  countsAgainstSeats: boolean;
+};
+
+/**
+ * The contract's Health: what the System Health page reads. Three of the
+ * services' signals are counted from the estate when the page is read, so
+ * they cannot drift from the Devices and Aegis Zones pages.
+ */
+export type Health = {
+  /** When these checks ran; the events panel buckets against this. */
+  asOf: string;
+  summary: {
+    servicesHealthy: number;
+    servicesTotal: number;
+    degraded: number;
+    agentsConnected: number;
+    agentsTotal: number;
+    warnings24h: number;
+  };
+  services: {
+    name: string;
+    status: 'healthy' | 'degraded' | 'down';
+    signal: string;
+    detail: string;
+  }[];
+  events: { at: string; level: 'info' | 'warning' | 'error'; message: string }[];
 };
 
 export type HealthMeasure = { id: string; label: string; weight: number; score: number };

@@ -890,3 +890,87 @@ screenshot and a false claim about an authentication path.
 
 `PUT` refuses to enable a provider that has no issuer, with HTTP 409. An
 enabled provider nobody can reach is not a configuration, it is a lockout.
+
+## D-054 — The fixture's clock follows the seed run
+
+The seed's "now" was frozen at `2026-11-01T09:30:00+05:30`, which made the
+database byte-for-byte reproducible. The cost was that every relative
+timestamp in the console decayed: `relative()` falls back to an absolute date
+past seven days, so a week after seeding, every "2 min ago" and "Just Now" the
+approved design prints read as "01 Nov 2026" instead. On Peer Cache it was
+worse than cosmetic — staleness judged against the wall clock reported every
+cache in the estate as stale (D-051 works around that, and no longer has to).
+
+The clock now follows the run. Everything is still derived from the one
+constant, so the _shape_ of the fixture is unchanged and reproducible for a
+given seed; only its absolute position on the calendar moves.
+`AEGIS_SEED_NOW` pins it for anyone who needs the old behaviour.
+
+This was the owner's call, put to them before the screenshot sweep: byte-for-
+byte determinism against screenshots that read like the approved design. They
+chose the clock.
+
+## D-055 — The licence is one agreement, and its seats are counted
+
+Licensing stored a row per licensed product, each with its own entitlement and
+expiry. The approved page asks two questions that shape cannot answer — which
+plan is this, and how many days until it renews — because four products with
+four expiries have no single term and no plan.
+
+So the fixture holds one licence and the modules it covers, which is what the
+contract declared all along.
+
+Seats in use and the platform split are **counted from the estate** rather
+than stored. A licence page whose seat count disagreed with the Devices page
+would be worse than no licence page, and a stored consumption figure drifts
+from the devices it was counted from the moment either changes.
+
+Counting them surfaced a gap in the declared shape. The estate runs five OS
+families and `byPlatform` had three keys with `additionalProperties: false`,
+so 455 AIX endpoints had nowhere to go and the split would not have added up.
+`byPlatform` gained `other`, and an assertion now requires the parts to sum to
+the whole. A chart that silently drops a platform is a chart that lies about
+the estate.
+
+## D-056 — A health page counts its own signals
+
+Three of the seven services on System Health carry no stored signal. The agent
+gateway, the peer cache controller and the notification service are counted
+when the page is read — online endpoints over total, zones serving under 70%
+locally, deliveries still retrying — because the console already knows all
+three, and the peer cache controller's _status_ is derived from the same
+figure rather than stored beside it.
+
+Storing those would be storing an answer that goes stale against the data it
+came from. "27/32 agents connected" on a health page while the Devices page
+says something else is not a cosmetic inconsistency: it means the two pages
+are describing different estates, and an operator cannot tell which is right.
+
+A contract assertion requires the gateway signal to equal the estate, and an
+e2e test requires the table and the counter above it to agree.
+
+The signal column is a **string**, not a number, because the four services
+print four different kinds of signal: a latency, a ratio, an age and a
+percentage. The table this replaced had a `latency_ms` column and printed "31"
+with no unit for all of them.
+
+## D-057 — "Now" comes from the server, on the response
+
+Both new pages first computed their own "now" with `Date.now()` during render,
+and the console's `react-hooks/purity` rule refused it — correctly. Licensing
+counts days to renewal and System Health buckets a day of events, and both
+were reading the browser's clock to do it.
+
+`License` and `Health` now carry `asOf`, the instant the server read them, and
+the pages do their arithmetic against that.
+
+The lint rule caught it, but the rule is not the reason. A licence figure that
+changes with whoever is looking at it is not a licence fact: two
+administrators in different time zones would see different days remaining from
+the same agreement. The same applies to the events panel, where the browser's
+clock decides which hour each event falls into — a clock a few minutes off
+shifts the whole chart by a column.
+
+The reference agrees, in its own way: its System Health counters carry a
+"Checked 02:29 AM" line, hidden in the markup. The page was always meant to
+date its figures from the check, not from the viewer.

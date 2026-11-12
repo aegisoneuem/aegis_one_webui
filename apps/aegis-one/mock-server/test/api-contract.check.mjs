@@ -1220,6 +1220,338 @@ const run = async () => {
   });
   check('a token can be revoked', revoked.status === 204, `HTTP ${revoked.status}`);
 
+  // --- Licensing -----------------------------------------------------------
+  const license = await fetch(`${API}/licensing`, { headers: authed(token) }).then((r) => r.json());
+  check(
+    'the licence comes back as one agreement, not a list of products',
+    typeof license.plan === 'string' &&
+      typeof license.seats?.total === 'number' &&
+      typeof license.term?.endsAt === 'string' &&
+      Array.isArray(license.modules),
+    `${license.plan}, ${license.modules.length} modules`,
+  );
+  /*
+   * The page's own argument: seats in use is the estate itself, counted, so
+   * this page and the Devices page cannot disagree about how many endpoints
+   * there are.
+   */
+  const estate = await fetch(`${API}/devices/summary`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'seats in use equals the enrolled estate',
+    license.seats.inUse === estate.all,
+    `${license.seats.inUse} seats against ${estate.all} endpoints`,
+  );
+  check(
+    'and the platform split adds up to it',
+    (license.seats.byPlatform.windows ?? 0) +
+      (license.seats.byPlatform.macos ?? 0) +
+      (license.seats.byPlatform.linux ?? 0) +
+      (license.seats.byPlatform.other ?? 0) ===
+      license.seats.inUse,
+  );
+  // A licence with no headroom tells an administrator nothing.
+  check(
+    'the licence has seats left',
+    license.seats.total > license.seats.inUse,
+    `${license.seats.total - license.seats.inUse} available`,
+  );
+  check(
+    'every module carries a tier the card can print',
+    license.modules.length === 7 &&
+      license.modules.every((m) => ['included', 'add-on', 'preview'].includes(m.tier)),
+  );
+  // A preview is offered but not charged for, which the card states.
+  check(
+    'a preview module is not counted against seats',
+    license.modules
+      .filter((m) => m.tier === 'preview')
+      .every((m) => m.countsAgainstSeats === false && m.enabled === false),
+  );
+  check(
+    'six of the seven modules are active',
+    license.modules.filter((m) => m.enabled).length === 6,
+  );
+
+  // The signature is verified server-side, so an unsigned upload is refused
+  // rather than quietly rewriting the plan and the seat count.
+  const badLicense = await fetch(`${API}/licensing/file`, {
+    method: 'PUT',
+    headers: authed(token, {
+      'content-type': 'application/octet-stream',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: 'not-a-signed-licence',
+  });
+  check(
+    'an unverifiable licence file is refused — HTTP 400',
+    badLicense.status === 400,
+    `HTTP ${badLicense.status}`,
+  );
+
+  // --- System Health -------------------------------------------------------
+  const sysHealth = await fetch(`${API}/diagnostics/health`, { headers: authed(token) }).then((r) =>
+    r.json(),
+  );
+  check(
+    'system health returns its summary, services and events',
+    sysHealth.services.length === 7 &&
+      typeof sysHealth.summary.servicesHealthy === 'number' &&
+      Array.isArray(sysHealth.events),
+    `${sysHealth.services.length} services, ${sysHealth.events.length} events`,
+  );
+  /*
+   * Three signals are counted from the estate rather than stored, so a health
+   * page cannot drift from the pages those figures came from.
+   */
+  check(
+    'the agent gateway signal equals the estate it came from',
+    sysHealth.summary.agentsConnected === estate.online &&
+      sysHealth.summary.agentsTotal === estate.all,
+    `${sysHealth.summary.agentsConnected}/${sysHealth.summary.agentsTotal}`,
+  );
+  check(
+    'the healthy count agrees with the services it counted',
+    sysHealth.summary.servicesHealthy ===
+      sysHealth.services.filter((s) => s.status === 'healthy').length &&
+      sysHealth.summary.degraded ===
+        sysHealth.services.filter((s) => s.status !== 'healthy').length,
+  );
+  check(
+    'the warning count agrees with the events it counted',
+    sysHealth.summary.warnings24h === sysHealth.events.filter((e) => e.level === 'warning').length,
+    `${sysHealth.summary.warnings24h} warnings`,
+  );
+  // Every event is inside the window the panel claims to show.
+  const dayAgo = Date.now() - 24 * 3_600_000;
+  check(
+    'every event is inside the last 24 hours',
+    sysHealth.events.every((e) => Date.parse(e.at) >= dayAgo),
+  );
+
+  const healthCheck = await fetch(`${API}/diagnostics/health-check`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: '{}',
+  });
+  check(
+    'Run Health Check is accepted — HTTP 202',
+    healthCheck.status === 202,
+    `HTTP ${healthCheck.status}`,
+  );
+
+  const bundleRes = await fetch(`${API}/diagnostics/bundle`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: '{}',
+  });
+  const bundle = await bundleRes.json();
+  check(
+    'the diagnostic bundle is built server-side and polled',
+    bundleRes.status === 202 && bundle.status === 'queued' && bundle.downloadUrl === null,
+    `HTTP ${bundleRes.status}`,
+  );
+
+  // --- Software package writes ---------------------------------------------
+  const madePkg = await fetch(`${API}/software`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      name: 'Contract Check Tool',
+      publisher: 'Aegis QA',
+      version: '1.0.0',
+      platform: 'windows',
+      category: 'Utilities',
+    }),
+  });
+  const pkg = await madePkg.json();
+  /*
+   * A new definition is a draft with nothing to install. The catalogue says
+   * "missing" rather than implying the package is ready to deploy.
+   */
+  check(
+    'a package is created as a draft with no installer',
+    madePkg.status === 201 && pkg.state === 'draft' && pkg.installer === 'missing',
+    `HTTP ${madePkg.status}`,
+  );
+
+  const dupe = await fetch(`${API}/software`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      name: 'Contract Check Tool',
+      publisher: 'Aegis QA',
+      version: '1.0.0',
+      platform: 'windows',
+    }),
+  });
+  check(
+    'the same title and version twice is refused — HTTP 409',
+    dupe.status === 409,
+    `HTTP ${dupe.status}`,
+  );
+
+  // Changing the version drops the installer built for the old one.
+  await fetch(`${API}/software/${encodeURIComponent(pkg.id)}`, {
+    method: 'PATCH',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({
+      name: 'Contract Check Tool',
+      publisher: 'Aegis QA',
+      version: '2.0.0',
+      platform: 'windows',
+    }),
+  });
+  const edited = await fetch(`${API}/software/${encodeURIComponent(pkg.id)}`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  /*
+   * The detail route is the shared lister's, which returns the catalogue's own
+   * `latestVersion` where the contract's SoftwarePackage says `version` —
+   * handover question 68.
+   */
+  check(
+    'changing the version invalidates the installer on file',
+    edited.latestVersion === '2.0.0' &&
+      edited.installer === 'missing' &&
+      edited.installerSha256 === null,
+    `${edited.latestVersion}, installer ${edited.installer}`,
+  );
+
+  const goneRes = await fetch(`${API}/software/${encodeURIComponent(pkg.id)}`, {
+    method: 'DELETE',
+    headers: authed(token, { 'x-csrf-token': session.csrfToken }),
+  });
+  check(
+    'a package nobody has installed can be deleted — HTTP 204',
+    goneRes.status === 204,
+    `HTTP ${goneRes.status}`,
+  );
+
+  /*
+   * One that endpoints have installed cannot be: the inventory rows point at
+   * it, and deleting the definition would leave the Devices page listing
+   * software nothing can describe.
+   */
+  const installed = (
+    await fetch(`${API}/software?limit=50`, { headers: authed(token) }).then((r) => r.json())
+  ).items.find((p) => p.installCount > 0);
+  const refused = await fetch(`${API}/software/${encodeURIComponent(installed.id)}`, {
+    method: 'DELETE',
+    headers: authed(token, { 'x-csrf-token': session.csrfToken }),
+  });
+  check(
+    'a package with installations is refused — HTTP 409',
+    refused.status === 409,
+    `HTTP ${refused.status}`,
+  );
+
+  // --- Patch policies ------------------------------------------------------
+  const madePolicy = await fetch(`${API}/patch-policies`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ name: 'Contract Check Policy', content: 'Windows · Critical' }),
+  });
+  const policy = await madePolicy.json();
+  /*
+   * A new policy covers nothing until it has been evaluated, so it is created
+   * suspended with no computers and no patches. One that claimed coverage it
+   * had not calculated would be a policy an administrator trusted wrongly.
+   */
+  check(
+    'a new policy starts suspended and covers nothing',
+    madePolicy.status === 201 &&
+      policy.status === 'suspended' &&
+      policy.computers === 0 &&
+      policy.patchCount === 0 &&
+      policy.nextRunAt === null,
+    `HTTP ${madePolicy.status}`,
+  );
+
+  // A copy takes the source's shape but none of its results.
+  const copied = await fetch(`${API}/patch-policies`, {
+    method: 'POST',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ name: 'Contract Check Copy', copyOf: policy.id }),
+  }).then((r) => r.json());
+  check(
+    'a copy takes the content but not the compliance',
+    copied.content === policy.content && copied.compliancePct === 0,
+    `${copied.content}`,
+  );
+
+  const resumed = await fetch(`${API}/patch-policies/${encodeURIComponent(policy.id)}`, {
+    method: 'PATCH',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ status: 'active' }),
+  }).then((r) => r.json());
+  check('a policy can be resumed', resumed.status === 'active');
+
+  /*
+   * An active policy is deploying to endpoints right now, so deleting it
+   * would stop that mid-flight with nothing recording why.
+   */
+  const refusedDelete = await fetch(`${API}/patch-policies/${encodeURIComponent(policy.id)}`, {
+    method: 'DELETE',
+    headers: authed(token, { 'x-csrf-token': session.csrfToken }),
+  });
+  check(
+    'deleting an active policy is refused — HTTP 409',
+    refusedDelete.status === 409,
+    `HTTP ${refusedDelete.status}`,
+  );
+
+  // Suspending clears the next run: a suspended policy must not promise work.
+  const suspended = await fetch(`${API}/patch-policies/${encodeURIComponent(policy.id)}`, {
+    method: 'PATCH',
+    headers: authed(token, {
+      'content-type': 'application/json',
+      'x-csrf-token': session.csrfToken,
+    }),
+    body: JSON.stringify({ status: 'suspended' }),
+  }).then((r) => r.json());
+  check(
+    'suspending clears the next run',
+    suspended.status === 'suspended' && suspended.nextRunAt === null,
+  );
+
+  for (const id of [policy.id, copied.id]) {
+    const gone = await fetch(`${API}/patch-policies/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: authed(token, { 'x-csrf-token': session.csrfToken }),
+    });
+    check(
+      `a suspended policy can be deleted — HTTP 204`,
+      gone.status === 204,
+      `HTTP ${gone.status}`,
+    );
+  }
+
   // --- Device detail -------------------------------------------------------
   const firstId = (
     await fetch(`${API}/devices?limit=1&fields=id`, { headers: authed(token) }).then((r) =>

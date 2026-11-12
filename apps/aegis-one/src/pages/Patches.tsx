@@ -1,18 +1,21 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   DataTable,
   ErrorState,
+  Field,
   Input,
   Menu,
+  Modal,
   Pagination,
   Select,
   Skeleton,
   buildDefaultView,
   type DataTableColumn,
   type TableView,
+  useToast,
 } from '@aegis/ui';
 import { api } from '../api/client';
 import { useListController, useResource } from '../app/useListController';
@@ -136,6 +139,7 @@ export default function Patches() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const canDeploy = useCan('patches:deploy');
 
   const raw = params.get('tab') ?? 'overview';
@@ -167,6 +171,103 @@ export default function Patches() {
   const [policySearch, setPolicySearch] = useState('');
   const [policyStatus, setPolicyStatus] = useState('');
   const [policyPane, setPolicyPane] = useState<'policies' | 'settings'>('policies');
+
+  const refreshPolicies = () => {
+    void queryClient.invalidateQueries({ queryKey: ['/patch-policies'] });
+    // The four counters above the table count policies, so they move too.
+    void queryClient.invalidateQueries({ queryKey: ['/patches/summary'] });
+  };
+
+  const [policyDialog, setPolicyDialog] = useState(false);
+  const [policyDraft, setPolicyDraft] = useState({ name: '', content: '', copyOf: '' });
+  const [deleting, setDeleting] = useState<PatchPolicy | null>(null);
+  /*
+   * Open reads the declared detail route. The approved design has no policy
+   * page to navigate to, so the detail is shown where the row is rather than
+   * invented as a route of its own.
+   */
+  const [opened, setOpened] = useState<PatchPolicy | null>(null);
+  const openedDetail = useQuery({
+    queryKey: ['/patch-policies', opened?.id],
+    enabled: opened !== null,
+    queryFn: ({ signal }) =>
+      api.get<PatchPolicy>(
+        `/patch-policies/${encodeURIComponent(opened?.id ?? '')}`,
+        undefined,
+        signal,
+      ),
+  });
+
+  const createPolicy = useMutation({
+    mutationFn: () =>
+      api.post<PatchPolicy>('/patch-policies', {
+        name: policyDraft.name.trim(),
+        ...(policyDraft.content.trim() ? { content: policyDraft.content.trim() } : {}),
+        ...(policyDraft.copyOf ? { copyOf: policyDraft.copyOf } : {}),
+      }),
+    onSuccess: (policy) => {
+      toast.show({
+        title: `${policy.name} created`,
+        /*
+         * A new policy covers nothing until it is evaluated, so the server
+         * creates it suspended. Saying so here is kinder than letting an
+         * administrator wonder why the compliance column reads 0%.
+         */
+        message: 'It starts suspended and covers nothing until it runs.',
+        tone: 'success',
+      });
+      setPolicyDialog(false);
+      refreshPolicies();
+    },
+    onError: (error) =>
+      toast.show({
+        title: 'The policy could not be created.',
+        message: error instanceof Error ? error.message : undefined,
+        tone: 'error',
+      }),
+  });
+
+  const changePolicyStatus = useMutation({
+    mutationFn: (vars: { policy: PatchPolicy; status: 'active' | 'suspended' }) =>
+      api.patch<PatchPolicy>(`/patch-policies/${encodeURIComponent(vars.policy.id)}`, {
+        status: vars.status,
+      }),
+    onSuccess: (policy) => {
+      toast.show({
+        title:
+          policy.status === 'suspended' ? `${policy.name} suspended` : `${policy.name} resumed`,
+        message: policy.status === 'suspended' ? 'Its next run has been cleared.' : undefined,
+        tone: 'success',
+      });
+      refreshPolicies();
+    },
+    onError: () => toast.show({ title: 'The policy could not be changed.', tone: 'error' }),
+  });
+
+  const deletePolicy = useMutation({
+    mutationFn: (policy: PatchPolicy) =>
+      api.delete(`/patch-policies/${encodeURIComponent(policy.id)}`),
+    onSuccess: () => {
+      toast.show({ title: 'Policy deleted', tone: 'success' });
+      setDeleting(null);
+      refreshPolicies();
+    },
+    onError: (error) =>
+      toast.show({
+        title: 'The policy could not be deleted.',
+        message: error instanceof Error ? error.message : undefined,
+        tone: 'error',
+      }),
+  });
+
+  const openPolicyDialog = (copyOf?: PatchPolicy) => {
+    setPolicyDraft({
+      name: copyOf ? `${copyOf.name} (copy)` : '',
+      content: copyOf?.content ?? '',
+      copyOf: copyOf?.id ?? '',
+    });
+    setPolicyDialog(true);
+  };
   const [osChart, setOsChart] = useState('bar');
   const [sevChart, setSevChart] = useState('donut');
   const [ageChart, setAgeChart] = useState('column');
@@ -272,6 +373,11 @@ export default function Patches() {
           status={policyStatus}
           onStatus={setPolicyStatus}
           canEdit={canDeploy}
+          onNew={() => openPolicyDialog()}
+          onOpen={setOpened}
+          onCopy={(policy) => openPolicyDialog(policy)}
+          onDelete={setDeleting}
+          onStatusChange={(policy, status) => changePolicyStatus.mutate({ policy, status })}
         />
       ) : (
         <>
@@ -413,6 +519,124 @@ export default function Patches() {
           </span>
         </div>
       ) : null}
+
+      <Modal
+        open={policyDialog}
+        onClose={() => setPolicyDialog(false)}
+        title={policyDraft.copyOf ? 'Copy policy' : 'New patch policy'}
+        description="A policy starts suspended and covers nothing until it runs. Give it a name and what it should cover."
+        footer={
+          <>
+            <Button onClick={() => setPolicyDialog(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              loading={createPolicy.isPending}
+              disabled={!policyDraft.name.trim()}
+              onClick={() => createPolicy.mutate()}
+            >
+              Create policy
+            </Button>
+          </>
+        }
+      >
+        <Field label="Name" required>
+          {(field) => (
+            <Input
+              {...field}
+              maxLength={120}
+              placeholder="Windows Monthly Security"
+              value={policyDraft.name}
+              onChange={(e) => setPolicyDraft({ ...policyDraft, name: e.target.value })}
+            />
+          )}
+        </Field>
+        <Field
+          label="Content"
+          hint="Platform, source and severities — for example Windows OS Critical/High."
+        >
+          {(field) => (
+            <Input
+              {...field}
+              maxLength={200}
+              placeholder="Windows · OS · Critical/High"
+              value={policyDraft.content}
+              onChange={(e) => setPolicyDraft({ ...policyDraft, content: e.target.value })}
+            />
+          )}
+        </Field>
+      </Modal>
+
+      <Modal
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        title={`Delete ${deleting?.name ?? ''}?`}
+        description="The policy and its schedule are removed. Patches it has already installed stay installed."
+        footer={
+          <>
+            <Button onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              loading={deletePolicy.isPending}
+              onClick={() => deleting && deletePolicy.mutate(deleting)}
+            >
+              Delete policy
+            </Button>
+          </>
+        }
+      >
+        {deleting ? (
+          <p>
+            It covers {num(deleting.computers)} computers and is {deleting.status}.
+          </p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={opened !== null}
+        onClose={() => setOpened(null)}
+        title={opened?.name ?? ''}
+        description="Read from the policy's own record."
+        footer={<Button onClick={() => setOpened(null)}>Close</Button>}
+      >
+        {openedDetail.data ? (
+          <dl className={styles.policyDetail}>
+            <div>
+              <dt>Content</dt>
+              <dd>{openedDetail.data.content}</dd>
+            </div>
+            <div>
+              <dt>Rollout</dt>
+              <dd>
+                {openedDetail.data.rollout.length === 0
+                  ? 'All Computers'
+                  : openedDetail.data.rollout.map(capitalise).join(' → ')}
+              </dd>
+            </div>
+            <div>
+              <dt>Schedule</dt>
+              <dd>{openedDetail.data.schedule}</dd>
+            </div>
+            <div>
+              <dt>Computers</dt>
+              <dd>{num(openedDetail.data.computers)}</dd>
+            </div>
+            <div>
+              <dt>Compliance</dt>
+              <dd>{openedDetail.data.compliancePct}%</dd>
+            </div>
+            <div>
+              <dt>Next run</dt>
+              <dd>
+                {openedDetail.data.nextRunAt
+                  ? dateTime(openedDetail.data.nextRunAt)
+                  : 'Not scheduled'}
+              </dd>
+            </div>
+          </dl>
+        ) : (
+          <Skeleton className={styles.rowSkeleton} />
+        )}
+      </Modal>
     </div>
   );
 }
@@ -675,6 +899,11 @@ function PoliciesTab({
   status,
   onStatus,
   canEdit,
+  onNew,
+  onOpen,
+  onCopy,
+  onDelete,
+  onStatusChange,
 }: {
   data: PatchSummary;
   rows: readonly PatchPolicy[];
@@ -686,6 +915,11 @@ function PoliciesTab({
   status: string;
   onStatus: (v: string) => void;
   canEdit: boolean;
+  onNew: () => void;
+  onOpen: (policy: PatchPolicy) => void;
+  onCopy: (policy: PatchPolicy) => void;
+  onDelete: (policy: PatchPolicy) => void;
+  onStatusChange: (policy: PatchPolicy, status: 'active' | 'suspended') => void;
 }) {
   const term = search.trim().toLowerCase();
   const shown = rows.filter(
@@ -779,7 +1013,7 @@ function PoliciesTab({
               />
             </div>
             <span className={styles.spacer} />
-            <Button variant="primary" disabled={!canEdit}>
+            <Button variant="primary" disabled={!canEdit} onClick={() => onNew()}>
               + New Policy
             </Button>
           </header>
@@ -852,16 +1086,42 @@ function PoliciesTab({
                         {capitalise(p.status)}
                       </span>
                     </td>
-                    <td>
-                      {/*
-                       * The reference also carries a "…" menu here (run now,
-                       * suspend, edit). No endpoint in the contract performs
-                       * any of them, so the menu is left out rather than
-                       * rendered as buttons that do nothing.
-                       */}
-                      <Button size="sm" disabled={!canEdit}>
+                    <td className={styles.policyActions}>
+                      <Button size="sm" disabled={!canEdit} onClick={() => onOpen(p)}>
                         Open
                       </Button>
+                      <Menu
+                        label={`More actions for ${p.name}`}
+                        items={[
+                          {
+                            id: 'status',
+                            label: p.status === 'active' ? 'Suspend' : 'Resume',
+                            disabled: !canEdit,
+                            onSelect: () =>
+                              onStatusChange(p, p.status === 'active' ? 'suspended' : 'active'),
+                          },
+                          {
+                            id: 'copy',
+                            label: 'Copy',
+                            disabled: !canEdit,
+                            onSelect: () => onCopy(p),
+                          },
+                          {
+                            id: 'delete',
+                            label: 'Delete',
+                            // An active policy is deploying right now; the
+                            // server refuses, so the menu says so first.
+                            disabled: !canEdit || p.status === 'active',
+                            onSelect: () => onDelete(p),
+                          },
+                        ]}
+                      >
+                        {(trigger) => (
+                          <Button size="sm" {...trigger}>
+                            ⋯
+                          </Button>
+                        )}
+                      </Menu>
                     </td>
                   </tr>
                 ))

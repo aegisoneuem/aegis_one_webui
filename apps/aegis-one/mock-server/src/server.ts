@@ -29,6 +29,10 @@ import { registerInsightRoutes } from './routes/insight';
 import { registerIntegrationRoutes } from './routes/integrations';
 import { registerPeerCacheRoutes } from './routes/peercache';
 import { registerAdministrationRoutes } from './routes/administration';
+import { registerLicensingRoutes } from './routes/licensing';
+import { registerDiagnosticsRoutes } from './routes/diagnostics';
+import { registerSoftwareWriteRoutes } from './routes/software';
+import { registerPatchPolicyRoutes } from './routes/patch-policies';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../../..');
@@ -157,6 +161,10 @@ export async function start(): Promise<void> {
   registerIntegrationRoutes(app, db, BASE_PATH);
   registerPeerCacheRoutes(app, db, BASE_PATH);
   registerAdministrationRoutes(app, db, BASE_PATH);
+  registerLicensingRoutes(app, db, BASE_PATH);
+  registerDiagnosticsRoutes(app, db, BASE_PATH);
+  registerSoftwareWriteRoutes(app, db, BASE_PATH);
+  registerPatchPolicyRoutes(app, db, BASE_PATH);
   // Last, so its generic `/:id` detail routes cannot shadow a specific one
   // such as `/devices/facets`.
   registerResourceRoutes(app, db, BASE_PATH);

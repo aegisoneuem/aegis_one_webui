@@ -1,0 +1,261 @@
+/*
+ * Licensing, on the reference's own shape: four counters — the first on a
+ * dark card — over three panels, then a grid of module cards.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  flex: 1;
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+/* Counters ---------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.kpi,
+.kpiLead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+/* The plan leads, on the near-black card under a gold rule. */
+.kpiLead {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+}
+
+.kpiLead > span {
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.kpiLead > strong {
+  color: var(--ao-surface);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.kpi > span {
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.kpi > strong {
+  color: var(--ao-navy-ink);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* The denominator beside a count is not a second figure. */
+.kpi > strong small {
+  color: var(--ao-muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.kpiSkeleton {
+  display: block;
+  height: 92px;
+  margin-bottom: 14px;
+}
+
+/* Panels ------------------------------------------------------------------ */
+
+.row3 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.panel,
+.panelPadded {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.panelPadded {
+  padding: 16px 18px;
+}
+
+.panel {
+  margin-top: 20px;
+}
+
+.panelHead {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.panel > .panelHead {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.panelTitle {
+  flex: 1;
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.panelHead > span {
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* The three figures printed under each donut. */
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 14px 0 0;
+}
+
+.facts div {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ao-track);
+}
+
+.facts div:last-child {
+  border-bottom: 0;
+}
+
+.facts dt {
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.figureSkeleton {
+  display: block;
+  height: 220px;
+}
+
+/* Modules ----------------------------------------------------------------- */
+
+.modules {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 16px 18px;
+}
+
+.module {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+/*
+ * The reference prints a product glyph here. Those are drawings, not data,
+ * so the tile stands in for one — see the restoration note.
+ */
+.moduleMark {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-bg);
+}
+
+.moduleBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.moduleBody b {
+  color: var(--ao-navy-ink);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.moduleBody small {
+  font-size: 11.5px;
+}
+
+/* Tones -------------------------------------------------------------------- */
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.info {
+  color: var(--st-info);
+}
+
+.muted {
+  color: var(--ao-muted);
+}
+
+@media (width <= 1400px) {
+  .modules {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 1100px) {
+  .row3,
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,305 @@
+/*
+ * System Health, on the reference's own shape: four counters — the first on
+ * a dark card — over the Services table and the day's events side by side.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  flex: 1;
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+/* Counters ---------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.kpi,
+.kpiLead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.kpiLead {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+}
+
+.kpiLead > span {
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.kpiLead > strong {
+  color: var(--ao-surface);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.kpiLead > strong small {
+  color: var(--ao-sidebar-text);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.kpi > span {
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.kpi > strong {
+  color: var(--ao-navy-ink);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.kpi > strong small {
+  color: var(--ao-muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.kpiSkeleton {
+  display: block;
+  height: 92px;
+  margin-bottom: 14px;
+}
+
+/* Panels ------------------------------------------------------------------ */
+
+.row2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.panel,
+.panelPadded {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.panelPadded {
+  padding: 16px 18px;
+}
+
+.panelHead {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.panel > .panelHead {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.panelTitle {
+  flex: 1;
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+/* The services table ------------------------------------------------------ */
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grid thead th {
+  padding: 10px 14px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--ao-track);
+  color: var(--ao-navy-mid);
+}
+
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grid tbody tr:hover td {
+  background: var(--ui-surface-hover);
+}
+
+.grid tbody td:first-child b {
+  color: var(--ao-navy-ink);
+  font-weight: 650;
+}
+
+.empty {
+  padding: 28px 14px;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+/* The events chart -------------------------------------------------------- */
+
+.chart {
+  display: block;
+  width: 100%;
+  height: 190px;
+  margin-top: 14px;
+}
+
+.barWarn {
+  fill: var(--st-warn);
+}
+
+.barError {
+  fill: var(--st-bad);
+}
+
+/* An hour with nothing in it still gets a baseline, so the axis reads. */
+.barNone {
+  fill: var(--ao-track);
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0 0;
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+}
+
+.keyWarn,
+.keyError {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--ao-navy-mid);
+}
+
+.keyWarn::before,
+.keyError::before {
+  width: 9px;
+  height: 9px;
+  content: '';
+}
+
+.keyWarn::before {
+  background: var(--st-warn);
+}
+
+.keyError::before {
+  background: var(--st-bad);
+}
+
+/* The three figures under the chart. */
+.eventFacts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 0;
+}
+
+.eventFacts div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.eventFacts dt {
+  color: var(--ao-navy-mid);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.eventFacts dd {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.figureSkeleton {
+  display: block;
+  height: 260px;
+}
+
+/* Tones -------------------------------------------------------------------- */
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.bad {
+  color: var(--st-bad);
+}
+
+@media (width <= 1200px) {
+  .row2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

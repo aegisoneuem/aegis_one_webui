@@ -557,7 +557,9 @@ you.
     and the reports export pipeline is keyed to report ids rather than
     arbitrary queries. The button is present and disabled rather than wired
     to something invented.
-57. **Relative timestamps age out of the fixture.** The seed's "now" is frozen
+57. **~~Relative timestamps age out of the fixture.~~ Answered: the clock now
+    follows the seed run (D-054).** What follows is the original note.
+    **Relative timestamps age out of the fixture.** The seed's "now" is frozen
     at `2026-11-01T09:30:00+05:30` for determinism (`docs/seed.md`), and
     `relative()` falls back to an absolute date past seven days. So every
     "2 min ago" and "Just Now" the reference prints reads as "01 Nov 2026"
@@ -617,3 +619,36 @@ you.
     declared a bare array where the server returns the standard
     `{items, page}` envelope; the contract now declares `ApiTokenPage`. Worth
     a sweep of the remaining list endpoints for the same bare-array slip.
+65. **Upload License opens no file picker.** The button is present and
+    permission-gated, and `PUT /licensing/file` is served — but it refuses
+    every upload, because the contract says the signature is verified
+    server-side and this fixture has no issuer key. A dialog that accepted a
+    file and then always failed would be worse than a button that says so.
+    What a real implementation needs is the issuer public key and a decision
+    about what happens to seats already over the new limit.
+66. **Neither System Health button has a result view.** Run Health Check
+    queues a job and Download Diagnostic Bundle queues an export, both as
+    declared, but there is nowhere to watch either finish: the reference has
+    no such view, no contract route polls a health check, and the bundle's
+    export id is not something any page reads. The bundle could reasonably
+    land in the same export list the reports use.
+67. **The licence term is a fixture constant, not a fact.** `license.plan`,
+    `seats_total` and the term dates are seeded; everything else on the page
+    is counted. That is the right split for a fixture — an estate cannot
+    compute what it was sold — but it means the one thing a licensing page
+    exists to enforce, the seat ceiling, is the one number nothing checks
+    against reality. Nothing in the console refuses an enrolment because the
+    licence is full.
+68. **The software catalogue has two names for the same two fields.** The
+    contract's `SoftwarePackage` declares `name` and `version`; the shared
+    resource lister serves `title` and `latestVersion`, which is what the
+    table columns are called. The page reads the catalogue's spelling and the
+    write routes accept the contract's, so both work — but a consumer reading
+    the contract and then calling the list gets neither field. One spelling
+    should win, and the contract's is the one to keep.
+69. **Import Icons needs an asset store, not an endpoint.** The button is
+    disabled with a title saying no icon store is configured. Wiring it needs
+    somewhere to put the icons, a same-origin path to serve them from, and a
+    rule for matching a bundle's files to catalogue titles — none of which the
+    contract or the fixture describes. `logoUrl` is already read, so a card
+    shows an icon the moment one exists.

@@ -1,7 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Button, ErrorState, Input, Menu, Pagination, Select, Skeleton } from '@aegis/ui';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Button,
+  ErrorState,
+  Field,
+  Input,
+  Menu,
+  Modal,
+  Pagination,
+  Select,
+  Skeleton,
+  useToast,
+} from '@aegis/ui';
 import { api, type Page } from '../api/client';
 import { useListController } from '../app/useListController';
 import { useCan } from '../app/auth';
@@ -40,6 +51,82 @@ const PLATFORM_LABEL: Record<string, string> = {
 export default function Software() {
   const navigate = useNavigate();
   const canWrite = useCan('software:write');
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
+  /*
+   * One dialog serves Add and Edit. They post to different routes but ask for
+   * the same fields, and two forms that must stay identical are one form.
+   * `editing` is the package being changed, or null for a new one.
+   */
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<SoftwareTitle | null>(null);
+  const [draft, setDraft] = useState({
+    name: '',
+    publisher: '',
+    version: '',
+    platform: 'windows',
+    category: 'Utilities',
+  });
+
+  const openEditor = (pkg: SoftwareTitle | null) => {
+    setEditing(pkg);
+    setDraft({
+      name: pkg?.title ?? '',
+      publisher: pkg?.publisher ?? '',
+      version: pkg?.latestVersion ?? '',
+      platform: pkg?.platform ?? 'windows',
+      category: pkg?.category ?? 'Utilities',
+    });
+    setEditorOpen(true);
+  };
+
+  const save = useMutation({
+    mutationFn: () => {
+      const body = {
+        name: draft.name.trim(),
+        publisher: draft.publisher.trim(),
+        version: draft.version.trim(),
+        platform: draft.platform,
+        category: draft.category,
+      };
+      /*
+       * The write routes return the contract's `SoftwarePackage`, whose
+       * fields are `name` and `version`; the list returns the catalogue's
+       * own `title` and `latestVersion`. Nothing here reads the response, so
+       * the two spellings do not have to be reconciled to save a package —
+       * but they should be. See handover question 68.
+       */
+      return editing
+        ? api.patch<unknown>(`/software/${encodeURIComponent(editing.id)}`, body)
+        : api.post<unknown>('/software', body);
+    },
+    onSuccess: () => {
+      toast.show({
+        title: editing ? `${draft.name} updated` : `${draft.name} added to the catalogue`,
+        /*
+         * Changing a version invalidates the installer that was built for the
+         * old one, so the server drops it — and the card will say "missing".
+         * Better to say so here than to let an administrator find out when a
+         * deployment refuses to start.
+         */
+        message:
+          editing && draft.version.trim() !== editing.latestVersion
+            ? 'The version changed, so the installer has to be uploaded again.'
+            : 'It needs an installer before it can be deployed.',
+        tone: 'success',
+      });
+      setEditorOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ['/software'] });
+    },
+    onError: (error) =>
+      toast.show({
+        title: editing ? 'The package could not be updated.' : 'The package could not be added.',
+        message: error instanceof Error ? error.message : undefined,
+        tone: 'error',
+      }),
+  });
+
   const [tile, setTile] = useState('all');
 
   const controller = useListController<SoftwareTitle>({
@@ -98,8 +185,15 @@ export default function Software() {
         </div>
         <div className={styles.actions}>
           <Button onClick={() => void navigate('/reports')}>Export</Button>
-          <Button disabled={!canWrite}>Import Icons</Button>
-          <Button variant="primary" disabled={!canWrite}>
+          {/*
+           * Import Icons has no endpoint in the contract and no asset store
+           * behind it, so it stays disabled rather than being wired to
+           * something invented. See the restoration note.
+           */}
+          <Button disabled title="No icon store is configured">
+            Import Icons
+          </Button>
+          <Button variant="primary" disabled={!canWrite} onClick={() => openEditor(null)}>
             + Add package
           </Button>
         </div>
@@ -190,11 +284,86 @@ export default function Software() {
                     `/deployments/new?kind=install-software&package=${encodeURIComponent(segment(pkg.id))}`,
                   )
                 }
+                onEdit={openEditor}
               />
             </li>
           ))}
         </ul>
       )}
+
+      <Modal
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        title={editing ? `Edit ${editing.title}` : 'Add a package'}
+        description={
+          editing
+            ? 'Changing the version drops the installer on file, because it was built for the old one.'
+            : 'A definition first. The installer is uploaded separately, and the package cannot be deployed until it is.'
+        }
+        footer={
+          <>
+            <Button onClick={() => setEditorOpen(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              loading={save.isPending}
+              disabled={!draft.name.trim() || !draft.publisher.trim() || !draft.version.trim()}
+              onClick={() => save.mutate()}
+            >
+              {editing ? 'Save package' : 'Add package'}
+            </Button>
+          </>
+        }
+      >
+        <div className={styles.editor}>
+          <Field label="Name" required>
+            {(field) => (
+              <Input
+                {...field}
+                maxLength={120}
+                placeholder="Google Chrome"
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+            )}
+          </Field>
+          <Field label="Publisher" required>
+            {(field) => (
+              <Input
+                {...field}
+                maxLength={120}
+                placeholder="Google LLC"
+                value={draft.publisher}
+                onChange={(e) => setDraft({ ...draft, publisher: e.target.value })}
+              />
+            )}
+          </Field>
+          <Field label="Version" required hint="What an endpoint would install.">
+            {(field) => (
+              <Input
+                {...field}
+                maxLength={64}
+                placeholder="142.0.7204.92"
+                value={draft.version}
+                onChange={(e) => setDraft({ ...draft, version: e.target.value })}
+              />
+            )}
+          </Field>
+          <Field label="Platform" required>
+            {(field) => (
+              <Select
+                {...field}
+                options={[
+                  { value: 'windows', label: 'Windows' },
+                  { value: 'macos', label: 'macOS' },
+                  { value: 'linux', label: 'Linux' },
+                ]}
+                value={draft.platform}
+                onChange={(e) => setDraft({ ...draft, platform: e.target.value })}
+              />
+            )}
+          </Field>
+        </div>
+      </Modal>
 
       {controller.hasNext || controller.hasPrevious ? (
         <Pagination
@@ -233,10 +402,12 @@ function PackageCard({
   pkg,
   canWrite,
   onDeploy,
+  onEdit,
 }: {
   pkg: SoftwareTitle;
   canWrite: boolean;
   onDeploy: () => void;
+  onEdit: (pkg: SoftwareTitle) => void;
 }) {
   const deployable = pkg.installer === 'added';
   return (
@@ -299,12 +470,13 @@ function PackageCard({
         </Button>
         <Menu
           label={`More actions for ${pkg.title}`}
-          /*
-           * The reference also carries Edit Package here. PATCH /software/{id}
-           * is declared but unserved, and there is no edit form, so it is left
-           * out rather than rendered as a button that does nothing.
-           */
           items={[
+            {
+              id: 'edit',
+              label: 'Edit Package',
+              disabled: !canWrite,
+              onSelect: () => onEdit(pkg),
+            },
             {
               id: 'uninstall',
               label: `Uninstall (${num(pkg.installCount)})`,

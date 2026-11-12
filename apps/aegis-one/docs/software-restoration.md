@@ -89,13 +89,13 @@ Patches, all already reviewed. See decisions.md D-028.
 
 ## Present in v129, not in the restored build
 
-| Missing              | Why                                                                                                                   |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `+ Add package` form | `POST /software` is declared and unserved, and there is no form. The button is rendered and permission-gated.         |
-| `Import Icons`       | No endpoint accepts an icon bundle. `logoUrl` is read, so the card uses an icon the moment one exists.                |
-| `Edit Package`       | `PATCH /software/{id}` is declared and unserved. Left out of the overflow menu rather than rendered as a dead button. |
-| Vendor logos         | Customer data, not product assets — see above.                                                                        |
-| Installer upload     | `PUT /software/{id}/installer` is declared, takes a binary body, and is unserved. Nothing in the page offers it.      |
+| Missing              | Why                                                                                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `+ Add package` form | **Closed.** `POST /software` is served and the button opens a dialog for name, publisher, version and platform.                                                                                                                               |
+| `Import Icons`       | **Still open.** No endpoint accepts an icon bundle and there is no asset store, so the button is disabled with a title saying why rather than wired to something invented. `logoUrl` is read, so the card uses an icon the moment one exists. |
+| `Edit Package`       | **Closed.** `PATCH /software/{id}` is served and the action is back in the overflow menu, opening the same dialog prefilled. Changing the version drops the installer built for the old one, and the toast says so.                           |
+| Vendor logos         | Customer data, not product assets — see above.                                                                                                                                                                                                |
+| Installer upload     | `PUT /software/{id}/installer` is declared, takes a binary body, and is unserved. Nothing in the page offers it.                                                                                                                              |
 
 ## Library changes this needed
 
@@ -106,3 +106,32 @@ have been a second scan of the same table.
 
 `registerResourceRoutes` gained the matching `envelope` hook, so a resource can
 declare what its page carries without a bespoke route.
+
+## The package writes, closed
+
+`POST /software`, `PATCH /software/{id}` and `DELETE /software/{id}` were all
+declared and none was served — which is why Add and Edit were rendered and did
+nothing. All three are served now, and three rules came out of serving them:
+
+- **A new definition is a draft with no installer.** The card says "missing"
+  rather than implying the package is ready to deploy, and Deploy stays
+  disabled until a binary is attached.
+- **Changing the version invalidates the installer.** The binary on file was
+  built for the old version, and keeping its hash against a new one would
+  claim an integrity check that was never made. The server drops it and the
+  dialog says so before you save.
+- **A package endpoints have installed cannot be deleted.** The inventory rows
+  point at it, and removing the definition would leave the Devices page
+  listing software nothing can describe. It is refused with HTTP 409 and the
+  message suggests retiring it instead.
+
+`GET /software/{id}` is served by the shared resource lister, which already
+owned that path — registering a second one is how the new route file first
+failed to boot.
+
+### A naming mismatch this turned up
+
+The contract's `SoftwarePackage` calls the fields `name` and `version`; the
+list and detail the lister serves call them `title` and `latestVersion`. Both
+are in use, so the page reads the catalogue's names and the write routes
+accept the contract's. See handover question 68.

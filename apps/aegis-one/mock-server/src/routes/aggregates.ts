@@ -298,7 +298,11 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
      * ones are already dealt with, so they are not pending anything.
      */
     const expiring = many<{ kind: string; name: string; expiresAt: string }>(
-      `SELECT 'license' AS kind, product AS name, expires_at AS expiresAt FROM licenses
+      /*
+       * The licence is one agreement now, not a row per product, so it
+       * contributes one expiry: the end of its term.
+       */
+      `SELECT 'license' AS kind, plan AS name, ends_at AS expiresAt FROM license
        UNION ALL
        SELECT 'enrollment-token', name, expires_at FROM enrollment_tokens WHERE revoked_at IS NULL
        UNION ALL
@@ -390,35 +394,6 @@ export function registerAggregateRoutes(app: FastifyInstance, db: Db, basePath: 
     }),
   );
 
-  app.get(`${basePath}/licensing`, async () => ({
-    items: many(
-      `SELECT id, product, entitled, consumed, expires_at AS expiresAt, support_tier AS supportTier FROM licenses ORDER BY product`,
-    ),
-  }));
-
-  app.get(`${basePath}/diagnostics`, async () => ({
-    services: many(
-      `SELECT id, component, status, latency_ms AS latencyMs, message, checked_at AS checkedAt FROM service_health ORDER BY component`,
-    ),
-    zones: many(
-      `SELECT id, name, relay_status AS relayStatus, last_sync_at AS lastSyncAt, device_count AS deviceCount FROM zones ORDER BY name`,
-    ),
-    counts: one(
-      `SELECT (SELECT COUNT(*) FROM devices) AS devices,
-              (SELECT COUNT(*) FROM device_software) AS softwareInstalls,
-              (SELECT COUNT(*) FROM device_patches) AS patchRecords,
-              (SELECT COUNT(*) FROM device_vulnerabilities) AS findings,
-              (SELECT COUNT(*) FROM audit_log) AS auditEntries`,
-    ),
-  }));
-
-  /**
-   * The four counts above the inventory grid. They answer "how much of the
-   * estate am I looking at", so they follow the same search term the grid
-   * does — a count that ignored the filter would contradict the list under
-   * it — but not its column filters, which are what the user is narrowing
-   * away from.
-   */
   app.get(`${basePath}/devices/summary`, async (request) => {
     const scope = zoneScope({ zoneIds: request.auth?.zoneIds ?? [] });
     const clauses = scope ? [scope.sql] : [];

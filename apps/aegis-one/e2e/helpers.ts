@@ -57,5 +57,5 @@ export const PAGES = [
   { path: '/integrations', heading: 'Integrations' },
   { path: '/admin', heading: 'Administration' },
   { path: '/licensing', heading: 'Licensing' },
-  { path: '/diagnostics', heading: 'Diagnostics' },
+  { path: '/diagnostics', heading: 'System Health' },
 ] as const;

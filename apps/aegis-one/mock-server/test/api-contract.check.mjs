@@ -400,6 +400,72 @@ const run = async () => {
     `HTTP ${evaluateRes.status}`,
   );
 
+  // --- Digital employee experience ----------------------------------------
+  const dex = await fetch(`${API}/dex/summary`, { headers: authed(token) }).then((r) => r.json());
+  check(
+    'dex summary reports a score, three bands and four measures',
+    dex.score > 0 &&
+      dex.score <= 100 &&
+      dex.breakdown.length === 4 &&
+      dex.topIssues.length === 4 &&
+      dex.method.length === 10,
+    `${dex.score}/100`,
+  );
+  // The bands are the whole estate, because every endpoint reports telemetry.
+  check(
+    'the three experience bands add up to the estate',
+    dex.distribution.good + dex.distribution.warning + dex.distribution.poor === 50000,
+    `${dex.distribution.good + dex.distribution.warning + dex.distribution.poor}`,
+  );
+  check(
+    'the scoring method publishes the thresholds the score uses',
+    dex.method.some((m) => m.measure === 'Starting Score' && m.points === 100) &&
+      dex.method.filter((m) => m.points < 0).length === 7 &&
+      dex.method.some((m) => m.measure === 'Poor Band' && m.points === 55),
+  );
+
+  const dexDevices = await fetch(`${API}/dex/devices?limit=10`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'dex devices rank worst-score first',
+    dexDevices.items.length === 10 &&
+      dexDevices.items.every((d, i, a) => i === 0 || a[i - 1].score <= d.score),
+  );
+
+  /*
+   * The point of the page: every penalty is re-derivable from the measures
+   * shown beside it, and the score is 100 less the penalties, then capped by
+   * the band. If this holds the panel's arithmetic can never look wrong.
+   */
+  check(
+    'each score is its own penalties, capped by its own band',
+    dexDevices.items.every((d) => {
+      const lost = d.penalties.reduce((a, p) => a + p.points, 0);
+      const cap = d.band === 'poor' ? 55 : d.band === 'warning' ? 80 : 100;
+      return d.score === Math.max(0, Math.min(100 - lost, cap));
+    }),
+  );
+  check(
+    'each penalty names the measure that caused it',
+    dexDevices.items.every((d) =>
+      d.penalties.every(
+        (p) =>
+          [10, 20].includes(p.points) && /CPU at|Memory at|Boot takes|disk free/.test(p.reason),
+      ),
+    ),
+  );
+
+  const byBoot = await fetch(`${API}/dex/devices?limit=5&sort=boot`, {
+    headers: authed(token),
+  }).then((r) => r.json());
+  check(
+    'dex devices can be ranked by the slowest boot instead',
+    byBoot.items.length === 5 &&
+      byBoot.items.every((d, i, a) => i === 0 || a[i - 1].bootSeconds >= d.bootSeconds),
+    `${byBoot.items[0]?.bootSeconds}s worst`,
+  );
+
   const insight = await fetch(`${API}/insight`, { headers: authed(token) }).then((r) => r.json());
   check('insight returns findings', insight.findings.length >= 5);
 

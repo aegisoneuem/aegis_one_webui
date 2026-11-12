@@ -6218,6 +6218,35 @@ components:
                 type: integer
               diskFreePct:
                 type: integer
+              os:
+                type: string
+              site:
+                type: string
+              band:
+                type: string
+                description: The band the three measures put this endpoint in.
+                enum:
+                - good
+                - warning
+                - poor
+              penalties:
+                description: >-
+                  What the score lost and why, in the order the measures are
+                  weighed. Empty when every measure is inside its threshold.
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                  - reason
+                  - points
+                  properties:
+                    reason:
+                      type: string
+                      maxLength: 120
+                    points:
+                      type: integer
+                      description: Points taken off, as a positive number.
         page:
           $ref: '#/components/schemas/PageInfo'
     InsightRequest:

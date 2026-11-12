@@ -629,3 +629,37 @@ disagreed about the same device.
 It is therefore recomputed in the configuration roll-up, from the checks that
 apply to that device minus the ones under an exception. The Devices grid and
 this page now answer the same question the same way.
+
+## D-042 — The experience score is derived from its measures, not seeded
+
+`dex_score` was a random integer: `78 + rng.int(-28, 20)`, nudged down when
+the disk was nearly full. The Devices grid showed it, the device detail page
+showed it, and the Overview averaged it — and none of them could say what it
+meant, because it was not made of anything.
+
+The approved DEX page is built entirely around the opposite claim. It
+publishes the thresholds in a table on the page, and when an administrator
+picks an endpoint it shows what that endpoint lost against each one. A score
+that cannot be taken apart is a score nobody trusts, and a random one cannot
+be taken apart at all.
+
+So `devices` now carries the three measures the score is made of — processor
+load, memory pressure and boot time — and `dex_score` is computed from them
+and from free disk with the reference's own arithmetic: start at 100, take the
+penalties off, then cap by band. The score stays stored, because the estate is
+ranked by it and 50,000 rows cannot be scored per request, which is the same
+arrangement the configuration roll-up uses and for the same reason (D-039).
+
+The measures are spread from each device's own row through a multiplicative
+hash rather than drawn from the seed's random stream. Two reasons. Drawing
+them would shift every figure seeded after the estate, which is how the
+Deployments status mix once lost its scheduled action. And `rowid % n` on its
+own is periodic: a first attempt put exactly 6% of the estate in every bucket
+and made the three measures correlate, which a reviewer would have spotted
+immediately in the band split. Each measure is now mixed with its own salt
+through a large prime.
+
+One consequence worth stating: a band cap is a ceiling, not a deduction, so an
+endpoint can show a single −20 against a score of 55. The reference behaves
+the same way and does not explain it; the restored panel adds a line naming
+the cap whenever a cap is what set the figure.

@@ -876,6 +876,74 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByText('Evaluation queued')).toBeVisible();
   });
 
+  test('DEX opens on the approved layout: four counters, three figures', async ({ page }) => {
+    await page.goto('/dex');
+
+    await expect(page.getByRole('heading', { name: 'Digital Employee Experience' })).toBeVisible();
+    for (const kpi of ['Experience Score', 'Good', 'Warning', 'Poor'])
+      await expect(page.getByText(kpi, { exact: true }).first()).toBeVisible();
+
+    for (const panel of [
+      'Distribution',
+      'Score Breakdown',
+      'Top Experience Issues',
+      'Endpoints With the Lowest Scores',
+      'How the Score Works',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // Scoped to the real grid: the three figures carry visually-hidden tables.
+    const grid = page.locator('table[class*="grid"]').first();
+    for (const column of ['Computer', 'Score', 'Boot', 'CPU', 'Memory', 'Disk free'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('the scoring method is published until an endpoint is picked', async ({ page }) => {
+    await page.goto('/dex');
+
+    // The thresholds are on the page, so the score can be checked by hand.
+    const method = page.locator('table[class*="grid"]').nth(1);
+    for (const column of ['Measure', 'Threshold', 'Points'])
+      await expect(method.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Select an endpoint in the table to see its score breakdown.'),
+    ).toBeVisible();
+
+    // Picking a row swaps the method out for that endpoint's own arithmetic.
+    const first = page.locator('table[class*="grid"] tbody tr').first();
+    const name = (await first.locator('button').first().innerText()).trim();
+    const score = (await first.locator('td').nth(1).innerText()).trim();
+    await first.click();
+
+    await expect(
+      page.getByRole('heading', { name: `Why is ${name} scored ${score}?` }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open Device' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Collect Logs' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'How the Score Works' })).toBeHidden();
+  });
+
+  test("a DEX penalty list accounts for the endpoint's own score", async ({ page }) => {
+    await page.goto('/dex');
+
+    const first = page.locator('table[class*="grid"] tbody tr').first();
+    const score = Number((await first.locator('td').nth(1).innerText()).replace(/\D/g, ''));
+    await first.click();
+
+    // The penalties and the band cap together have to produce the figure the
+    // grid showed: 100 minus what was lost, then capped.
+    const items = page.locator('[class*="penalties"] li');
+    const count = await items.count();
+    expect(count).toBeGreaterThan(0);
+    let lost = 0;
+    for (let i = 0; i < count; i++) {
+      lost += Number((await items.nth(i).locator('b').innerText()).replace(/\D/g, ''));
+    }
+    const cap = await page.getByText(/Capped at \d+ by the/).count();
+    if (cap === 0) expect(100 - lost).toBe(score);
+    else expect(score).toBeLessThanOrEqual(100 - lost);
+  });
+
   test('the sidebar collapses and the state survives a reload', async ({ page }) => {
     await page.goto('/devices');
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();

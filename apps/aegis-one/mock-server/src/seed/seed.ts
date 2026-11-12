@@ -66,6 +66,7 @@ export function seedDatabase({
   onProgress(`${deviceCount.toLocaleString('en-IN')} devices`);
 
   rollUpCounts(db);
+  rollUpDex(db);
   seedGroups(db, rng);
   seedConfiguration(db);
   seedDeployments(db, rng);
@@ -1000,7 +1001,8 @@ function seedDevices(
         compliance,
         pendingPatches,
         criticalVulns,
-        Math.max(20, Math.min(100, 78 + rng.int(-28, 20) - (diskFree < 10 ? 14 : 0))),
+        // Filled in by rollUpDex from the three measures it is made of.
+        0,
         os.family === 'Linux' || os.family === 'AIX'
           ? rng.chance(0.6)
             ? 1
@@ -1055,6 +1057,70 @@ function macAddress(rng: Rng): string {
 }
 
 /** Rolls per-device rows up into the counts the list pages show. */
+/**
+ * The experience score, exactly as the reference computes it.
+ *
+ * Start at 100, take the penalties off, then cap by band. The caps are what
+ * make the score mean something: an endpoint with one measure in the red
+ * cannot score well on the strength of the other three.
+ */
+const DEX_SCORE_SQL = `MAX(0, MIN(
+    100
+      - (CASE WHEN cpu_pct >= 90 THEN 20 WHEN cpu_pct >= 75 THEN 10 ELSE 0 END)
+      - (CASE WHEN memory_pct >= 90 THEN 20 WHEN memory_pct >= 75 THEN 10 ELSE 0 END)
+      - (CASE WHEN boot_seconds >= 90 THEN 20 WHEN boot_seconds >= 60 THEN 10 ELSE 0 END)
+      - (CASE WHEN disk_free_pct <= 10 THEN 10 ELSE 0 END),
+    CASE
+      WHEN cpu_pct >= 90 OR memory_pct >= 90 OR boot_seconds >= 90 THEN 55
+      WHEN cpu_pct >= 75 OR memory_pct >= 75 OR boot_seconds >= 60 THEN 80
+      ELSE 100
+    END))`;
+
+/** The band the three measures put an endpoint in, as the reference defines it. */
+export const DEX_BAND_SQL = `CASE
+    WHEN cpu_pct >= 90 OR memory_pct >= 90 OR boot_seconds >= 90 THEN 'poor'
+    WHEN cpu_pct >= 75 OR memory_pct >= 75 OR boot_seconds >= 60 THEN 'warning'
+    ELSE 'good'
+  END`;
+
+/**
+ * Fills in the three measures and derives the score from them.
+ *
+ * The measures are spread from the device's own row rather than drawn from
+ * the seed's random stream, so adding them does not shift every figure seeded
+ * after the estate — which is how the Deployments status mix once lost its
+ * scheduled action.
+ */
+function rollUpDex(db: Db): void {
+  // A multiplicative hash through a large prime. `rowid % n` on its own is
+  // periodic — it put exactly 6% of the estate in every bucket and made the
+  // three measures correlate — so each measure is mixed with its own salt.
+  const mix = (salt: number): string => `((devices.rowid * 2654435761 + ${salt}) % 1000000007)`;
+  const cpu = mix(97);
+  const mem = mix(40503);
+  const boot = mix(2246822519);
+
+  db.exec(`
+    UPDATE devices SET
+      cpu_pct = CASE
+        WHEN ${cpu} % 100 < 6 THEN 90 + (${cpu} / 100) % 10
+        WHEN ${cpu} % 100 < 18 THEN 75 + (${cpu} / 100) % 15
+        ELSE 12 + (${cpu} / 100) % 50 END,
+      memory_pct = CASE
+        WHEN ${mem} % 100 < 5 THEN 90 + (${mem} / 100) % 10
+        WHEN ${mem} % 100 < 20 THEN 75 + (${mem} / 100) % 15
+        ELSE 28 + (${mem} / 100) % 44 END,
+      -- A server boots slower than a workstation, and both have a long tail.
+      boot_seconds = CASE
+        WHEN ${boot} % 100 < 4 THEN 90 + (${boot} / 100) % 45
+        WHEN ${boot} % 100 < 16 THEN 60 + (${boot} / 100) % 30
+        WHEN kind = 'server' THEN 32 + (${boot} / 100) % 24
+        ELSE 16 + (${boot} / 100) % 26 END;
+
+    UPDATE devices SET dex_score = ${DEX_SCORE_SQL};
+  `);
+}
+
 function rollUpCounts(db: Db): void {
   db.exec(`
     UPDATE zones SET device_count = (SELECT COUNT(*) FROM devices WHERE devices.zone_id = zones.id);

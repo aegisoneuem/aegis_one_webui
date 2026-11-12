@@ -43,6 +43,7 @@ enough for day-to-day work on the console and takes a few seconds.
 | Table                    | Rows at 50,000 devices | Notes                                                                                                            |
 | ------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `devices`                | 50,000                 | Windows 10/11, Server 2016–2022, RHEL 8/9, Ubuntu 20.04–24.04, macOS 13–15, a small AIX set                      |
+| `devices` (experience)   | 50,000                 | Processor load, memory pressure and boot time, with `dex_score` derived from them                                |
 | `device_software`        | ~575,000               | Per-endpoint installs drawn from a 32-title catalogue                                                            |
 | `device_patches`         | ~290,000               | Installed, pending, failed and not-applicable                                                                    |
 | `device_vulnerabilities` | ~130,000               | Open, remediated and accepted-risk findings                                                                      |

@@ -55,6 +55,11 @@
   color: var(--chart-navy-1);
 }
 
+/* The reference's own fourth chart colour, for a four-measure breakdown. */
+.teal {
+  color: #0ea5a4;
+}
+
 /* `currentColor` is what makes one tone class serve a stroke, a fill and a
    text colour at once, so a slice and its legend swatch can never drift. */
 .arc {

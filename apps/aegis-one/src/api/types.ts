@@ -569,6 +569,34 @@ export type ConfigProfileDetail = {
   settings: { setting: string; values: { version: number; value: string }[] }[];
 };
 
+/** One endpoint's experience measures, and what its score lost. */
+export type DexDevice = {
+  deviceId: string;
+  name: string;
+  score: number;
+  bootSeconds: number;
+  cpuPct: number;
+  memoryPct: number;
+  diskFreePct: number;
+  os: string;
+  site: string;
+  band: 'good' | 'warning' | 'poor';
+  /** Empty when every measure is inside its threshold. */
+  penalties: { reason: string; points: number }[];
+};
+
+/**
+ * The experience score, how it is made up, what is dragging it down, and the
+ * thresholds it is scored against.
+ */
+export type DexSummary = {
+  score: number;
+  distribution: { good: number; warning: number; poor: number };
+  breakdown: { measure: string; score: number }[];
+  topIssues: { issue: string; endpoints: number }[];
+  method: { measure: string; threshold: string; points: number }[];
+};
+
 /**
  * Everything above the Checks grid: the five counters, the four widgets and
  * the Security Posture rings on the Profiles tab.
@@ -863,17 +891,6 @@ export type Overview = {
   attention: AttentionItem[];
   recentActivity: ActivityItem[];
   updatedAt: string;
-};
-
-export type DexSummary = {
-  overall: { score: number };
-  byDepartment: { department: string; score: number; devices: number }[];
-  byZone: { zoneName: string; score: number; devices: number }[];
-  distribution: { band: string; devices: number }[];
-  lowestScoring: Pick<
-    Device,
-    'id' | 'hostname' | 'zoneName' | 'department' | 'dexScore' | 'diskFreePct' | 'ramGb'
-  >[];
 };
 
 export type InsightFinding = {

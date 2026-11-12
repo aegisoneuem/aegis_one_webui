@@ -73,8 +73,17 @@ CREATE TABLE devices (
   config_checks_total INTEGER NOT NULL DEFAULT 0,
   config_fail INTEGER NOT NULL DEFAULT 0,
   config_high_fail INTEGER NOT NULL DEFAULT 0,
-  config_exceptions INTEGER NOT NULL DEFAULT 0
+  config_exceptions INTEGER NOT NULL DEFAULT 0,
+  -- The three measures the experience score is made of. They were missing, so
+  -- `dex_score` was a random figure with nothing behind it: the DEX page shows
+  -- the score, its breakdown and the penalties that produced it, and all three
+  -- have to agree. `dex_score` is now derived from these. See decision D-042.
+  cpu_pct INTEGER NOT NULL DEFAULT 0,
+  memory_pct INTEGER NOT NULL DEFAULT 0,
+  boot_seconds INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE INDEX idx_devices_dex ON devices(dex_score);
 
 CREATE INDEX idx_devices_zone ON devices(zone_id);
 CREATE INDEX idx_devices_status ON devices(status);

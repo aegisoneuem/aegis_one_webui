@@ -443,3 +443,24 @@ you.
     which is the honest reading but means the Configuration page's device
     total (49,542) does not match the estate total (50,000) anywhere else in
     the console.
+39. **The DEX figures cannot be drilled through.** In the reference every bar,
+    donut slice and band counter on this page opens the Devices page filtered
+    to exactly those endpoints, by passing a list of device ids to an in-page
+    overlay. This console's Devices grid filters on device fields and the
+    contract declares no way to pass an arbitrary id list, so the counters and
+    bars are not clickable here. Either `listDevices` needs an `ids` filter
+    (bounded, since a poor-band list is 6,375 ids long), or each figure needs
+    a server-side saved selection to link to. This is the one thing on the
+    page I would most like back.
+40. **The three experience measures are a single sample, not a series.**
+    `cpu_pct`, `memory_pct` and `boot_seconds` are one reading per device, so
+    the page can say an endpoint is slow but not whether it is getting slower.
+    The reference has the same limitation. A trend would need a
+    `dex_samples` table and a `DexSummary.trend` the contract does not
+    declare.
+41. **AIX endpoints are scored.** Experience telemetry is platform-independent,
+    so the estate's 458 AIX servers appear in the DEX figures — unlike the
+    Configuration page, where they have no checks and are absent. The two
+    pages therefore report different device totals (50,000 against 49,542),
+    which is correct in both cases but worth knowing before the two are
+    compared.

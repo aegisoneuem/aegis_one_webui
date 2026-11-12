@@ -22,6 +22,7 @@ import { registerGroupRoutes } from './routes/groups';
 import { registerLiveOpsRoutes } from './routes/liveops';
 import { registerVulnerabilityRoutes } from './routes/vulnerabilities';
 import { registerConfigurationRoutes } from './routes/configuration';
+import { registerDexRoutes } from './routes/dex';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../../..');
@@ -143,6 +144,7 @@ export async function start(): Promise<void> {
   registerLiveOpsRoutes(app, db, BASE_PATH);
   registerVulnerabilityRoutes(app, db, BASE_PATH);
   registerConfigurationRoutes(app, db, BASE_PATH);
+  registerDexRoutes(app, db, BASE_PATH);
   // Last, so its generic `/:id` detail routes cannot shadow a specific one
   // such as `/devices/facets`.
   registerResourceRoutes(app, db, BASE_PATH);

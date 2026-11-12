@@ -2943,6 +2943,19 @@ export interface components {
                 cpuPct?: number;
                 memoryPct?: number;
                 diskFreePct?: number;
+                os?: string;
+                site?: string;
+                /**
+                 * @description The band the three measures put this endpoint in.
+                 * @enum {string}
+                 */
+                band?: "good" | "warning" | "poor";
+                /** @description What the score lost and why, in the order the measures are weighed. Empty when every measure is inside its threshold. */
+                penalties?: {
+                    reason: string;
+                    /** @description Points taken off, as a positive number. */
+                    points: number;
+                }[];
             }[];
             page: components["schemas"]["PageInfo"];
         };

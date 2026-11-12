@@ -17,9 +17,12 @@ import styles from './Figures.module.css';
  * `sand` and `amber` are the two lighter steps of the warm ramp. They exist
  * because a severity or age ramp needs four warm steps, and good/warn/bad
  * only gives it two. `deep` is the darkest navy step, for a figure the
- * reference draws in the navy the page's own headings use.
+ * reference draws in the navy the page's own headings use, and `teal` is the
+ * reference's own fourth chart colour, which the DEX score breakdown needs to
+ * tell four measures apart.
  */
-export type Tone = 'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral' | 'sand' | 'amber' | 'deep';
+export type Tone =
+  'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral' | 'sand' | 'amber' | 'deep' | 'teal';
 
 export type Datum = {
   key: string;
@@ -28,6 +31,11 @@ export type Datum = {
   tone: Tone;
   /** Shown under the label on a column chart, e.g. "weight 30%". */
   note?: string;
+  /**
+   * What to print above the bar, when the raw value does not read well — a
+   * count in the thousands wants its separators.
+   */
+  display?: string;
 };
 
 export type Series = {
@@ -46,6 +54,7 @@ const TONE_CLASS: Record<Tone, string> = {
   sand: styles.sand as string,
   amber: styles.amber as string,
   deep: styles.deep as string,
+  teal: styles.teal as string,
 };
 
 /** High is good: the band the approved design colours a percentage by. */
@@ -213,10 +222,7 @@ export function Columns({
           const height = Math.max(1, (d.value / ceiling) * 100);
           return (
             <div key={d.key} className={styles.column}>
-              <span className={styles.columnValue}>
-                {d.value}
-                {suffix}
-              </span>
+              <span className={styles.columnValue}>{d.display ?? `${d.value}${suffix}`}</span>
               <button
                 type="button"
                 className={`${styles.columnBar} ${TONE_CLASS[d.tone]}`}
@@ -279,8 +285,7 @@ export function Bars({
             </button>
           </span>
           <span className={styles.barValue}>
-            {d.value.toLocaleString('en-IN')}
-            {suffix}
+            {d.display ?? `${d.value.toLocaleString('en-IN')}${suffix}`}
           </span>
         </div>
       ))}

@@ -48,7 +48,8 @@ export const PAGES = [
   { path: '/vulns', heading: 'Vulnerabilities' },
   // The sidebar says Configuration; the approved page's own title is longer.
   { path: '/profiles', heading: 'Configuration Compliance' },
-  { path: '/dex', heading: 'DEX' },
+  // The sidebar says DEX; the approved page's own title is longer.
+  { path: '/dex', heading: 'Digital Employee Experience' },
   { path: '/insight', heading: 'AEGIS Insight' },
   { path: '/sites', heading: 'Aegis Zones' },
   { path: '/peercache', heading: 'Peer cache' },

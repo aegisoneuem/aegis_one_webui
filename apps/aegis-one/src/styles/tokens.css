@@ -114,7 +114,36 @@
    * under the hard rules, so this is the flat approved navy, which sits inside
    * that range. See docs/decisions.md D-026.
    */
+  /*
+   * The dark tile and its gold, exactly as the reference's avatar draws
+   * them. Deliberately not --ao-sidebar / --ao-brand-hi, which are a shade
+   * off: v129 uses #20272D 247 times and #ECC57C 219 times, against 3 and 49
+   * for the two this console has. Correcting those two globally would move
+   * the sidebar, the grid headers and the lead counter tile as well, so it
+   * is proposed in docs/sweep-v129.md rather than done here.
+   */
+  --ao-tile-ink: #20272d;
+  --ao-tile-gold: #ecc57c;
+
   --ui-button-primary-bg: var(--ao-navy);
+
+  /*
+   * The gloss, verbatim from v129's rendered buttons. The reference paints a
+   * gradient on exactly two things — the primary button and the destructive
+   * one — and on nothing else: no glossy cards, no glossy tiles, no sheen
+   * overlays anywhere on any of the twenty pages. See docs/sweep-v129.md.
+   *
+   * The inset highlight is what makes it read as a raised control rather
+   * than a painted rectangle, and the destructive one carries a text shadow
+   * the navy one does not.
+   */
+  --ui-button-primary-gloss: linear-gradient(#24476b 0%, #1b3a5a 55%, #15304c 100%);
+  --ui-button-primary-edge: #0f2740;
+  --ui-button-primary-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), 0 1px 2px rgb(10 25 45 / 30%);
+  --ui-button-danger-gloss: linear-gradient(#e0474c 0%, #c0262d 50%, #9e1c22 100%);
+  --ui-button-danger-edge: #8b1a1f;
+  --ui-button-danger-shadow: inset 0 1px 0 rgb(255 255 255 / 28%), 0 1px 2px rgb(139 26 31 / 35%);
+  --ui-button-danger-text-shadow: 0 1px 0 rgb(0 0 0 / 18%);
   --ui-button-primary-hover: var(--ao-navy-ink);
 
   --ui-bg: var(--ao-bg);

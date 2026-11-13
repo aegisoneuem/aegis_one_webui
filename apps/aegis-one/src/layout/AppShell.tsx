@@ -1,18 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { Outlet, useMatches, useNavigate } from 'react-router-dom';
-import {
-  Breadcrumb,
-  Button,
-  Icon,
-  Menu,
-  NavGroup,
-  NavItem,
-  Sidebar,
-  type BreadcrumbItem,
-} from '@aegis/ui';
+import { Breadcrumb, Icon, NavGroup, NavItem, Sidebar, type BreadcrumbItem } from '@aegis/ui';
 import markUrl from '../assets/brand/aegis-mark.png';
 import { NAV_GROUPS, PAGE_BY_ID, PAGE_PERMISSIONS } from '../app/nav';
 import { useAuth } from '../app/auth';
+import { TopBarActions } from './TopBarActions';
 import type { RouteHandle } from '../app/routes';
 import { useUiStore } from '../app/uiStore';
 import styles from './AppShell.module.css';
@@ -25,7 +17,7 @@ export function AppShell(): JSX.Element {
   const navigate = useNavigate();
   const matches = useMatches();
   const { collapsed, expanded, toggleCollapsed, toggleGroup, expandGroup } = useUiStore();
-  const { user, can, signOut } = useAuth();
+  const { can } = useAuth();
 
   const handle = useMemo(() => {
     const last = [...matches].reverse().find((m) => isRouteHandle(m.handle));
@@ -132,28 +124,7 @@ export function AppShell(): JSX.Element {
           onHome={() => navigate('/')}
           backIcon={<Icon name="back" size={15} />}
           homeIcon={<Icon name="home" size={15} />}
-          trailing={
-            user ? (
-              <Menu
-                label="Account"
-                items={[
-                  { separator: true, label: `${user.name} — ${user.role}` },
-                  {
-                    id: 'sign-out',
-                    label: 'Sign out',
-                    icon: <Icon name="sign-out" size={15} />,
-                    onSelect: () => void signOut(),
-                  },
-                ]}
-              >
-                {(trigger) => (
-                  <Button size="sm" variant="ghost" icon={<Icon name="user" size={15} />} {...trigger}>
-                    {user.name}
-                  </Button>
-                )}
-              </Menu>
-            ) : null
-          }
+          trailing={<TopBarActions />}
         />
         <main className={styles.content} id="content">
           <Outlet />

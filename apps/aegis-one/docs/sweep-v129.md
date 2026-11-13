@@ -34,21 +34,21 @@ having no "Loading" text left.
 | Device groups   | `/groups`         | 24/24 | clean   | n/a   | —      | 14 / 0 | matches                | sort, pager         | 236ms |
 | Enrollment      | `/enrollment`     | 24/27 | clean   | n/a   | 3 svg  | 18 / 0 | matches                | 5 rows              | 324ms |
 | Patches         | `/patches`        | 24/44 | clean   | n/a   | 20 svg | 17 / 0 | matches                | 35 rows, sort       | 280ms |
-| Software        | `/software`       | 24/24 | clean   | **0** | —      | 16 / 4 | **installer upload**   | cards, search       | 326ms |
+| Software        | `/software`       | 24/24 | clean   | done  | —      | 16 / 4 | **installer upload**   | cards, search       | 326ms |
 | Live Activity   | `/liveops`        | 24/27 | clean   | n/a   | 3 svg  | — ¹    | matches                | search              | 287ms |
 | Remote Control  | `/remote-control` | 30/30 | clean   | n/a   | 6 svg  | — ¹    | no reference ²         | search              | 239ms |
 | Deployments     | `/deployments`    | 24/40 | clean   | n/a   | 16 svg | 19 / 6 | matches                | 16 rows, sort       | 265ms |
-| Vulnerabilities | `/vulns`          | 24/51 | clean   | **0** | 27 svg | 25 / 6 | **differs in shape**   | 42 rows, 7 filters  | 428ms |
+| Vulnerabilities | `/vulns`          | 24/51 | clean   | done  | 27 svg | 25 / 6 | **differs in shape**   | 42 rows, 7 filters  | 428ms |
 | Configuration   | `/profiles`       | 24/24 | clean   | n/a   | —      | — ¹    | matches                | 6 filters           | 553ms |
 | DEX             | `/dex`            | 24/33 | clean   | n/a   | 9 svg  | 11 / 0 | matches                | 31 rows             | 269ms |
-| AEGIS Insight   | `/insight`        | 24/24 | clean   | **0** | —      | — ¹    | **no PREVIEW tag**     | —                   | 436ms |
+| AEGIS Insight   | `/insight`        | 24/24 | clean   | done  | —      | — ¹    | **no PREVIEW tag**     | —                   | 436ms |
 | Aegis Zones     | `/sites`          | 24/34 | clean   | n/a   | 10 svg | 6 / 0  | matches                | 20 rows             | 208ms |
 | Peer cache      | `/peercache`      | 24/24 | clean   | n/a   | —      | — ¹    | matches                | 9 rows              | 234ms |
 | Reports         | `/reports`        | 24/24 | clean   | n/a   | —      | — ¹    | **no count chip**      | cards               | 284ms |
 | Integrations    | `/integrations`   | 24/24 | clean   | n/a   | —      | — ¹    | matches                | —                   | 613ms |
 | Administration  | `/admin`          | 24/24 | clean   | n/a   | —      | — ¹    | matches                | —                   | 256ms |
 | Licensing       | `/licensing`      | 24/30 | clean   | n/a   | 6 svg  | 5 / 0  | **upload is a button** | 8 rows              | 258ms |
-| Diagnostics     | `/diagnostics`    | 24/25 | clean   | **0** | 1 svg  | 5 / 0  | matches                | 7 rows              | 272ms |
+| Diagnostics     | `/diagnostics`    | 24/25 | clean   | done  | 1 svg  | 5 / 0  | matches                | 7 rows              | 272ms |
 
 ¹ Not "no tiles". The counter selector finds tiles on thirteen pages and
 misses them on seven, because there is no single tile component to select —
@@ -102,16 +102,34 @@ The two that differ are listed below.
 
 Ordered by how many pages it touches.
 
-### 3.1 The top bar — all twenty pages
+### 3.1 The top bar — all twenty pages — **done**
 
-The reference's top bar carries a search field, a bell with an unread dot, a
-help control and an `AA` avatar tile. The build has the user's name as text.
-This is brief item A.7 and it is the single most visible difference left,
-because it is on every screenshot.
+The reference's top bar carries a search control, a bell with an unread dot,
+a help control and an initials tile. The build had the user's name as text.
 
-### 3.2 Primary and destructive buttons are flat — all twenty pages
+Built, and measured against the reference rather than eyeballed: the icon
+buttons are 32×32, the tile is 36×36 in #20272D with #ECC57C initials at
+12.5px/650, and the unread mark is a 5px **square** — all ten measurements
+match.
 
-See the gradient table above.
+What sits behind each control is narrower than v129's, and the copy says so
+instead of promising more. The reference's search is a command palette over
+every entity in the console; this one searches endpoints, which is a search
+this console can run today. The bell shows the audit log — the one record of
+"what just happened" that exists — and the dot means entries newer than the
+last time this browser opened it, rather than an ornament that is always
+lit. It hides entirely for a role without `audit:read`.
+
+### 3.2 Primary and destructive buttons are flat — all twenty pages — **done**
+
+Both gradients are now tokens and both variants carry them, with the
+reference's own edge colour, inset highlight and drop shadow; the
+destructive one also carries the text shadow the navy one does not. A
+consumer of `packages/ui` that sets no gloss token still gets the flat
+colour, so this is a design-system default rather than a requirement.
+
+Measured: gradient, border and box-shadow on the primary button match the
+reference string for string.
 
 ### 3.3 Overview is missing its scope bar and its panel controls
 
@@ -167,6 +185,27 @@ it.**
 | Enrollment     | The reference's four counters are buttons; the build's are not clickable.                                                                                                  |
 
 ---
+
+### 3.6b Found while building the bell: `/audit` is declared and unimplemented
+
+The contract has `GET /audit` with `audit:read`, and no server answers it —
+asking for it is a 404. The working endpoint is `/liveops/audit`, which the
+Live Activity page uses and which the bell now uses too. Either the contract
+should drop `/audit` or the mock should implement it; a declared path that
+404s is the kind of thing a backend team builds against and then has to undo.
+
+### 3.7 Open: two palette tokens are a shade off, console-wide
+
+Found while matching the avatar tile, and left alone because it reaches
+further than this brief. v129 paints its dark tiles #20272D and their gold
+#ECC57C — 247 and 219 occurrences. This console's `--ao-sidebar` is #202329
+and `--ao-brand-hi` is #E4C795, which appear 3 and 49 times. Both of ours are
+in the reference, so the colour check passes and has always passed.
+
+The avatar tile uses the reference's values through their own tokens. Moving
+`--ao-sidebar` and `--ao-brand-hi` would also move the sidebar, every grid
+header band and the lead counter on every page, so it wants a decision rather
+than a quiet fix.
 
 ## 4. What this sweep does not cover
 

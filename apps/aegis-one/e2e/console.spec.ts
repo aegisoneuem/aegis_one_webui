@@ -1729,9 +1729,56 @@ test.describe('signed in as Super Admin', () => {
     await expect(page).toHaveURL(/\/devices$/);
   });
 
+  test('the top bar carries the reference’s four controls', async ({ page }) => {
+    await page.goto('/devices');
+
+    for (const name of ['Search endpoints', 'Open notifications', 'Help']) {
+      await expect(page.getByRole('button', { name })).toBeVisible();
+    }
+
+    // The signed-in user is an initials tile, not their name in text.
+    const tile = page.getByRole('button', { name: 'Open profile for Rohan Deshpande' });
+    await expect(tile).toHaveText('RD');
+    const box = await tile.boundingBox();
+    if (box === null) throw new Error('the profile tile has no box');
+    expect(Math.round(box.width)).toBe(36);
+    expect(Math.round(box.height)).toBe(36);
+  });
+
+  test('top-bar search hands its query to Devices', async ({ page }) => {
+    await page.goto('/reports');
+    await page.getByRole('button', { name: 'Search endpoints' }).click();
+
+    const field = page.getByRole('textbox', { name: 'Search endpoints' });
+    await expect(field).toBeFocused();
+    await field.fill('AHM-SRV-0089');
+    await field.press('Enter');
+
+    await expect(page).toHaveURL(/\/devices\?q=AHM-SRV-0089/);
+    await expect(page.getByRole('heading', { name: 'Devices' })).toBeVisible();
+  });
+
+  test('primary and destructive buttons carry the approved gloss', async ({ page }) => {
+    await page.goto('/devices');
+
+    // v129 paints a gradient on exactly two variants and nothing else, so
+    // the check is that the primary has one and an ordinary button does not.
+    const primary = page.getByRole('button', { name: 'Create Action' });
+    await expect(primary).toBeVisible();
+    const gloss = await primary.evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(gloss).toBe(
+      'linear-gradient(rgb(36, 71, 107) 0%, rgb(27, 58, 90) 55%, rgb(21, 48, 76) 100%)',
+    );
+
+    const plain = page.getByRole('button', { name: 'Export' }).first();
+    const flat = await plain.evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(flat).toBe('none');
+  });
+
   test('signing out ends the session server-side', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /Rohan Deshpande/ }).click();
+    // The top bar shows the signed-in user as an initials tile, as v129 does.
+    await page.getByRole('button', { name: 'Open profile for Rohan Deshpande' }).click();
     await page.getByRole('menuitem', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/sign-in/);
 

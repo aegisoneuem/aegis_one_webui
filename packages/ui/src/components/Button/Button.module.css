@@ -34,15 +34,28 @@
 /* The primary fill is its own token: a console's accent and its call-to-action
    are not always the same colour. Each falls back to the accent, so a console
    that sets none of them is unchanged. */
+/*
+ * The two variants the approved design paints a gradient on. A consumer that
+ * sets no gloss token gets the flat colour it had before, so this stays a
+ * design-system default rather than a requirement.
+ */
 .primary {
+  border-color: var(--ui-button-primary-edge, var(--ui-button-primary-bg, var(--ui-accent-strong)));
   background: var(--ui-button-primary-bg, var(--ui-accent-strong));
-  border-color: var(--ui-button-primary-bg, var(--ui-accent-strong));
+  background-image: var(--ui-button-primary-gloss, none);
+  box-shadow: var(--ui-button-primary-shadow, none);
   color: var(--ui-button-primary-fg, var(--ui-surface));
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--ui-button-primary-hover, var(--ui-accent-hover));
-  border-color: var(--ui-button-primary-hover, var(--ui-accent-hover));
+  background-color: var(--ui-button-primary-hover, var(--ui-accent-hover));
+  /* The gloss lifts on hover rather than disappearing, so the control does
+     not change character under the pointer. */
+  background-image: var(--ui-button-primary-gloss-hover, var(--ui-button-primary-gloss, none));
+  border-color: var(
+    --ui-button-primary-edge,
+    var(--ui-button-primary-hover, var(--ui-accent-hover))
+  );
 }
 
 .secondary {
@@ -65,14 +78,18 @@
 }
 
 .danger {
+  border-color: var(--ui-button-danger-edge, var(--ui-danger));
   background: var(--ui-danger);
-  border-color: var(--ui-danger);
+  background-image: var(--ui-button-danger-gloss, none);
+  box-shadow: var(--ui-button-danger-shadow, none);
   color: var(--ui-surface);
+  text-shadow: var(--ui-button-danger-text-shadow, none);
 }
 
 .danger:hover:not(:disabled) {
-  background: var(--ui-danger-hover);
-  border-color: var(--ui-danger-hover);
+  background-color: var(--ui-danger-hover);
+  background-image: var(--ui-button-danger-gloss-hover, var(--ui-button-danger-gloss, none));
+  border-color: var(--ui-button-danger-edge, var(--ui-danger-hover));
 }
 
 .link {

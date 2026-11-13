@@ -976,7 +976,9 @@ test.describe('signed in as Super Admin', () => {
     const first = page.locator('article').first();
     await expect(first.getByRole('heading', { name: 'All Computers' })).toBeVisible();
     await expect(first.getByText(/charts · \d+ columns/)).toBeVisible();
-    await expect(first.getByRole('button', { name: 'Open Report →' })).toBeVisible();
+    // Each card's open button names its own report, so twenty of them are
+    // twenty names rather than one repeated.
+    await expect(first.getByRole('button', { name: /^Open / })).toBeVisible();
   });
 
   test('a Reports category narrows the library to what it counted', async ({ page }) => {
@@ -1009,7 +1011,11 @@ test.describe('signed in as Super Admin', () => {
 
   test('opening a report shows its counters, charts and its own columns', async ({ page }) => {
     await page.goto('/reports');
-    await page.locator('article').first().getByRole('button', { name: 'Open Report →' }).click();
+    await page
+      .locator('article')
+      .first()
+      .getByRole('button', { name: /^Open / })
+      .click();
 
     await expect(page).toHaveURL(/\/reports\/computers$/);
     await expect(page.getByRole('heading', { name: 'All Computers', exact: true })).toBeVisible();

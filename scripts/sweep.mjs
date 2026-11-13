@@ -85,6 +85,16 @@ function measure() {
         .join(' ')
         .trim();
     }
+    // A wrapping label names its control, including the visually hidden span
+    // both codebases use for exactly that. Reading only the element's own
+    // text made every search box on both sides look nameless.
+    const label = el.closest('label');
+    if (label) {
+      const own = label.cloneNode(true);
+      for (const child of own.querySelectorAll('input, select, textarea')) child.remove();
+      const text = own.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (text !== '') return text;
+    }
     return el.textContent.replace(/\s+/g, ' ').trim();
   };
 

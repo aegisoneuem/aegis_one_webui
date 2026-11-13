@@ -243,14 +243,14 @@ export default function Software() {
           onChange={(e) => controller.setSearch(e.target.value)}
         />
         <Select
-          aria-label="Category"
+          aria-label="Software category"
           placeholder="All Categories"
           options={categories}
           value={controller.filters['category'] ?? ''}
           onChange={(e) => controller.setFilter('category', e.target.value || undefined)}
         />
         <Select
-          aria-label="Publisher"
+          aria-label="Software publisher"
           placeholder="All Publishers"
           options={publishers}
           value={controller.filters['publisher'] ?? ''}

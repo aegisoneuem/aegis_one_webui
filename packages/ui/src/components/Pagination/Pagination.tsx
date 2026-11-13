@@ -79,11 +79,22 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(function P
           </span>
         ) : null}
 
+        {/*
+         * "Previous" and "Next" on their own are two of the commonest
+         * unnamed controls in any console; the unit this pager already
+         * knows says what is being paged, so a screen reader can tell one
+         * from another.
+         */}
         <span className={styles.buttons}>
-          <Button size="sm" disabled={!hasPrevious} onClick={onPrevious}>
+          <Button
+            size="sm"
+            aria-label={`Previous ${unit} page`}
+            disabled={!hasPrevious}
+            onClick={onPrevious}
+          >
             Previous
           </Button>
-          <Button size="sm" disabled={!hasNext} onClick={onNext}>
+          <Button size="sm" aria-label={`Next ${unit} page`} disabled={!hasNext} onClick={onNext}>
             Next
           </Button>
         </span>

@@ -89,7 +89,10 @@ export function SavedViews({
     <>
       <Menu items={entries} label="Saved views">
         {(trigger) => (
-          <Button size="sm" {...trigger}>
+          // Named for what it is, not for what is currently chosen: the
+          // visible text says which view, the name says what the control
+          // does.
+          <Button size="sm" aria-label="Saved views" {...trigger}>
             {active ? active.name : 'Default view'}
             {dirty ? ' •' : ''}
           </Button>

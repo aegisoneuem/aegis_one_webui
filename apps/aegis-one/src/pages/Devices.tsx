@@ -619,7 +619,7 @@ export default function Devices() {
             />
             <Select
               size="sm"
-              aria-label="Location"
+              aria-label="Device location"
               placeholder="All Locations"
               options={zoneOptions}
               value={controller.filters['zoneId'] ?? ''}
@@ -627,7 +627,7 @@ export default function Devices() {
             />
             <Select
               size="sm"
-              aria-label="Platform"
+              aria-label="Device platform"
               placeholder="All Platforms"
               options={PLATFORM_OPTIONS}
               value={controller.filters['osFamily'] ?? ''}
@@ -635,7 +635,7 @@ export default function Devices() {
             />
             <Select
               size="sm"
-              aria-label="Status"
+              aria-label="Device status"
               placeholder="All Statuses"
               options={STATUS_OPTIONS}
               value={controller.filters['status'] ?? ''}

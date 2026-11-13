@@ -433,7 +433,7 @@ function Console({ onOpen }: { onOpen: (id: string) => void }) {
 
           <div className={styles.fields}>
             <label className={styles.field}>
-              <span className={styles.srOnly}>Search</span>
+              <span className={styles.srOnly}>Search target computers</span>
               <input
                 type="search"
                 placeholder="Search computer, IP or OS…"
@@ -442,7 +442,7 @@ function Console({ onOpen }: { onOpen: (id: string) => void }) {
               />
             </label>
             <label className={styles.field}>
-              <span className={styles.srOnly}>Platform</span>
+              <span className={styles.srOnly}>Target platform</span>
               <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
                 <option value="">All Platforms</option>
                 <option value="Windows">Windows</option>

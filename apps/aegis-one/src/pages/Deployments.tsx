@@ -181,7 +181,7 @@ export default function Deployments() {
           <span className={styles.count}>{num(controller.total)} actions</span>
           <Select
             className={styles.typeSelect}
-            aria-label="Type"
+            aria-label="Filter deployment action"
             placeholder="All Types"
             options={Object.entries(TYPE_LABEL).map(([value, label]) => ({ value, label }))}
             value={controller.filters['type'] ?? ''}

@@ -286,6 +286,45 @@ Live Activity page uses and which the bell now uses too. Either the contract
 should drop `/audit` or the mock should implement it; a declared path that
 404s is the kind of thing a backend team builds against and then has to undo.
 
+### 3.6c The naming pass — done, and what it was really about
+
+Re-reading the whole sweep with the fixed reader turned most of 3.6 into one
+finding: the controls were there, and what differed was what a screen reader
+calls them. Four selects named `Location`, `Platform`, `Status` and `Type`
+across four pages are four names doing the work of none, and the reference
+chose the longer form on purpose.
+
+Renamed to the reference's own names: the Devices scope selects
+(`Device location`, `Device platform`, `Device status`), the Reports toolbar
+(`Search reports`, `Sort reports`, `Grid view`, `List view`), Software's two
+selects, Deployments' action filter, Live Activity's target search and
+platform, and the shared saved-views control (`Saved views`, not whichever
+view happens to be chosen). The shared pager's Previous and Next now say what
+they page.
+
+Two were genuine defects rather than wording:
+
+- The Reports search box had the result count **inside** its label, so its
+  accessible name was "Search reports 0 reports". The count moved out.
+- Twenty report cards offered twenty buttons all called "Open Report". Each
+  now names its own report.
+
+What is left after that pass, re-measured across all twenty pages:
+
+| Page                     | Still missing                                                       |
+| ------------------------ | ------------------------------------------------------------------- |
+| Overview                 | `+ Custom Widget`, `Customize`, `How it's calculated`, `Thresholds` |
+| Device groups            | the CSV file input, the tree's collapse controls, a member search   |
+| Vulnerabilities          | `Deploy Fix` and `Review` as row actions (see 3.5)                  |
+| Configuration            | `All Failing Checks`                                                |
+| Zones                    | `Open data summary`                                                 |
+| Peer cache, Integrations | the per-row overflow menus                                          |
+| Devices                  | sort indicators on two columns                                      |
+
+Each is a small piece of work rather than a question. The wording differences
+that remain — "Search software or publisher" against the reference's "Search
+software" — are ones where this console says more, and they are left.
+
 ### 3.7 Open: two palette tokens are a shade off, console-wide
 
 Found while matching the avatar tile, and left alone because it reaches

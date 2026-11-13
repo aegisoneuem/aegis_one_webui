@@ -153,15 +153,17 @@ export default function Reports() {
 
       <section className={styles.toolbar} aria-label="Find a report">
         <label className={styles.search}>
-          <span className={styles.srOnly}>Find a report</span>
+          <span className={styles.srOnly}>Search reports</span>
           <input
             type="search"
             placeholder="Find a report — computers, updates, SEBI…"
             value={search}
             onChange={(e) => go({ q: e.target.value || null })}
           />
-          <span className={styles.searchCount}>{num(sorted.length)} reports</span>
         </label>
+        {/* Outside the label: inside it, the count becomes part of the
+            search box's own name — "Search reports 0 reports". */}
+        <span className={styles.searchCount}>{num(sorted.length)} reports</span>
 
         <button
           type="button"
@@ -177,7 +179,7 @@ export default function Reports() {
         <label className={styles.sort}>
           <span>Sort by</span>
           <select
-            aria-label="Sort by"
+            aria-label="Sort reports"
             value={sort}
             onChange={(e) => go({ sort: e.target.value === 'default' ? null : e.target.value })}
           >
@@ -193,6 +195,7 @@ export default function Reports() {
           <button
             type="button"
             aria-pressed={view === 'grid'}
+            aria-label="Grid view"
             className={view === 'grid' ? styles.viewOn : styles.viewOff}
             onClick={() => setView('grid')}
           >
@@ -201,6 +204,7 @@ export default function Reports() {
           <button
             type="button"
             aria-pressed={view === 'list'}
+            aria-label="List view"
             className={view === 'list' ? styles.viewOn : styles.viewOff}
             onClick={() => setView('list')}
           >
@@ -267,6 +271,7 @@ export default function Reports() {
                       <button
                         type="button"
                         className={styles.rowLink}
+                        aria-label={`Open ${report.title}`}
                         onClick={() => void navigate(`/reports/${segment(report.id)}`)}
                       >
                         Open Report
@@ -349,7 +354,14 @@ function ReportTile({
         <span className={styles.cardMeta}>
           {num(report.charts)} charts · {num(report.columns)} columns
         </span>
-        <button type="button" className={styles.openLink} onClick={onOpen}>
+        {/* Named for its own report: twenty cards otherwise give a screen
+            reader twenty buttons with one name between them. */}
+        <button
+          type="button"
+          className={styles.openLink}
+          aria-label={`Open ${report.title}`}
+          onClick={onOpen}
+        >
           Open Report →
         </button>
       </footer>

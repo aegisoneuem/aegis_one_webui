@@ -45,7 +45,7 @@ const DEVICE_FIELDS: Readonly<Record<string, string>> = {
   lastLogon: 'd.primary_user_name',
   department: 'd.department',
   status: `CASE d.status WHEN 'online' THEN 'Online' WHEN 'offline' THEN 'Offline'
-                         ELSE 'Pending restart' END`,
+                         ELSE 'Pending Restart' END`,
   lastSeen: 'd.last_seen_at',
   type: `CASE d.kind WHEN 'server' THEN 'Server' WHEN 'laptop' THEN 'Laptop' ELSE 'Desktop' END`,
   manufacturer: 'd.manufacturer',
@@ -82,22 +82,22 @@ const DEVICE_FIELDS: Readonly<Record<string, string>> = {
   ssid: 'd.ssid',
   publicIp: 'd.public_ip',
   vpn: 'd.vpn',
-  av: `CASE WHEN d.antivirus_ok = 1 THEN 'Protected' ELSE 'Not protected' END`,
+  av: `CASE WHEN d.antivirus_ok = 1 THEN 'Protected' ELSE 'Not Protected' END`,
   protection: 'd.av_product',
   avVersion: 'd.av_definitions',
   lastScan: 'd.last_scan_at',
-  encryption: `CASE WHEN d.encrypted = 1 THEN 'Encrypted' ELSE 'Not encrypted' END`,
+  encryption: `CASE WHEN d.encrypted = 1 THEN 'Encrypted' ELSE 'Not Encrypted' END`,
   encryptionType: 'd.encryption_type',
   firewall: `CASE WHEN d.firewall_ok = 1 THEN 'On' ELSE 'Off' END`,
   usb: 'd.usb_storage',
   localAdmins: 'd.local_admins',
   risk: `CASE WHEN d.critical_vulns > 0 OR d.encrypted = 0 OR d.antivirus_ok = 0
-              THEN 'High risk' WHEN d.pending_patches > 2 THEN 'Medium risk'
-              ELSE 'Low risk' END`,
+              THEN 'High Risk' WHEN d.pending_patches > 2 THEN 'Medium Risk'
+              ELSE 'Low Risk' END`,
   openVulns: 'd.critical_vulns',
   missing: 'd.pending_patches',
   critMissing: `CASE WHEN d.pending_patches >= 3 THEN 1 ELSE 0 END`,
-  patch: `CASE WHEN d.pending_patches = 0 THEN 'Up to date' ELSE 'Updates pending' END`,
+  patch: `CASE WHEN d.pending_patches = 0 THEN 'Up to Date' ELSE 'Updates Pending' END`,
   lastPatched: 'd.last_patched_at',
   ring: 'd.patch_ring',
   rebootPending: `CASE WHEN d.reboot_pending = 1 THEN 'Yes' ELSE 'No' END`,
@@ -105,22 +105,22 @@ const DEVICE_FIELDS: Readonly<Record<string, string>> = {
   contentSource: 'd.content_source',
   compliance: 'd.config_pass_pct',
   failedChecks: 'd.config_fail',
-  checks: `CASE WHEN d.config_pass_pct >= 90 THEN 'All passing'
-                WHEN d.config_pass_pct >= 75 THEN 'Some failing' ELSE 'Many failing' END`,
+  checks: `CASE WHEN d.config_pass_pct >= 90 THEN 'All Passing'
+                WHEN d.config_pass_pct >= 75 THEN 'Some Failing' ELSE 'Many Failing' END`,
   dexScore: 'd.dex_score',
   cpu: 'd.cpu_pct',
   ram: 'd.memory_pct',
   boot: 'd.boot_seconds',
   performance: `CASE WHEN d.cpu_pct >= 90 OR d.memory_pct >= 90 OR d.boot_seconds >= 90
                      THEN 'Poor' WHEN d.cpu_pct >= 75 OR d.memory_pct >= 75 OR d.boot_seconds >= 60
-                     THEN 'Needs attention' ELSE 'Normal' END`,
+                     THEN 'Needs Attention' ELSE 'Normal' END`,
   cpuBand: `CASE WHEN d.cpu_pct >= 90 THEN '90% or more' WHEN d.cpu_pct >= 75 THEN '75-89%'
                  WHEN d.cpu_pct >= 50 THEN '50-74%' ELSE 'Below 50%' END`,
   ramBand: `CASE WHEN d.memory_pct >= 90 THEN '90% or more' WHEN d.memory_pct >= 75 THEN '75-89%'
                  WHEN d.memory_pct >= 50 THEN '50-74%' ELSE 'Below 50%' END`,
   bootBand: `CASE WHEN d.boot_seconds >= 90 THEN '90 seconds or more'
                   WHEN d.boot_seconds >= 60 THEN '60-89 seconds' ELSE 'Under 60 seconds' END`,
-  storage: `CASE WHEN d.disk_free_pct <= 10 THEN 'Low space'
+  storage: `CASE WHEN d.disk_free_pct <= 10 THEN 'Low Space'
                  WHEN d.disk_free_pct <= 25 THEN 'Watch' ELSE 'Healthy' END`,
   spaceBand: `CASE WHEN d.disk_free_pct <= 10 THEN '10% or less'
                    WHEN d.disk_free_pct <= 25 THEN '11-25%' ELSE 'Over 25%' END`,
@@ -130,7 +130,7 @@ const DEVICE_FIELDS: Readonly<Record<string, string>> = {
                        ELSE 'Today' END`,
   ready: `CASE WHEN d.config_pass_pct >= 90 AND d.pending_patches = 0 AND d.encrypted = 1
                     AND d.antivirus_ok = 1 AND d.firewall_ok = 1 THEN 'Ready'
-               ELSE 'Needs review' END`,
+               ELSE 'Needs Review' END`,
   /*
    * "Last deployment" is a property of the device, not of the row: it is how
    * the newest action sent to this endpoint finished. A device that has never
@@ -138,7 +138,7 @@ const DEVICE_FIELDS: Readonly<Record<string, string>> = {
    */
   deployment: `COALESCE((SELECT CASE dr2.state WHEN 'succeeded' THEN 'Completed'
                                                WHEN 'failed' THEN 'Failed'
-                                               ELSE 'In progress' END
+                                               ELSE 'In Progress' END
                             FROM deployment_results dr2
                            WHERE dr2.device_id = d.id
                            ORDER BY dr2.finished_at DESC LIMIT 1), 'None')`,
@@ -156,13 +156,13 @@ const SOURCE_FIELDS: Readonly<Record<ReportSource, Readonly<Record<string, strin
     version: 'ds.version',
     publisher: 's.publisher',
     category: 's.category',
-    versionStatus: `CASE WHEN ds.outdated = 1 THEN 'Out of date' ELSE 'Current' END`,
+    versionStatus: `CASE WHEN ds.outdated = 1 THEN 'Out of Date' ELSE 'Current' END`,
     detected: 'ds.installed_at',
   },
   licenses: {
     app: 's.title',
     license: `CASE WHEN s.install_count > s.seats THEN 'Over-allocated'
-                   WHEN s.install_count = s.seats THEN 'Fully assigned' ELSE 'Assigned' END`,
+                   WHEN s.install_count = s.seats THEN 'Fully Assigned' ELSE 'Assigned' END`,
     renewal: `strftime('%b %Y', s.renews_at)`,
     version: 'ds.version',
     publisher: 's.publisher',
@@ -180,7 +180,7 @@ const SOURCE_FIELDS: Readonly<Record<ReportSource, Readonly<Record<string, strin
   'update-results': {
     update: 'p.title',
     result: `CASE dp.state WHEN 'installed' THEN 'Successful' WHEN 'failed' THEN 'Failed'
-                           ELSE 'Not finished' END`,
+                           ELSE 'Not Finished' END`,
     date: `date(dp.updated_at)`,
     severity: `UPPER(SUBSTR(p.severity, 1, 1)) || SUBSTR(p.severity, 2)`,
     updateStatus: `CASE dp.state WHEN 'pending' THEN 'Pending' WHEN 'failed' THEN 'Failed'
@@ -210,9 +210,9 @@ const SOURCE_FIELDS: Readonly<Record<ReportSource, Readonly<Record<string, strin
     app: 'dep.package',
     action: `REPLACE(UPPER(SUBSTR(dep.type, 1, 1)) || SUBSTR(dep.type, 2), '-', ' ')`,
     result: `CASE dr.state WHEN 'succeeded' THEN 'Completed' WHEN 'failed' THEN 'Failed'
-                           ELSE 'In progress' END`,
+                           ELSE 'In Progress' END`,
     deployment: `CASE dr.state WHEN 'succeeded' THEN 'Completed' WHEN 'failed' THEN 'Failed'
-                               ELSE 'In progress' END`,
+                               ELSE 'In Progress' END`,
     date: `date(dr.finished_at)`,
     detail: 'dr.message',
     time: 'dr.finished_at',
@@ -221,8 +221,8 @@ const SOURCE_FIELDS: Readonly<Record<ReportSource, Readonly<Record<string, strin
     action: `UPPER(SUBSTR(ljr.action_type, 1, 1))
              || REPLACE(LOWER(SUBSTR(ljr.action_type, 2)), '_', ' ')`,
     result: `CASE ljr.status WHEN 'succeeded' THEN 'Completed' WHEN 'failed' THEN 'Failed'
-                             WHEN 'timed-out' THEN 'Timed out' WHEN 'offline' THEN 'Not reached'
-                             ELSE 'In progress' END`,
+                             WHEN 'timed-out' THEN 'Timed Out' WHEN 'offline' THEN 'Not Reached'
+                             ELSE 'In Progress' END`,
     date: `date(ljr.finished_at)`,
     time: 'ljr.finished_at',
     detail: 'ljr.reason',
@@ -369,7 +369,7 @@ function devicesIn(db: Db, report: ReportDef, scope: ReportScope): number {
  *
  * These are declared per report in the catalogue rather than taken from the
  * first chart's largest groups. Reading them off the chart is what made All
- * Computers show "Pending restart" as its third tile, where the reference
+ * Computers show "Pending Restart" as its third tile, where the reference
  * shows "Offline computers": the chart is sorted by size, so the tile changed
  * meaning whenever the data did.
  */
@@ -564,7 +564,7 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
           };
         }),
       kpis: [
-        { label: 'Computers in this report', value: devicesIn(db, report, scope) },
+        { label: 'Computers in This Report', value: devicesIn(db, report, scope) },
         ...report.kpis.map((kpi) => kpiOf(db, report, kpi, scope)),
       ],
       charts,

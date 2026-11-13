@@ -107,37 +107,37 @@ function renderCell(
 const STATUS_TONE: Readonly<Record<string, Tone>> = {
   Online: 'good',
   Offline: 'bad',
-  'Pending restart': 'warn',
+  'Pending Restart': 'warn',
   Protected: 'good',
-  'Not protected': 'bad',
+  'Not Protected': 'bad',
   Encrypted: 'good',
-  'Not encrypted': 'bad',
+  'Not Encrypted': 'bad',
   On: 'good',
   Off: 'bad',
   Successful: 'good',
   Completed: 'good',
   Failed: 'bad',
-  'Not finished': 'warn',
-  'In progress': 'warn',
+  'Not Finished': 'warn',
+  'In Progress': 'warn',
   Allowed: 'good',
   Blocked: 'bad',
   Normal: 'good',
-  'Needs attention': 'warn',
+  'Needs Attention': 'warn',
   Poor: 'bad',
   Healthy: 'good',
   Watch: 'warn',
-  'Low space': 'bad',
+  'Low Space': 'bad',
   Ready: 'good',
-  'Needs review': 'warn',
-  'Up to date': 'good',
-  'Updates pending': 'warn',
+  'Needs Review': 'warn',
+  'Up to Date': 'good',
+  'Updates Pending': 'warn',
   Critical: 'bad',
   High: 'bad',
   Medium: 'warn',
   Low: 'neutral',
-  'Low risk': 'good',
-  'Medium risk': 'warn',
-  'High risk': 'bad',
+  'Low Risk': 'good',
+  'Medium Risk': 'warn',
+  'High Risk': 'bad',
 };
 
 export default function ReportViewer() {
@@ -441,10 +441,10 @@ export default function ReportViewer() {
 
       <section className={styles.panel}>
         <header className={styles.dataHead}>
-          {/* "Computer details" on every report, which is what v129 calls
+          {/* "Computer Details" on every report, which is what v129 calls
               it whether the rows are computers, installations or updates. */}
           <h2 className={styles.panelTitle}>
-            Computer details <span className={styles.count}>{num(total)}</span>
+            Computer Details <span className={styles.count}>{num(total)}</span>
           </h2>
           <span className={styles.grow} />
           <div className={styles.search}>

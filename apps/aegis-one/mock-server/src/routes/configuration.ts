@@ -354,7 +354,7 @@ export function registerConfigurationRoutes(app: FastifyInstance, db: Db, basePa
 
   app.get(`${basePath}/configuration/checks`, async (request) => {
     const query = request.query as CheckQuery;
-    const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
     const offset = Number.parseInt(query.cursor ?? '0', 10) || 0;
     const { from, params: fromParams } = scopeFrom(query.group);
     const counts = scopeCounts(query.group);
@@ -397,7 +397,7 @@ export function registerConfigurationRoutes(app: FastifyInstance, db: Db, basePa
   app.get(`${basePath}/configuration/checks/:checkId`, async (request) => {
     const { checkId } = request.params as { checkId: string };
     const query = request.query as { limit?: string; group?: string };
-    const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
     const { from, params: fromParams } = scopeFrom(query.group);
     const counts = scopeCounts(query.group);
 
@@ -431,7 +431,7 @@ export function registerConfigurationRoutes(app: FastifyInstance, db: Db, basePa
 
   app.get(`${basePath}/configuration/devices`, async (request) => {
     const query = request.query as { cursor?: string; limit?: string; q?: string; group?: string };
-    const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
     const offset = Number.parseInt(query.cursor ?? '0', 10) || 0;
     const search = (query.q ?? '').trim();
     const scope = deviceScope(query.group);

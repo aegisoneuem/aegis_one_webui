@@ -436,7 +436,7 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
     if (!report) throw notFound();
 
     const query = request.query as { cursor?: string; limit?: string; q?: string };
-    const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
     const offset = Number.parseInt(query.cursor ?? '0', 10) || 0;
     const search = (query.q ?? '').trim();
 

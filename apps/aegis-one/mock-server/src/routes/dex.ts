@@ -130,7 +130,7 @@ export function registerDexRoutes(app: FastifyInstance, db: Db, basePath: string
    */
   app.get(`${basePath}/dex/devices`, async (request) => {
     const query = request.query as { cursor?: string; limit?: string; sort?: string };
-    const limit = Math.min(Math.max(Number(query.limit ?? 10), 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 200);
     const offset = Number.parseInt(query.cursor ?? '0', 10) || 0;
 
     // The contract allows a sort; the page offers the four measures behind the

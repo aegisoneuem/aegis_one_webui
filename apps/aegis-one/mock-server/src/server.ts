@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  ACCESS_TTL_SECONDS,
   SessionStore,
   createMockServer,
   openDb,
@@ -41,6 +42,12 @@ const repoRoot = resolve(here, '../../../..');
 const BASE_PATH = '/api/v1';
 const PORT = Number(process.env['MOCK_PORT'] ?? 8080);
 const APP_ORIGIN = process.env['APP_ORIGIN'] ?? 'http://localhost:5173';
+/*
+ * Raised only for an authenticated active scan, which outlives the default
+ * 15-minute token and otherwise spends its second half getting 401s.
+ */
+const accessTtlSeconds = Number(process.env['MOCK_ACCESS_TTL_SECONDS']) || ACCESS_TTL_SECONDS;
+
 const ISSUER = process.env['MOCK_ISSUER'] ?? `http://localhost:${PORT}`;
 const DB_FILE = process.env['MOCK_DB'] ?? resolve(here, '../data/aegis-mock.db');
 
@@ -99,7 +106,7 @@ export async function start(): Promise<void> {
     basePath: BASE_PATH,
     contractPath: resolve(repoRoot, 'contracts/aegis-one.openapi.yaml'),
     appOrigins: [APP_ORIGIN],
-    tokens: { secret, issuer: ISSUER, audience: 'aegis-one-console' },
+    tokens: { secret, issuer: ISSUER, audience: 'aegis-one-console', accessTtlSeconds },
     // Everything else needs a bearer token. These four are how you get one.
     publicPaths: ['/auth/token', '/auth/refresh', '/auth/logout', '/health'],
     /*
@@ -139,7 +146,7 @@ export async function start(): Promise<void> {
 
   registerAuthRoutes(app, {
     basePath: BASE_PATH,
-    tokens: { secret, issuer: ISSUER, audience: 'aegis-one-console' },
+    tokens: { secret, issuer: ISSUER, audience: 'aegis-one-console', accessTtlSeconds },
     sessions,
     idp,
     users,

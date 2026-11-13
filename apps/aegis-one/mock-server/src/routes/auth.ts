@@ -71,7 +71,7 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
     const csrfToken = issueCsrfToken(reply, { secure });
     return {
       accessToken,
-      expiresIn: ACCESS_TTL_SECONDS,
+      expiresIn: tokens.accessTtlSeconds ?? ACCESS_TTL_SECONDS,
       csrfToken,
       user: {
         id: user.id,

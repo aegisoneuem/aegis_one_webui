@@ -31,6 +31,16 @@ export interface TokenConfig {
   secret: string;
   issuer: string;
   audience: string;
+  /**
+   * Access-token lifetime, defaulting to the 15 minutes above.
+   *
+   * Configurable for one reason: an authenticated active scan outlives a
+   * 15-minute token, and ZAP injects a single static bearer. When the token
+   * expired mid-scan, 46% of the run came back 401 and the scan still reported
+   * success — it had simply stopped testing anything. Raising this for a scan
+   * is a deliberate, local choice; the default is unchanged.
+   */
+  accessTtlSeconds?: number;
 }
 
 function keyOf(secret: string): Uint8Array {
@@ -46,7 +56,7 @@ export async function signAccessToken(
     .setIssuedAt()
     .setIssuer(config.issuer)
     .setAudience(config.audience)
-    .setExpirationTime(`${ACCESS_TTL_SECONDS}s`)
+    .setExpirationTime(`${config.accessTtlSeconds ?? ACCESS_TTL_SECONDS}s`)
     .sign(keyOf(config.secret));
 }
 

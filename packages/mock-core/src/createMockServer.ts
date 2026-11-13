@@ -137,7 +137,16 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
     if (schema?.validateBody) assertValidBody(schema, request.body);
   });
 
-  app.setErrorHandler((error, request, reply) => {
+  /*
+   * One body for both error handlers below.
+   *
+   * These were two copies, and they drifted: the not-found copy was missing
+   * the Fastify-4xx branch, so a malformed JSON body sent to a path that does
+   * not exist was answered 500 — the error object was already carrying
+   * statusCode 400. An active scan found it by posting junk to a route that
+   * only accepts PUT. Sharing the body is what stops that happening again.
+   */
+  const respondToError: Parameters<typeof app.setErrorHandler>[0] = (error, request, reply) => {
     const requestId = String(request.id);
 
     if (error instanceof ApiError) {
@@ -170,7 +179,9 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
           requestId,
         ),
       );
-  });
+  };
+
+  app.setErrorHandler(respondToError);
 
   app.setNotFoundHandler((request, reply) =>
     reply
@@ -184,21 +195,7 @@ export async function createMockServer(options: MockServerOptions): Promise<Mock
    * or a failure here leaves through Fastify's default handler and loses the
    * envelope every client is written against.
    */
-  app.setErrorHandler((error, request, reply) => {
-    const requestId = String(request.id);
-    if (error instanceof ApiError) {
-      return reply.status(error.status).send(toErrorBody(error, requestId));
-    }
-    request.log.error({ err: error }, 'unhandled error on the not-found path');
-    return reply
-      .status(500)
-      .send(
-        toErrorBody(
-          new ApiError(500, 'internal_error', 'Something went wrong on our side.'),
-          requestId,
-        ),
-      );
-  });
+  app.setErrorHandler(respondToError);
 
   return { app, contract };
 }

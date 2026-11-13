@@ -203,7 +203,7 @@ export function registerVulnerabilityRoutes(app: FastifyInstance, db: Db, basePa
    */
   app.get(`${basePath}/vulnerabilities/devices`, async (request) => {
     const query = request.query as { limit?: string; q?: string };
-    const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
     const search = (query.q ?? '').trim();
 
     const rows = db

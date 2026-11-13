@@ -153,7 +153,7 @@ export function registerAdministrationRoutes(app: FastifyInstance, db: Db, baseP
 
   app.get(`${basePath}/admin/users`, async (request) => {
     const query = request.query as { cursor?: string; limit?: string; q?: string };
-    const limit = Math.min(Math.max(Number(query.limit ?? 50) || 50, 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
 
     const where: string[] = [];
     const params: unknown[] = [];
@@ -349,7 +349,9 @@ export function registerAdministrationRoutes(app: FastifyInstance, db: Db, baseP
       tokenMaxAgeDays: number;
     };
     if (body.autoAssignGroup !== null) {
-      const group = db.prepare(`SELECT id FROM groups WHERE id = ?`).get(body.autoAssignGroup);
+      const group = db
+        .prepare(`SELECT id FROM device_groups WHERE id = ?`)
+        .get(body.autoAssignGroup);
       if (!group) throw badRequest('Unknown device group.', { autoAssignGroup: 'unknown' });
     }
     db.prepare(

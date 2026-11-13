@@ -1822,6 +1822,68 @@ const run = async () => {
     unknownBody.error?.code === 'not_found' && Boolean(unknownBody.error?.requestId),
   );
 
+  /*
+   * A malformed body sent to a path that exists but does not accept that
+   * method goes through Fastify's not-found context, which had its own copy of
+   * the error handler — and that copy was missing the branch that honours a
+   * 4xx statusCode. The body parser's own 400 was answered 500. Both handlers
+   * now share one body.
+   */
+  const badJson = await fetch(`${API}/admin/agent-enrollment`, {
+    method: 'POST',
+    headers: authed(token, { 'content-type': 'application/json' }),
+    body: 'not json',
+  });
+  check(
+    'a malformed body on a route with no such method is 4xx, not 500',
+    badJson.status < 500,
+    `HTTP ${badJson.status}`,
+  );
+
+  /*
+   * A non-numeric `limit` used to reach better-sqlite3 as NaN and throw
+   * "datatype mismatch", so a malformed query string answered 500. The guard
+   * was `Number(query.limit ?? 50)`, which only falls back when the parameter
+   * is absent; `Number(query.limit) || 50` falls back on NaN too, which is
+   * what the shared lister already did. Found by the second active scan.
+   */
+  for (const path of [
+    'dex/devices',
+    'vulnerabilities/devices',
+    'configuration/checks',
+    'configuration/devices',
+    'reports',
+  ]) {
+    const res = await fetch(`${API}/${path}?limit=abc`, { headers: authed(token) });
+    check(`a non-numeric limit on /${path} is not a 500`, res.status === 200, `HTTP ${res.status}`);
+  }
+
+  /*
+   * This one queried a table called `groups`; the table is `device_groups`, so
+   * every attempt to validate the group threw SqliteError and answered 500 —
+   * including the ordinary case of naming a group that does not exist.
+   */
+  // Signs in again rather than reusing `session`: the scoped sign-in above
+  // rotated the shared cookie jar's CSRF cookie, so the pair would not match.
+  const admin = await signIn('rohan.deshpande@example.co.in', 'Aegis-Demo-2026');
+  const badGroup = await fetch(`${API}/admin/agent-enrollment`, {
+    method: 'PUT',
+    headers: authed(admin.body.accessToken, {
+      'content-type': 'application/json',
+      'x-csrf-token': admin.body.csrfToken,
+    }),
+    body: JSON.stringify({
+      requireToken: true,
+      autoAssignGroup: 'no-such-group',
+      tokenMaxAgeDays: 30,
+    }),
+  });
+  check(
+    'enrolling into an unknown group is 400, not 500',
+    badGroup.status === 400,
+    `HTTP ${badGroup.status}`,
+  );
+
   const bad = await fetch(`${API}/devices`, {
     headers: { authorization: 'Bearer not-a-real-token' },
   });

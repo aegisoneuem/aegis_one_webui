@@ -424,7 +424,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, db: Db, basePath
       result?: string;
     };
 
-    const limit = Math.min(Math.max(Number(query.limit ?? 50) || 50, 1), 200);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
     const where: string[] = [];
     const params: unknown[] = [];
 

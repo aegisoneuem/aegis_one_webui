@@ -16,16 +16,24 @@
 
 /* Slice and bar tones ---------------------------------------------------- */
 
+/*
+ * The status tones are the reference's own --st-* set, not the compliance
+ * ramp. v129 draws a status breakdown — online and offline, protected and
+ * unprotected, succeeded and failed — in #15803D and #C0262D, and keeps the
+ * softer --chart-compliance-* greens for the Overview's patch-compliance
+ * figure alone. Taking the compliance ramp for every status chart is what the
+ * brief means by "pastel tints".
+ */
 .good {
-  color: var(--chart-compliance-1);
+  color: var(--st-good);
 }
 
 .warn {
-  color: var(--chart-compliance-2);
+  color: var(--st-warn);
 }
 
 .bad {
-  color: var(--chart-compliance-3);
+  color: var(--st-bad);
 }
 
 .info {
@@ -35,6 +43,21 @@
 /* A second navy, so two in-flight states never read as one slice. */
 .alt {
   color: var(--chart-navy-4);
+}
+
+/*
+ * The two navy steps the tone names had been skipping. A report's categorical
+ * chart in v129 walks all five steps of the ramp and then repeats from the
+ * top; with only navy-1, -2 and -4 reachable, the third and fifth categories
+ * had to borrow a colour from somewhere else, which is how teal and sand got
+ * into charts that are not about status.
+ */
+.mid {
+  color: var(--chart-navy-3);
+}
+
+.pale {
+  color: var(--chart-navy-5);
 }
 
 .neutral {
@@ -173,10 +196,10 @@
   box-shadow: var(--ui-focus-ring);
 }
 
+/* Square, as v129 draws it: 9px with no radius. */
 .swatch {
   width: 9px;
   height: 9px;
-  border-radius: 50%;
   background: currentcolor;
 }
 
@@ -193,6 +216,11 @@
   font-size: 12.5px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* Without the share column the count takes its place against the edge. */
+.noShare .legendRow {
+  grid-template-columns: 10px 1fr auto;
 }
 
 .legendPct {
@@ -324,6 +352,124 @@
 .axisTick small {
   color: var(--ao-muted);
   font-size: 10.5px;
+}
+
+/* The value axis ---------------------------------------------------------
+   Only the report charts carry one: v129 gives the Overview's health columns
+   their percentage above each bar and no axis at all. */
+
+.hasAxis {
+  --axis-gutter: 38px;
+}
+
+.hasAxis .plot {
+  height: 221px;
+  padding-left: var(--axis-gutter);
+}
+
+.hasAxis .axis {
+  padding-left: var(--axis-gutter);
+  border-top-color: var(--chart-rule);
+}
+
+.hasAxis .axisTick {
+  min-width: 0;
+}
+
+.hasAxis .axisTick b {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--chart-tick-category);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hasAxis .columnValue {
+  color: var(--chart-bar-label);
+}
+
+/*
+ * The ticks and their rules are both five evenly spaced items down the plot,
+ * so space-between places them and the two cannot drift apart. The top of
+ * both is the plot's own 18px label gutter, which is where the ceiling tick
+ * belongs.
+ */
+.valueAxis,
+.gridlines {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.valueAxis {
+  left: 0;
+  width: var(--axis-gutter);
+  align-items: flex-end;
+}
+
+.valueAxis span {
+  height: 0;
+  padding-right: var(--ui-space-4);
+  color: var(--chart-tick-value);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 0;
+}
+
+.gridlines {
+  right: 0;
+  left: var(--axis-gutter);
+}
+
+.gridlines span {
+  display: block;
+  height: 1px;
+  background: var(--chart-rule);
+}
+
+/* Drawn bottom-up, so the first rule in the list is the ceiling. */
+.gridlines span:last-child {
+  background: var(--chart-axis);
+}
+
+/* The horizontal form's axis runs along the bottom instead, on the same
+   three-column grid as a bar row so the scale lines up with the tracks. */
+.barAxis {
+  display: grid;
+  grid-template-columns: 148px 1fr 64px;
+  gap: var(--ui-space-5);
+  align-items: center;
+  margin-top: var(--ui-space-3);
+  padding-top: var(--ui-space-3);
+  border-top: 1px solid var(--chart-rule);
+}
+
+.barAxisScale {
+  display: flex;
+  justify-content: space-between;
+}
+
+.barAxisScale b {
+  width: 0;
+  color: var(--chart-tick-value);
+  font-size: 10.5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* The end labels would otherwise hang off the track at both ends. */
+.barAxisScale b:first-child {
+  text-indent: 0;
+}
+
+.barAxisScale b:last-child {
+  direction: rtl;
 }
 
 /* Bars ------------------------------------------------------------------- */

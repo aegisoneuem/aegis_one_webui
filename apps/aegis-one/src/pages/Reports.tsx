@@ -5,7 +5,7 @@ import { Button, ErrorState, Skeleton } from '@aegis/ui';
 import { api } from '../api/client';
 import { num } from '../app/format';
 import { segment } from '../app/safeNavigate';
-import { Donut, type Tone } from './shared/Figures';
+import { Donut, NAVY_RAMP, type Tone } from './shared/Figures';
 import type { ReportCard, ReportCategory } from '../api/types';
 import styles from './Reports.module.css';
 
@@ -28,7 +28,7 @@ const CATEGORIES: readonly { id: ReportCategory | 'all'; label: string }[] = [
 ];
 
 /** A breakdown is a share, so the slices take the navy ramp, not a status one. */
-const RAMP: readonly Tone[] = ['deep', 'info', 'alt', 'teal', 'sand'];
+const RAMP = NAVY_RAMP;
 
 /** Except where the breakdown is of an outcome, which the reference colours. */
 const TILE_TONE: Readonly<Record<string, Tone>> = {

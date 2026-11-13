@@ -597,8 +597,19 @@ export type ReportSummary = {
   description: string;
   unit: string;
   total: number;
+  favorite: boolean;
+  /** The Location picker's options. */
+  locations: string[];
+  /** The Group picker's options; a child names its parent. */
+  groups: { id: string; name: string; parentId?: string }[];
   kpis: { label: string; value: number }[];
-  charts: { title: string; field: string; data: { label: string; value: number }[] }[];
+  charts: {
+    title: string;
+    field: string;
+    /** The form the panel opens in; the reader can switch it. */
+    form: 'column' | 'bar' | 'donut';
+    data: { label: string; value: number }[];
+  }[];
   columns: { id: string; header: string }[];
 };
 
@@ -606,7 +617,12 @@ export type ReportSummary = {
 export type ReportRowPage = {
   columns: { id: string; header: string }[];
   rows: Record<string, string | number | boolean | null>[];
-  page: { nextCursor: string | null; total: number };
+  page: {
+    nextCursor: string | null;
+    total: number;
+    /** How many computers these rows cover, for the footer's second figure. */
+    devices: number;
+  };
 };
 
 /** One endpoint's experience measures, and what its score lost. */

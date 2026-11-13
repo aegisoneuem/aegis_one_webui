@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { notFound, TtlCache, type Db } from '@aegis/mock-core';
-import { REPORTS, type ReportDef, type ReportSource } from '../seed/report-catalog';
+import {
+  REPORTS,
+  type ReportDef,
+  type ReportKpiDef,
+  type ReportSource,
+} from '../seed/report-catalog';
 
 /**
  * Reports: the library of twenty standard reports and the engine that runs
@@ -262,10 +267,52 @@ const SOURCE_WHERE: Readonly<Partial<Record<ReportSource, string>>> = {
   issues: `dv.state <> 'resolved'`,
 };
 
-/** The whole WHERE for one report. */
-function whereOf(report: ReportDef): string {
-  const parts = [SOURCE_WHERE[report.source], report.filter].filter(Boolean);
+/**
+ * The Location and Group pickers above a report, which narrow every figure on
+ * the page at once — the charts, the counters and the rows alike, which is
+ * why this is part of the WHERE rather than something the grid filters after
+ * the fact.
+ */
+export interface ReportScope {
+  readonly location?: string;
+  readonly group?: string;
+}
+
+function scopeOf(scope: ReportScope): { sql: string[]; params: string[] } {
+  const sql: string[] = [];
+  const params: string[] = [];
+  if (scope.location) {
+    sql.push('d.zone_name = ?');
+    params.push(scope.location);
+  }
+  if (scope.group) {
+    sql.push(
+      'EXISTS (SELECT 1 FROM group_members gm WHERE gm.device_id = d.id AND gm.group_id = ?)',
+    );
+    params.push(scope.group);
+  }
+  return { sql, params };
+}
+
+/** The whole WHERE for one report, including the page's scope pickers. */
+function whereOf(report: ReportDef, scope: ReportScope = {}): string {
+  const parts = [SOURCE_WHERE[report.source], report.filter, ...scopeOf(scope).sql].filter(Boolean);
   return parts.length > 0 ? `WHERE ${parts.join(' AND ')}` : '';
+}
+
+/** The scope's own bound values, in the order whereOf puts its holes. */
+function scopeParams(scope: ReportScope): string[] {
+  return scopeOf(scope).params;
+}
+
+/** Reads the two pickers off a query string, ignoring anything blank. */
+function readScope(query: { location?: string; group?: string }): ReportScope {
+  const location = (query.location ?? '').trim();
+  const group = (query.group ?? '').trim();
+  return {
+    ...(location ? { location } : {}),
+    ...(group ? { group } : {}),
+  };
 }
 
 function sqlFor(report: ReportDef, field: string): string | undefined {
@@ -304,11 +351,77 @@ function totalOf(db: Db, report: ReportDef): number {
   return count(db, `SELECT COUNT(*) AS n FROM ${SOURCE_FROM[report.source]} ${whereOf(report)}`);
 }
 
+/**
+ * The computers a report covers, which is not the same as the rows it lists:
+ * Installed Software lists 116 installations across 32 computers, and the
+ * reference's first counter says 32.
+ */
+function devicesIn(db: Db, report: ReportDef, scope: ReportScope): number {
+  return count(
+    db,
+    `SELECT COUNT(DISTINCT d.id) AS n FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}`,
+    ...scopeParams(scope),
+  );
+}
+
+/**
+ * One of the report's own two counters.
+ *
+ * These are declared per report in the catalogue rather than taken from the
+ * first chart's largest groups. Reading them off the chart is what made All
+ * Computers show "Pending restart" as its third tile, where the reference
+ * shows "Offline computers": the chart is sorted by size, so the tile changed
+ * meaning whenever the data did.
+ */
+function kpiOf(
+  db: Db,
+  report: ReportDef,
+  kpi: ReportKpiDef,
+  scope: ReportScope,
+): { label: string; value: number } {
+  const from = `FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}`;
+  const base = scopeParams(scope);
+  if (kpi.kind === 'rows') {
+    return { label: kpi.label, value: count(db, `SELECT COUNT(*) AS n ${from}`, ...base) };
+  }
+
+  const expr = sqlFor(report, kpi.field);
+  // assertCatalogue has already rejected a field with no SQL behind it, so
+  // this is unreachable; it keeps the type narrow rather than casting.
+  if (!expr) return { label: kpi.label, value: 0 };
+
+  const and = whereOf(report, scope) ? 'AND' : 'WHERE';
+  if (kpi.kind === 'distinct') {
+    return {
+      label: kpi.label,
+      value: count(db, `SELECT COUNT(DISTINCT ${expr}) AS n ${from}`, ...base),
+    };
+  }
+  if (kpi.kind === 'in') {
+    const holes = kpi.values.map(() => '?').join(', ');
+    return {
+      label: kpi.label,
+      value: count(
+        db,
+        `SELECT COUNT(*) AS n ${from} ${and} ${expr} IN (${holes})`,
+        ...base,
+        ...kpi.values,
+      ),
+    };
+  }
+  const test = kpi.kind === 'equals' ? '=' : '<>';
+  return {
+    label: kpi.label,
+    value: count(db, `SELECT COUNT(*) AS n ${from} ${and} ${expr} ${test} ?`, ...base, kpi.value),
+  };
+}
+
 /** One chart: the row count grouped by a field, largest group first. */
 function chartOf(
   db: Db,
   report: ReportDef,
   field: string,
+  scope: ReportScope = {},
   limit = 10,
 ): { label: string; value: number }[] {
   const expr = sqlFor(report, field);
@@ -317,10 +430,10 @@ function chartOf(
     db
       .prepare(
         `SELECT ${expr} AS label, COUNT(*) AS value
-           FROM ${SOURCE_FROM[report.source]} ${whereOf(report)}
+           FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}
           GROUP BY 1 ORDER BY value DESC, label LIMIT ?`,
       )
-      .all(limit) as { label: unknown; value: number }[]
+      .all(...scopeParams(scope), limit) as { label: unknown; value: number }[]
   ).map((r) => ({ label: r.label === null ? '—' : String(r.label), value: Number(r.value) }));
 }
 
@@ -370,7 +483,7 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
         const first = report.charts[0];
         // Five groups is what fits the tile; the reference draws the same
         // first breakdown as a donut beside the figure.
-        const preview = first ? chartOf(db, report, first.field, 5) : [];
+        const preview = first ? chartOf(db, report, first.field, {}, 5) : [];
         const top = preview[0];
         return {
           id: report.id,
@@ -394,35 +507,65 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
   });
 
   /**
-   * One report's three counters and its charts. The counters are the first
-   * chart's own groups, which is what the reference puts above the panels.
+   * One report's three counters and its charts.
+   *
+   * The first counter is the computers the report covers; the other two are
+   * the report's own, declared in the catalogue.
    */
   app.get(`${basePath}/reports/:reportId/summary`, async (request) => {
     const { reportId } = request.params as { reportId: string };
     const report = findReport(reportId);
     if (!report) throw notFound();
 
-    const total = totalOf(db, report);
+    const scope = readScope(request.query as { location?: string; group?: string });
+    const total = count(
+      db,
+      `SELECT COUNT(*) AS n FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}`,
+      ...scopeParams(scope),
+    );
     const charts = report.charts.map((chart) => ({
       title: chart.title,
       field: chart.field,
-      data: chartOf(db, report, chart.field),
+      form: chart.form,
+      data: chartOf(db, report, chart.field, scope),
     }));
 
-    // "N in this report", then the two largest groups of the first chart.
-    const lead = charts[0]?.data ?? [];
+    const email = request.auth?.email ?? '';
+    const favorite =
+      count(
+        db,
+        `SELECT COUNT(*) AS n FROM report_favorites WHERE report_id = ? AND user_email = ?`,
+        report.id,
+        email,
+      ) > 0;
+
     return {
       id: report.id,
       title: report.title,
       description: report.description,
       unit: report.unit,
       total,
+      favorite,
+      locations: db
+        .prepare(`SELECT DISTINCT zone_name AS name FROM devices ORDER BY name`)
+        .all()
+        .map((r) => String((r as { name: unknown }).name)),
+      groups: db
+        .prepare(
+          `SELECT id, name, parent_id AS parentId FROM device_groups ORDER BY parent_id, name`,
+        )
+        .all()
+        .map((r) => {
+          const g = r as { id: unknown; name: unknown; parentId: unknown };
+          return {
+            id: String(g.id),
+            name: String(g.name),
+            ...(g.parentId === null ? {} : { parentId: String(g.parentId) }),
+          };
+        }),
       kpis: [
-        {
-          label: `${report.unit.charAt(0).toUpperCase()}${report.unit.slice(1)} in this report`,
-          value: total,
-        },
-        ...lead.slice(0, 2).map((g) => ({ label: g.label, value: g.value })),
+        { label: 'Computers in this report', value: devicesIn(db, report, scope) },
+        ...report.kpis.map((kpi) => kpiOf(db, report, kpi, scope)),
       ],
       charts,
       columns: report.columns.map((c) => ({ id: c.field, header: c.header })),
@@ -435,25 +578,49 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
     const report = findReport(reportId);
     if (!report) throw notFound();
 
-    const query = request.query as { cursor?: string; limit?: string; q?: string };
-    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 200);
+    const query = request.query as {
+      cursor?: string;
+      limit?: string;
+      q?: string;
+      sort?: string;
+      dir?: string;
+      location?: string;
+      group?: string;
+    };
+    const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 200);
     const offset = Number.parseInt(query.cursor ?? '0', 10) || 0;
     const search = (query.q ?? '').trim();
+    const scope = readScope(query);
 
     const select = report.columns
       .map((c) => `${sqlFor(report, c.field) ?? `''`} AS "${c.field}"`)
       .join(', ');
 
-    const where = whereOf(report);
+    /*
+     * Sorting is by a column the report declares, looked up in its own list
+     * rather than interpolated from the query string: the field name reaches
+     * SQL as an expression, so an unknown one has to fall back to the
+     * default rather than be passed through.
+     */
+    const sortColumn = report.columns.find((c) => c.field === query.sort);
+    const descending = query.dir === 'desc';
+    const orderBy = sortColumn
+      ? `${sqlFor(report, sortColumn.field)} ${descending ? 'DESC' : 'ASC'}, d.hostname`
+      : 'd.hostname';
+
+    const where = whereOf(report, scope);
     const filtered = search
       ? `${where ? `${where} AND` : 'WHERE'} (d.hostname LIKE ? OR d.ip LIKE ? OR d.primary_user_name LIKE ?)`
       : where;
-    const params = search ? [`%${search}%`, `%${search}%`, `%${search}%`] : [];
+    const params = [
+      ...scopeParams(scope),
+      ...(search ? [`%${search}%`, `%${search}%`, `%${search}%`] : []),
+    ];
 
     const rows = db
       .prepare(
         `SELECT ${select} FROM ${SOURCE_FROM[report.source]} ${filtered}
-          ORDER BY d.hostname LIMIT ? OFFSET ?`,
+          ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
       )
       .all(...params, limit, offset) as Record<string, unknown>[];
 
@@ -469,6 +636,16 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
       page: {
         nextCursor: offset + rows.length < total ? String(offset + rows.length) : null,
         total,
+        /*
+         * The footer says "1-10 of 116 installations . 32 computers", so the
+         * device count has to be the one behind these very rows: under a
+         * search or a scope it is not the report's own figure.
+         */
+        devices: count(
+          db,
+          `SELECT COUNT(DISTINCT d.id) AS n FROM ${SOURCE_FROM[report.source]} ${filtered}`,
+          ...params,
+        ),
       },
     };
   });

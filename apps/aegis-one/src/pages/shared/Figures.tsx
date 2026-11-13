@@ -20,9 +20,31 @@ import styles from './Figures.module.css';
  * reference draws in the navy the page's own headings use, and `teal` is the
  * reference's own fourth chart colour, which the DEX score breakdown needs to
  * tell four measures apart.
+ *
+ * `deep`, `info`, `mid`, `alt` and `pale` are the five navy steps in order —
+ * see `NAVY_RAMP`.
  */
 export type Tone =
-  'good' | 'warn' | 'bad' | 'info' | 'alt' | 'neutral' | 'sand' | 'amber' | 'deep' | 'teal';
+  | 'good'
+  | 'warn'
+  | 'bad'
+  | 'info'
+  | 'alt'
+  | 'neutral'
+  | 'sand'
+  | 'amber'
+  | 'deep'
+  | 'mid'
+  | 'pale'
+  | 'teal';
+
+/**
+ * The five navy steps in the order v129 walks them, for a chart whose
+ * categories are shares rather than outcomes. A categorical chart takes this
+ * and repeats from the start once it runs out, exactly as the reference does
+ * on a nine-bar breakdown.
+ */
+export const NAVY_RAMP: readonly Tone[] = ['deep', 'info', 'mid', 'alt', 'pale'];
 
 export type Datum = {
   key: string;
@@ -54,6 +76,8 @@ const TONE_CLASS: Record<Tone, string> = {
   sand: styles.sand as string,
   amber: styles.amber as string,
   deep: styles.deep as string,
+  mid: styles.mid as string,
+  pale: styles.pale as string,
   teal: styles.teal as string,
 };
 
@@ -83,6 +107,30 @@ function DataTable({ caption, data, unit }: Series & { unit: string }) {
   );
 }
 
+/**
+ * The tick values a value axis shows, matching the reference's own choice.
+ *
+ * v129 draws five ticks and never a fractional one, so the step is the
+ * smallest whole, round number that lets four of them cover the tallest bar:
+ * a nine-bar maximum gets 0·3·6·9·12 and an eight gets 0·2·4·6·8, which is
+ * exactly what the reference's Operating systems and Computers by location
+ * panels show.
+ */
+export function axisTicks(max: number, count = 5): number[] {
+  const raw = Math.max(max, 1) / (count - 1);
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  let step = magnitude * 10;
+  for (const multiple of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) {
+    const candidate = multiple * magnitude;
+    if (candidate >= raw) {
+      step = candidate;
+      break;
+    }
+  }
+  step = Math.max(1, Math.round(step));
+  return Array.from({ length: count }, (_, i) => i * step);
+}
+
 type FigureProps = Series & {
   /** Clicking a slice, bar or ring opens the matching detail. */
   onPick?: (key: string) => void;
@@ -101,12 +149,19 @@ export function Donut({
   centreLabel,
   pie = false,
   stack = false,
+  share = true,
 }: FigureProps & {
   centreValue: string;
   centreLabel: string;
   pie?: boolean;
   /** Puts the legend under the ring, for a panel one column wide. */
   stack?: boolean;
+  /**
+   * The share column in the legend. The Overview's compliance ring shows it
+   * ("Compliant 19 59%"); a report's donut does not, and prints the count
+   * alone against the right edge.
+   */
+  share?: boolean;
 }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   /*
@@ -132,7 +187,11 @@ export function Donut({
   );
 
   return (
-    <div className={stack ? `${styles.donutWrap} ${styles.donutStack}` : styles.donutWrap}>
+    <div
+      className={[styles.donutWrap, stack ? styles.donutStack : '', share ? '' : styles.noShare]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className={styles.donutFig}>
         <svg viewBox="0 0 60 60" className={styles.donutSvg} role="presentation">
           <circle className={styles.track} cx="30" cy="30" r={r} strokeWidth={width} />
@@ -169,7 +228,9 @@ export function Donut({
               <i className={`${styles.swatch} ${TONE_CLASS[a.tone]}`} aria-hidden="true" />
               <span className={styles.legendLabel}>{a.label}</span>
               <span className={styles.legendValue}>{a.value.toLocaleString('en-IN')}</span>
-              <span className={styles.legendPct}>{Math.round(a.share * 100)}%</span>
+              {share ? (
+                <span className={styles.legendPct}>{Math.round(a.share * 100)}%</span>
+              ) : null}
             </button>
           </li>
         ))}
@@ -191,12 +252,48 @@ export function Columns({
   target,
   max = 100,
   suffix = '%',
-}: FigureProps & { target?: number; max?: number; suffix?: string }) {
+  axis = false,
+}: FigureProps & {
+  target?: number;
+  max?: number;
+  suffix?: string;
+  /**
+   * Draws the value axis the reference's report charts have: gridlines, tick
+   * labels down the left and a ceiling rounded up to the top tick.
+   *
+   * Off by default, because the Overview's health-score columns carry their
+   * own percentage above each bar and v129 gives them no axis at all.
+   */
+  axis?: boolean;
+}) {
   const targetId = useId();
-  const ceiling = max || 1;
+  const ticks = axis ? axisTicks(Math.max(1, ...data.map((d) => d.value))) : [];
+  // With an axis, the plot has to reach the top tick rather than the tallest
+  // bar, or a bar would sit above its own gridline.
+  const ceiling = (axis ? ticks[ticks.length - 1] : max) || 1;
   return (
-    <div className={styles.columns}>
+    <div className={axis ? `${styles.columns} ${styles.hasAxis}` : styles.columns}>
       <div className={styles.plot}>
+        {/*
+         * The ticks are always five evenly spaced values, because the step
+         * is chosen so that four of them reach the ceiling. That is what
+         * lets the labels and their rules be laid out with space-between
+         * rather than positioned from a computed percentage.
+         */}
+        {axis ? (
+          <>
+            <div className={styles.valueAxis} aria-hidden="true">
+              {[...ticks].reverse().map((t) => (
+                <span key={t}>{t.toLocaleString('en-IN')}</span>
+              ))}
+            </div>
+            <div className={styles.gridlines} aria-hidden="true">
+              {ticks.map((t) => (
+                <span key={t} />
+              ))}
+            </div>
+          </>
+        ) : null}
         {/*
          * The bar geometry lives in SVG rather than in a style attribute: a
          * 0–100 viewBox stretched to the box means the height is a data
@@ -241,7 +338,7 @@ export function Columns({
       <div className={styles.axis}>
         {data.map((d) => (
           <span key={d.key} className={styles.axisTick}>
-            <b>{d.label}</b>
+            <b title={d.label}>{d.label}</b>
             {d.note ? <small>{d.note}</small> : null}
           </span>
         ))}
@@ -264,10 +361,18 @@ export function Bars({
   onPick,
   max = 100,
   suffix = '%',
-}: FigureProps & { max?: number; suffix?: string }) {
-  const ceiling = Math.max(max, ...data.map((d) => d.value)) || 1;
+  axis = false,
+}: FigureProps & {
+  max?: number;
+  suffix?: string;
+  /** The value axis along the bottom, as the reference's Bar charts have. */
+  axis?: boolean;
+}) {
+  const ticks = axis ? axisTicks(Math.max(1, ...data.map((d) => d.value))) : [];
+  const ceiling =
+    (axis ? ticks[ticks.length - 1] : Math.max(max, ...data.map((d) => d.value))) || 1;
   return (
-    <div className={styles.bars}>
+    <div className={axis ? `${styles.bars} ${styles.hasAxis}` : styles.bars}>
       {data.map((d) => (
         <div key={d.key} className={styles.barRow}>
           <span className={styles.barLabel}>{d.label}</span>
@@ -289,6 +394,17 @@ export function Bars({
           </span>
         </div>
       ))}
+      {axis ? (
+        <div className={styles.barAxis} aria-hidden="true">
+          <span />
+          <span className={styles.barAxisScale}>
+            {ticks.map((t) => (
+              <b key={t}>{t.toLocaleString('en-IN')}</b>
+            ))}
+          </span>
+          <span />
+        </div>
+      ) : null}
       <DataTable caption={caption} data={data} unit={suffix === '%' ? 'Percent' : 'Value'} />
     </div>
   );

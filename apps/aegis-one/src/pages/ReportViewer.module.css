@@ -29,10 +29,81 @@
   flex: 1;
 }
 
-.lead {
-  margin: 0 0 var(--ui-space-5);
-  color: var(--ao-muted);
+/*
+ * The row above the title: All Reports, then the report switcher. v129 puts
+ * these on their own line and gives the report no description line at all —
+ * the title and the counters say what it is.
+ */
+.nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.switcher {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
   font-size: 13px;
+  font-weight: 600;
+}
+
+.star,
+.starOn {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.star {
+  color: var(--ao-neutral);
+}
+
+.starOn {
+  color: var(--ao-brand);
+}
+
+.star:disabled,
+.starOn:disabled {
+  cursor: default;
+}
+
+/* Location and Group, which narrow the whole page rather than the grid. */
+.scopeField {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--ao-muted);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.scopeField select {
+  height: 32px;
+  max-width: 190px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.buttonIcon {
+  margin-right: 6px;
+  vertical-align: -2px;
 }
 
 /* Counters ---------------------------------------------------------------- */
@@ -137,6 +208,59 @@
   font-weight: 600;
 }
 
+/* The details panel's own header, which carries the search and the two
+   chooser buttons beside the title. */
+.dataHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 255px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-muted);
+}
+
+.search input {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 12.5px;
+}
+
+.search input:focus {
+  outline: none;
+}
+
+.columnChooser {
+  display: grid;
+  gap: 6px 18px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ao-border);
+  background: var(--ao-bg);
+  font-size: 12.5px;
+}
+
+.columnChooser label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--ao-text);
+}
+
 .count {
   padding: 2px 8px;
   border: 1px solid var(--ao-border);
@@ -169,6 +293,47 @@
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* The header cell is a sort control, so the label and its indicator are a
+   button rather than text with a click handler on the cell. */
+.sortButton {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.sortButton span {
+  color: var(--ao-sidebar-caption);
+}
+
+.sortButton:hover span {
+  color: var(--ao-brand-hi);
+}
+
+.deviceLink {
+  color: var(--ao-navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.deviceLink:hover {
+  text-decoration: underline;
+}
+
+/* An address reads as a column of octets, so it takes the tabular face. */
+.network {
+  color: var(--ao-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .grid tbody td {

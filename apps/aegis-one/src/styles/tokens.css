@@ -86,6 +86,18 @@
   --chart-axis: #e3e8ef;
   --chart-axis-text: #69717d;
 
+  /*
+   * The report charts' own axis furniture, read out of v129's rendered
+   * Operating systems and Computers by location panels. They are a notch
+   * darker and cooler than --chart-grid / --chart-axis-text, which belong to
+   * the Overview's figures, so the two sets are kept apart rather than
+   * approximated into one.
+   */
+  --chart-rule: #e3eaf0;
+  --chart-tick-category: #29465f;
+  --chart-tick-value: #425e78;
+  --chart-bar-label: #173653;
+
   /* ---------------------------------------------------------------- */
   /* 2. The --ui-* contract packages/ui reads                          */
   /* ---------------------------------------------------------------- */

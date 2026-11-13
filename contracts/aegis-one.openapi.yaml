@@ -2448,6 +2448,16 @@ paths:
       x-required-permission: reports:read
       parameters:
       - $ref: '#/components/parameters/ReportId'
+      - name: location
+        in: query
+        description: Narrows every figure on the page to one location.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Narrows every figure on the page to one device group.
+        schema:
+          type: string
       responses:
         '200':
           description: Summary
@@ -2468,6 +2478,35 @@ paths:
       - $ref: '#/components/parameters/ReportId'
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
+      - name: location
+        in: query
+        description: Narrows every figure on the page to one location.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Narrows every figure on the page to one device group.
+        schema:
+          type: string
+      - name: q
+        in: query
+        description: Matches a hostname, IP address or user.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: >-
+          A column the report declares. An unknown field is ignored rather
+          than reaching SQL, and the default order stands.
+        schema:
+          type: string
+      - name: dir
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
       responses:
         '200':
           description: Report page
@@ -7333,6 +7372,30 @@ components:
           type: string
         total:
           type: integer
+        favorite:
+          description: Whether the signed-in user has starred this report.
+          type: boolean
+        locations:
+          description: The Location picker's options, in the estate's own order.
+          type: array
+          items:
+            type: string
+        groups:
+          description: The Group picker's options, as a flat list with parents named.
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - name
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              parentId:
+                type: string
         kpis:
           description: The counters above the panels, the row total first.
           type: array
@@ -7356,12 +7419,24 @@ components:
             required:
             - title
             - field
+            - form
             - data
             properties:
               title:
                 type: string
               field:
                 type: string
+              form:
+                description: >-
+                  The shape the panel opens in. A property of the chart, not a
+                  rule about category count: the reference draws four
+                  locations as side-on bars and three computer types as a
+                  ring. The reader can switch it; this is only the default.
+                type: string
+                enum:
+                - column
+                - bar
+                - donut
               data:
                 type: array
                 items:
@@ -7402,7 +7477,27 @@ components:
               - boolean
               - 'null'
         page:
-          $ref: '#/components/schemas/PageInfo'
+          description: >-
+            PageInfo with the report footer's second figure: how many
+            computers these rows cover, which under a search or a scope is
+            not the report's own total.
+          type: object
+          additionalProperties: false
+          required:
+          - nextCursor
+          - total
+          - devices
+          properties:
+            nextCursor:
+              type:
+              - string
+              - 'null'
+            total:
+              type: integer
+              minimum: 0
+            devices:
+              type: integer
+              minimum: 0
     CustomReportInput:
       type: object
       additionalProperties: false

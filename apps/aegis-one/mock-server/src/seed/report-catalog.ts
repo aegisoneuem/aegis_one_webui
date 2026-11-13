@@ -34,11 +34,57 @@ export interface ReportColumnDef {
   readonly header: string;
 }
 
+/** The shapes a panel can be drawn in. The reader can switch between them. */
+export type ReportChartForm = 'column' | 'bar' | 'donut';
+
 /** One panel on the report: a count of rows grouped by one field. */
 export interface ReportChartDef {
   readonly title: string;
   readonly field: string;
+  /**
+   * The form the panel opens in, taken from the reference's own chart
+   * factories: its `kind: "bar"` is a vertical column chart, `"horizontal"`
+   * is the side-on bar chart. It is a property of the chart rather than a
+   * rule about how many categories there are, because v129 draws four
+   * locations side-on and three computer types as a ring.
+   */
+  readonly form: ReportChartForm;
 }
+
+/**
+ * One of the three counters above the charts.
+ *
+ * The first is always the computers the report covers; the other two are the
+ * report's own pair, and they are declared here because deriving them from
+ * the first chart gets them wrong — All Computers would show "Pending
+ * restart" where the reference shows "Offline computers".
+ */
+export type ReportKpiDef =
+  /** The rows the report lists, e.g. "Software installations". */
+  | { readonly kind: 'rows'; readonly label: string }
+  /** Rows whose field holds this value, e.g. status = Online. */
+  | {
+      readonly kind: 'equals';
+      readonly label: string;
+      readonly field: string;
+      readonly value: string;
+    }
+  /** Rows whose field holds anything else, e.g. antivirus other than Protected. */
+  | { readonly kind: 'not'; readonly label: string; readonly field: string; readonly value: string }
+  /** How many different values the field takes, e.g. operating systems. */
+  | { readonly kind: 'distinct'; readonly label: string; readonly field: string }
+  /**
+   * Rows whose field holds any of these values. This exists because a band
+   * in this estate is not always one of the reference's: v129 counts "over 7
+   * days" as a single bucket, while `lastSeenGroup` here splits it at thirty
+   * days, and a tile that counted only one of the two halves would be wrong.
+   */
+  | {
+      readonly kind: 'in';
+      readonly label: string;
+      readonly field: string;
+      readonly values: readonly string[];
+    };
 
 export interface ReportDef {
   readonly id: string;
@@ -51,6 +97,8 @@ export interface ReportDef {
   /** Extra SQL narrowing the source, for a report that is not the whole estate. */
   readonly filter?: string;
   readonly charts: readonly ReportChartDef[];
+  /** The report's own pair of counters, after the computers-in-scope tile. */
+  readonly kpis: readonly [ReportKpiDef, ReportKpiDef];
   readonly columns: readonly ReportColumnDef[];
 }
 
@@ -63,10 +111,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Online and offline', field: 'status' },
-      { title: 'Operating systems', field: 'os' },
-      { title: 'Computers by location', field: 'location' },
-      { title: 'Computer types', field: 'type' },
+      { title: 'Online and offline', field: 'status', form: 'donut' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+      { title: 'Computer types', field: 'type', form: 'donut' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Online computers', field: 'status', value: 'Online' },
+      { kind: 'equals', label: 'Offline computers', field: 'status', value: 'Offline' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -160,10 +212,24 @@ export const REPORTS: readonly ReportDef[] = [
     source: 'devices',
     filter: "d.status = 'offline'",
     charts: [
-      { title: 'Last reported', field: 'lastSeenGroup' },
-      { title: 'Computers by location', field: 'location' },
-      { title: 'Operating systems', field: 'os' },
-      { title: 'Computer types', field: 'type' },
+      { title: 'Last reported', field: 'lastSeenGroup', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+      { title: 'Computer types', field: 'type', form: 'donut' },
+    ],
+    kpis: [
+      {
+        kind: 'equals',
+        label: 'Last seen 1–7 days ago',
+        field: 'lastSeenGroup',
+        value: 'Over a day ago',
+      },
+      {
+        kind: 'in',
+        label: 'Not seen for over 7 days',
+        field: 'lastSeenGroup',
+        values: ['Over 7 days ago', 'Over 30 days ago'],
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -255,10 +321,19 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Operating systems', field: 'os' },
-      { title: 'OS versions', field: 'osVersion' },
-      { title: 'Update status', field: 'patch' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+      { title: 'OS versions', field: 'osVersion', form: 'bar' },
+      { title: 'Update status', field: 'patch', form: 'donut' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'distinct', label: 'Operating systems', field: 'os' },
+      {
+        kind: 'equals',
+        label: 'Computers with pending updates',
+        field: 'patch',
+        value: 'Updates pending',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -350,10 +425,19 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'installations',
     source: 'software',
     charts: [
-      { title: 'Installed applications', field: 'app' },
-      { title: 'Software publishers', field: 'publisher' },
-      { title: 'Version status', field: 'versionStatus' },
-      { title: 'Software categories', field: 'category' },
+      { title: 'Installed applications', field: 'app', form: 'bar' },
+      { title: 'Software publishers', field: 'publisher', form: 'column' },
+      { title: 'Version status', field: 'versionStatus', form: 'donut' },
+      { title: 'Software categories', field: 'category', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'rows', label: 'Software installations' },
+      {
+        kind: 'equals',
+        label: 'Installations with an update available',
+        field: 'versionStatus',
+        value: 'Out of date',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -449,10 +533,19 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'assignments',
     source: 'licenses',
     charts: [
-      { title: 'License status', field: 'license' },
-      { title: 'Assigned software', field: 'app' },
-      { title: 'Renewal month', field: 'renewal' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'License status', field: 'license', form: 'donut' },
+      { title: 'Assigned software', field: 'app', form: 'column' },
+      { title: 'Renewal month', field: 'renewal', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'rows', label: 'Software assignments' },
+      {
+        kind: 'equals',
+        label: 'Assignments needing review',
+        field: 'license',
+        value: 'Over-allocated',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -547,10 +640,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'updates',
     source: 'updates',
     charts: [
-      { title: 'Update severity', field: 'severity' },
-      { title: 'Missing updates', field: 'update' },
-      { title: 'Installation status', field: 'updateStatus' },
-      { title: 'Operating systems', field: 'os' },
+      { title: 'Update severity', field: 'severity', form: 'donut' },
+      { title: 'Missing updates', field: 'update', form: 'bar' },
+      { title: 'Installation status', field: 'updateStatus', form: 'column' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'rows', label: 'Pending updates' },
+      { kind: 'equals', label: 'Critical updates', field: 'severity', value: 'Critical' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -646,10 +743,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'update results',
     source: 'update-results',
     charts: [
-      { title: 'Update results', field: 'result' },
-      { title: 'Results by date', field: 'date' },
-      { title: 'Computers by location', field: 'location' },
-      { title: 'Operating systems', field: 'os' },
+      { title: 'Update results', field: 'result', form: 'donut' },
+      { title: 'Results by date', field: 'date', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Successful updates', field: 'result', value: 'Successful' },
+      { kind: 'equals', label: 'Failed updates', field: 'result', value: 'Failed' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -745,10 +846,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'issues',
     source: 'issues',
     charts: [
-      { title: 'Issue severity', field: 'severity' },
-      { title: 'Types of issue', field: 'issue' },
-      { title: 'Operating systems', field: 'os' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Issue severity', field: 'severity', form: 'donut' },
+      { title: 'Types of issue', field: 'issue', form: 'bar' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'rows', label: 'Open security issues' },
+      { kind: 'equals', label: 'Critical issues', field: 'severity', value: 'Critical' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -844,10 +949,19 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Antivirus status', field: 'av' },
-      { title: 'Antivirus products', field: 'protection' },
-      { title: 'Computers by location', field: 'location' },
-      { title: 'Operating systems', field: 'os' },
+      { title: 'Antivirus status', field: 'av', form: 'donut' },
+      { title: 'Antivirus products', field: 'protection', form: 'bar' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Protected computers', field: 'av', value: 'Protected' },
+      {
+        kind: 'not',
+        label: 'Computers needing protection review',
+        field: 'av',
+        value: 'Protected',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -939,10 +1053,19 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Disk encryption', field: 'encryption' },
-      { title: 'Encryption types', field: 'encryptionType' },
-      { title: 'Operating systems', field: 'os' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Disk encryption', field: 'encryption', form: 'donut' },
+      { title: 'Encryption types', field: 'encryptionType', form: 'column' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Encrypted computers', field: 'encryption', value: 'Encrypted' },
+      {
+        kind: 'equals',
+        label: 'Computers without encryption',
+        field: 'encryption',
+        value: 'Not encrypted',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1034,10 +1157,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'USB events',
     source: 'usb',
     charts: [
-      { title: 'Allowed and blocked', field: 'usbAction' },
-      { title: 'USB device types', field: 'peripheral' },
-      { title: 'Connections by date', field: 'date' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Allowed and blocked', field: 'usbAction', form: 'donut' },
+      { title: 'USB device types', field: 'peripheral', form: 'column' },
+      { title: 'Connections by date', field: 'date', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'rows', label: 'USB connections' },
+      { kind: 'equals', label: 'Blocked connections', field: 'usbAction', value: 'blocked' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1133,10 +1260,24 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Computer performance', field: 'performance' },
-      { title: 'CPU usage', field: 'cpuBand' },
-      { title: 'Memory usage', field: 'ramBand' },
-      { title: 'Startup time', field: 'bootBand' },
+      { title: 'Computer performance', field: 'performance', form: 'donut' },
+      { title: 'CPU usage', field: 'cpuBand', form: 'column' },
+      { title: 'Memory usage', field: 'ramBand', form: 'column' },
+      { title: 'Startup time', field: 'bootBand', form: 'column' },
+    ],
+    kpis: [
+      {
+        kind: 'equals',
+        label: 'Computers running normally',
+        field: 'performance',
+        value: 'Normal',
+      },
+      {
+        kind: 'equals',
+        label: 'Computers needing attention',
+        field: 'performance',
+        value: 'Needs attention',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1228,10 +1369,24 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Disk space status', field: 'storage' },
-      { title: 'Available disk space', field: 'spaceBand' },
-      { title: 'Operating systems', field: 'os' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Disk space status', field: 'storage', form: 'donut' },
+      { title: 'Available disk space', field: 'spaceBand', form: 'column' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      {
+        kind: 'equals',
+        label: 'Computers with healthy disk space',
+        field: 'storage',
+        value: 'Healthy',
+      },
+      {
+        kind: 'equals',
+        label: 'Computers with low disk space',
+        field: 'storage',
+        value: 'Low space',
+      },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1323,10 +1478,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'deployment results',
     source: 'deployments',
     charts: [
-      { title: 'Deployment results', field: 'result' },
-      { title: 'Deployed software', field: 'app' },
-      { title: 'Deployment actions', field: 'action' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Deployment results', field: 'result', form: 'donut' },
+      { title: 'Deployed software', field: 'app', form: 'bar' },
+      { title: 'Deployment actions', field: 'action', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Completed deployments', field: 'result', value: 'Completed' },
+      { kind: 'equals', label: 'Failed deployments', field: 'result', value: 'Failed' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1423,10 +1582,14 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'activities',
     source: 'activity',
     charts: [
-      { title: 'Recent activities', field: 'action' },
-      { title: 'Activity results', field: 'result' },
-      { title: 'Activity by date', field: 'date' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Recent activities', field: 'action', form: 'bar' },
+      { title: 'Activity results', field: 'result', form: 'donut' },
+      { title: 'Activity by date', field: 'date', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'rows', label: 'Recorded activities' },
+      { kind: 'equals', label: 'Unsuccessful activities', field: 'result', value: 'Failed' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1522,12 +1685,16 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Overall computer checks', field: 'ready' },
-      { title: 'Checks needing attention', field: 'checks' },
-      { title: 'Update status', field: 'patch' },
-      { title: 'Antivirus status', field: 'av' },
-      { title: 'Disk encryption', field: 'encryption' },
-      { title: 'Firewall status', field: 'firewall' },
+      { title: 'Overall computer checks', field: 'ready', form: 'donut' },
+      { title: 'Checks needing attention', field: 'checks', form: 'bar' },
+      { title: 'Update status', field: 'patch', form: 'donut' },
+      { title: 'Antivirus status', field: 'av', form: 'donut' },
+      { title: 'Disk encryption', field: 'encryption', form: 'donut' },
+      { title: 'Firewall status', field: 'firewall', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Computers passing the checks', field: 'ready', value: 'Ready' },
+      { kind: 'equals', label: 'Computers needing review', field: 'ready', value: 'Needs review' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1619,12 +1786,16 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Computer check status', field: 'ready' },
-      { title: 'Update status', field: 'patch' },
-      { title: 'Antivirus status', field: 'av' },
-      { title: 'Disk encryption', field: 'encryption' },
-      { title: 'Online and offline', field: 'status' },
-      { title: 'Computer risk', field: 'risk' },
+      { title: 'Computer check status', field: 'ready', form: 'donut' },
+      { title: 'Update status', field: 'patch', form: 'donut' },
+      { title: 'Antivirus status', field: 'av', form: 'donut' },
+      { title: 'Disk encryption', field: 'encryption', form: 'donut' },
+      { title: 'Online and offline', field: 'status', form: 'donut' },
+      { title: 'Computer risk', field: 'risk', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Computers passing the checks', field: 'ready', value: 'Ready' },
+      { kind: 'equals', label: 'Computers needing review', field: 'ready', value: 'Needs review' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1716,12 +1887,16 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Computer check status', field: 'ready' },
-      { title: 'Firewall status', field: 'firewall' },
-      { title: 'Disk encryption', field: 'encryption' },
-      { title: 'Update status', field: 'patch' },
-      { title: 'Antivirus status', field: 'av' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Computer check status', field: 'ready', form: 'donut' },
+      { title: 'Firewall status', field: 'firewall', form: 'column' },
+      { title: 'Disk encryption', field: 'encryption', form: 'donut' },
+      { title: 'Update status', field: 'patch', form: 'donut' },
+      { title: 'Antivirus status', field: 'av', form: 'donut' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Computers passing the checks', field: 'ready', value: 'Ready' },
+      { kind: 'equals', label: 'Computers needing review', field: 'ready', value: 'Needs review' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1813,12 +1988,16 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Computer risk', field: 'risk' },
-      { title: 'Checks needing attention', field: 'checks' },
-      { title: 'Antivirus status', field: 'av' },
-      { title: 'Update status', field: 'patch' },
-      { title: 'Disk encryption', field: 'encryption' },
-      { title: 'Computers by location', field: 'location' },
+      { title: 'Computer risk', field: 'risk', form: 'donut' },
+      { title: 'Checks needing attention', field: 'checks', form: 'bar' },
+      { title: 'Antivirus status', field: 'av', form: 'donut' },
+      { title: 'Update status', field: 'patch', form: 'donut' },
+      { title: 'Disk encryption', field: 'encryption', form: 'donut' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Computers passing the checks', field: 'ready', value: 'Ready' },
+      { kind: 'equals', label: 'Computers needing review', field: 'ready', value: 'Needs review' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },
@@ -1910,12 +2089,16 @@ export const REPORTS: readonly ReportDef[] = [
     unit: 'computers',
     source: 'devices',
     charts: [
-      { title: 'Online and offline', field: 'status' },
-      { title: 'Security checks', field: 'ready' },
-      { title: 'Computer performance', field: 'performance' },
-      { title: 'Latest deployment result', field: 'deployment' },
-      { title: 'Computers by location', field: 'location' },
-      { title: 'Operating systems', field: 'os' },
+      { title: 'Online and offline', field: 'status', form: 'donut' },
+      { title: 'Security checks', field: 'ready', form: 'donut' },
+      { title: 'Computer performance', field: 'performance', form: 'column' },
+      { title: 'Latest deployment result', field: 'deployment', form: 'column' },
+      { title: 'Computers by location', field: 'location', form: 'bar' },
+      { title: 'Operating systems', field: 'os', form: 'column' },
+    ],
+    kpis: [
+      { kind: 'equals', label: 'Computers passing the checks', field: 'ready', value: 'Ready' },
+      { kind: 'equals', label: 'Computers needing review', field: 'ready', value: 'Needs review' },
     ],
     columns: [
       { field: 'name', header: 'Computer name' },

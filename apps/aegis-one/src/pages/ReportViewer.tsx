@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Button, ErrorState, Skeleton, useToast } from '@aegis/ui';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button, ErrorState, Skeleton, StatusPill, type StatusTone, useToast } from '@aegis/ui';
 import { api } from '../api/client';
 import { dateTime, num } from '../app/format';
-import { Columns, Donut, type Tone } from './shared/Figures';
-import type { ReportRowPage, ReportSummary } from '../api/types';
+import { Bars, Columns, Donut, NAVY_RAMP, type Tone } from './shared/Figures';
+import type { ReportCard, ReportRowPage, ReportSummary } from '../api/types';
 import styles from './ReportViewer.module.css';
 
 /**
@@ -18,7 +18,14 @@ import styles from './ReportViewer.module.css';
  * charts were grouped from, so a panel and the grid can never disagree.
  */
 
-const PER_PAGE = 50;
+/* Ten, as the reference's footer says: "1–10 of 32 computers". */
+const PER_PAGE = 10;
+
+/** The columns the reference renders as a link to the device, not as text. */
+const DEVICE_LINK_FIELDS = new Set(['name', 'hostname']);
+
+/** The columns the reference sets in its tabular network face. */
+const NETWORK_FIELDS = new Set(['ip', 'hostname', 'mac', 'dns', 'publicIp', 'gateway', 'subnet']);
 
 /** The forms the console can draw, in the reference's own order. */
 const FORMS = [
@@ -33,8 +40,14 @@ type Form = (typeof FORMS)[number]['value'];
 /**
  * A chart is a count by category, so the slices take the navy ramp rather
  * than a status ramp: nothing here is good or bad, it is just a share.
+ *
+ * The ramp is the reference's five navy steps and nothing else. It used to
+ * reach for teal, sand and grey once it ran past the third step, which is why
+ * "Computers by location" came out navy, teal, sand and grey — four unrelated
+ * hues for four equal shares. v129 walks the five steps and then starts
+ * again, so a ninth bar is the same navy as the first.
  */
-const RAMP: readonly Tone[] = ['deep', 'info', 'alt', 'teal', 'sand', 'neutral'];
+const RAMP = NAVY_RAMP;
 
 /**
  * A report column carries whatever its source holds, so an instant arrives as
@@ -47,6 +60,47 @@ function cell(value: string | number | boolean | null): string {
   if (value === null || value === '') return '—';
   const text = String(value);
   return ISO.test(text) ? dateTime(text) : text;
+}
+
+/**
+ * One cell, drawn the way the reference draws it rather than as plain text.
+ *
+ * Three columns are not text in v129: a computer name is a link to the
+ * device, an address is set in the tabular face so the octets line up, and a
+ * status carries its own dot in the status colour. Everything else is the
+ * value, with an instant printed rather than left as an ISO string.
+ */
+function renderCell(
+  field: string,
+  row: Record<string, string | number | boolean | null>,
+): JSX.Element {
+  const value = row[field] ?? null;
+  const text = cell(value);
+
+  if (DEVICE_LINK_FIELDS.has(field) && row['deviceId']) {
+    return (
+      <Link className={styles.deviceLink} to={`/devices/${String(row['deviceId'])}`}>
+        {text}
+      </Link>
+    );
+  }
+
+  /*
+   * A status is the shared pill, not a local one: it is the same chip the
+   * device grid and the deployment list already use, so the five tones
+   * cannot drift apart across pages.
+   */
+  const tone = STATUS_TONE[text];
+  if (field === 'status' && tone) {
+    return (
+      <StatusPill tone={tone as StatusTone} dot>
+        {text}
+      </StatusPill>
+    );
+  }
+
+  if (NETWORK_FIELDS.has(field)) return <span className={styles.network}>{text}</span>;
+  return <>{text}</>;
 }
 
 /** Where a breakdown is of a status, the reference colours it by outcome. */
@@ -90,23 +144,79 @@ export default function ReportViewer() {
   const { reportId = '' } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
   const [cursors, setCursors] = useState<string[]>([]);
   const [forms, setForms] = useState<Record<string, Form>>({});
+  const [showColumns, setShowColumns] = useState(false);
+  const [hidden, setHidden] = useState<Record<string, true>>({});
+
+  /*
+   * The pickers live in the query string, so a filtered report is a link
+   * someone can send. Changing any of them starts the rows again from the
+   * first page, because page three of the old filter means nothing under the
+   * new one.
+   */
+  const location = params.get('location') ?? '';
+  const group = params.get('group') ?? '';
+  const search = params.get('q') ?? '';
+  const sort = params.get('sort') ?? '';
+  const dir = params.get('dir') === 'desc' ? 'desc' : 'asc';
+
+  function go(next: Record<string, string | null>): void {
+    const merged = new URLSearchParams(params);
+    for (const [key, value] of Object.entries(next)) {
+      if (value === null || value === '') merged.delete(key);
+      else merged.set(key, value);
+    }
+    setCursors([]);
+    setParams(merged, { replace: true });
+  }
+
+  const scope: Record<string, string> = {
+    ...(location ? { location } : {}),
+    ...(group ? { group } : {}),
+  };
 
   const summary = useQuery({
-    queryKey: ['/reports', reportId, 'summary'],
+    queryKey: ['/reports', reportId, 'summary', scope],
     queryFn: ({ signal }) =>
-      api.get<ReportSummary>(`/reports/${encodeURIComponent(reportId)}/summary`, undefined, signal),
+      api.get<ReportSummary>(`/reports/${encodeURIComponent(reportId)}/summary`, scope, signal),
+  });
+
+  /*
+   * The switcher's options. This is the library's own list, under the same
+   * key the library page uses, so arriving from there costs nothing.
+   */
+  const library = useQuery({
+    queryKey: ['/reports'],
+    queryFn: ({ signal }) => api.get<ReportCard[]>('/reports', undefined, signal),
+    staleTime: 60_000,
   });
 
   const cursor = cursors[cursors.length - 1];
-  const query: Record<string, string> = { limit: String(PER_PAGE) };
+  const query: Record<string, string> = { limit: String(PER_PAGE), ...scope };
   if (cursor) query['cursor'] = cursor;
+  if (search) query['q'] = search;
+  if (sort) {
+    query['sort'] = sort;
+    query['dir'] = dir;
+  }
 
   const rows = useQuery({
     queryKey: ['/reports', reportId, 'run', query],
     queryFn: ({ signal }) =>
       api.get<ReportRowPage>(`/reports/${encodeURIComponent(reportId)}/run`, query, signal),
+  });
+
+  const favourite = useMutation({
+    mutationFn: (value: boolean) =>
+      api.put<null>(`/reports/${encodeURIComponent(reportId)}/favorite`, { favorite: value }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['/reports'] });
+      void summary.refetch();
+    },
+    onError: () => toast.show({ title: 'That could not be saved.', tone: 'error' }),
   });
 
   const exportReport = useMutation({
@@ -120,6 +230,25 @@ export default function ReportViewer() {
       }),
     onError: () => toast.show({ title: 'The export could not be queued.', tone: 'error' }),
   });
+
+  /* The Group picker is a tree in the reference, drawn flat with indents. */
+  const groupOptions = useMemo(() => {
+    const all = summary.data?.groups ?? [];
+    const children = new Map<string, typeof all>();
+    for (const g of all) {
+      const key = g.parentId ?? '';
+      children.set(key, [...(children.get(key) ?? []), g]);
+    }
+    const out: { id: string; name: string; depth: number }[] = [];
+    const walk = (parent: string, depth: number): void => {
+      for (const g of children.get(parent) ?? []) {
+        out.push({ id: g.id, name: g.name, depth });
+        walk(g.id, depth + 1);
+      }
+    };
+    walk('', 0);
+    return out;
+  }, [summary.data?.groups]);
 
   if (summary.error) {
     return (
@@ -137,15 +266,87 @@ export default function ReportViewer() {
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
   const page = cursors.length + 1;
   const next = rows.data?.page.nextCursor ?? null;
+  const columns = (rows.data?.columns ?? []).filter((c) => !hidden[c.id]);
+  /*
+   * The footer names the computers behind the rows only where the rows are
+   * not computers themselves: v129 says "1-10 of 116 installations . 32
+   * computers" for Installed Software and plain "1-10 of 32 computers" for
+   * All Computers.
+   */
+  const devices = s?.unit === 'computers' ? null : (rows.data?.page.devices ?? null);
+  /*
+   * With no explicit sort the server orders by the first column ascending,
+   * so that column shows the ascending arrow rather than the neutral one.
+   */
+  const sortedBy = sort || (rows.data?.columns[0]?.id ?? '');
+  const scoped = location !== '' || group !== '';
 
   return (
     <div className={styles.page}>
-      <header className={styles.head}>
+      <div className={styles.nav}>
         <Button size="sm" onClick={() => void navigate('/reports')}>
           All Reports
         </Button>
+        <select
+          className={styles.switcher}
+          aria-label="Report"
+          value={reportId}
+          onChange={(e) => void navigate(`/reports/${e.target.value}`)}
+        >
+          {(library.data ?? [{ id: reportId, title: s ? s.title : 'Report' }]).map((card) => (
+            <option key={card.id} value={card.id}>
+              {card.title}
+            </option>
+          ))}
+        </select>
+        <span className={styles.grow} />
+
+        <label className={styles.scopeField}>
+          Location
+          <select
+            aria-label="Report location"
+            value={location}
+            onChange={(e) => go({ location: e.target.value })}
+          >
+            <option value="">All locations</option>
+            {(s?.locations ?? []).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={styles.scopeField}>
+          Group
+          <select
+            aria-label="Report group"
+            value={group}
+            onChange={(e) => go({ group: e.target.value })}
+          >
+            <option value="">All Groups</option>
+            {groupOptions.map((g) => (
+              <option key={g.id} value={g.id}>
+                {'   '.repeat(g.depth) + g.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <header className={styles.head}>
         <h1>{s ? s.title : 'Report'}</h1>
         <span className={styles.grow} />
+        <button
+          type="button"
+          className={s?.favorite ? styles.starOn : styles.star}
+          aria-pressed={s?.favorite ?? false}
+          aria-label={s?.favorite ? 'Remove from favourites' : 'Add to favourites'}
+          disabled={!s || favourite.isPending}
+          onClick={() => favourite.mutate(!s?.favorite)}
+        >
+          {s?.favorite ? '★' : '☆'}
+        </button>
         <Button size="sm" onClick={() => void navigate('/reports/custom')}>
           Schedule
         </Button>
@@ -155,11 +356,23 @@ export default function ReportViewer() {
           disabled={exportReport.isPending}
           onClick={() => exportReport.mutate('xlsx')}
         >
+          <svg
+            className={styles.buttonIcon}
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+            aria-hidden="true"
+          >
+            <path d="M12 3v12M7 11l5 5 5-5M4 20h16" />
+          </svg>
           {exportReport.isPending ? 'Exporting…' : 'Export'}
         </Button>
       </header>
-
-      {s ? <p className={styles.lead}>{s.description}</p> : null}
 
       {s ? (
         <div className={styles.kpis}>
@@ -176,7 +389,10 @@ export default function ReportViewer() {
 
       <div className={styles.charts}>
         {(s?.charts ?? []).map((chart) => {
-          const form = forms[chart.field] ?? (chart.data.length <= 4 ? 'donut' : 'column');
+          // The catalogue says which form a panel opens in, because v129
+          // does: four locations are side-on bars and three computer types
+          // are a ring, which no rule about category counts would predict.
+          const form = forms[chart.field] ?? chart.form;
           const data = chart.data.map((d, i) => ({
             key: d.label,
             label: d.label,
@@ -208,16 +424,14 @@ export default function ReportViewer() {
                     caption={chart.title}
                     data={data}
                     pie={form === 'pie'}
+                    share={false}
                     centreValue={num(chart.data.reduce((a, d) => a + d.value, 0))}
                     centreLabel={s?.unit ?? ''}
                   />
+                ) : form === 'bar' ? (
+                  <Bars caption={chart.title} suffix="" axis data={data} />
                 ) : (
-                  <Columns
-                    caption={chart.title}
-                    suffix=""
-                    max={Math.max(1, ...chart.data.map((d) => d.value))}
-                    data={data}
-                  />
+                  <Columns caption={chart.title} suffix="" axis data={data} />
                 )}
               </div>
             </section>
@@ -226,19 +440,96 @@ export default function ReportViewer() {
       </div>
 
       <section className={styles.panel}>
-        <header className={styles.panelHead}>
+        <header className={styles.dataHead}>
+          {/* "Computer details" on every report, which is what v129 calls
+              it whether the rows are computers, installations or updates. */}
           <h2 className={styles.panelTitle}>
-            {s ? `${s.title} details` : 'Details'}{' '}
-            <span className={styles.count}>{num(total)}</span>
+            Computer details <span className={styles.count}>{num(total)}</span>
           </h2>
+          <span className={styles.grow} />
+          <div className={styles.search}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 20l-5-5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0" />
+            </svg>
+            <input
+              aria-label="Search report details"
+              placeholder="Computer, IP, user or keyword…"
+              defaultValue={search}
+              onChange={(e) => go({ q: e.target.value })}
+            />
+          </div>
+          <Button
+            size="sm"
+            aria-pressed={scoped}
+            disabled={!scoped}
+            onClick={() => go({ location: null, group: null })}
+          >
+            {scoped ? 'Clear filters' : 'Filters'}
+          </Button>
+          <Button
+            size="sm"
+            aria-expanded={showColumns}
+            onClick={() => setShowColumns(!showColumns)}
+          >
+            Columns
+          </Button>
         </header>
+
+        {showColumns ? (
+          <div className={styles.columnChooser}>
+            {(rows.data?.columns ?? []).map((c) => (
+              <label key={c.id}>
+                <input
+                  type="checkbox"
+                  checked={!hidden[c.id]}
+                  onChange={(e) =>
+                    setHidden(
+                      e.target.checked
+                        ? Object.fromEntries(Object.entries(hidden).filter(([id]) => id !== c.id))
+                        : { ...hidden, [c.id]: true },
+                    )
+                  }
+                />
+                {c.header}
+              </label>
+            ))}
+          </div>
+        ) : null}
+
         <div className={styles.tableWrap}>
           <table className={styles.grid}>
             <thead>
               <tr>
-                {(rows.data?.columns ?? []).map((c) => (
-                  <th key={c.id} scope="col">
-                    {c.header}
+                {columns.map((c) => (
+                  <th
+                    key={c.id}
+                    scope="col"
+                    aria-sort={
+                      sortedBy === c.id ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'
+                    }
+                  >
+                    <button
+                      type="button"
+                      className={styles.sortButton}
+                      onClick={() =>
+                        go({ sort: c.id, dir: sort === c.id && dir === 'asc' ? 'desc' : 'asc' })
+                      }
+                    >
+                      {c.header}
+                      <span aria-hidden="true">
+                        {sortedBy === c.id ? (dir === 'desc' ? '↓' : '↑') : '↕'}
+                      </span>
+                    </button>
                   </th>
                 ))}
               </tr>
@@ -251,8 +542,8 @@ export default function ReportViewer() {
               ) : (
                 (rows.data?.rows ?? []).map((row, i) => (
                   <tr key={String(row['deviceId'] ?? i) + String(i)}>
-                    {(rows.data?.columns ?? []).map((c) => (
-                      <td key={c.id}>{cell(row[c.id] ?? null)}</td>
+                    {columns.map((c) => (
+                      <td key={c.id}>{renderCell(c.id, row)}</td>
                     ))}
                   </tr>
                 ))
@@ -264,12 +555,11 @@ export default function ReportViewer() {
           <span className={styles.pagerCount}>
             {total === 0
               ? `No ${s?.unit ?? 'rows'}`
-              : `${num((page - 1) * PER_PAGE + 1)}–${num(Math.min(page * PER_PAGE, total))} of ${num(total)} ${s?.unit ?? ''}`}
+              : `${num((page - 1) * PER_PAGE + 1)}–${num(Math.min(page * PER_PAGE, total))} of ${num(total)} ${s?.unit ?? ''}${
+                  devices === null ? '' : ` · ${num(devices)} computers`
+                }`}
           </span>
           <span className={styles.grow} />
-          <Button size="sm" disabled={page === 1} onClick={() => setCursors([])}>
-            First
-          </Button>
           <Button size="sm" disabled={page === 1} onClick={() => setCursors(cursors.slice(0, -1))}>
             Previous
           </Button>

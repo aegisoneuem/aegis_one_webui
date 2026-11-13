@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Mon, 2 Nov 2026 04:06:52",
-	"created": "2026-11-01T22:36:52.273824400Z",
+	"@generated": "Fri, 13 Nov 2026 05:32:16",
+	"created": "2026-11-13T00:02:16.547286400Z",
 	"insights":[
 		{
 			"level": "Low",
@@ -18,7 +18,7 @@
 			"site": "",
 			"key": "insight.log.warn",
 			"description": "ZAP warnings logged - see the zap.log file for details",
-			"statistic": "8"
+			"statistic": "5"
 		},
 		{
 			"level": "Info",
@@ -32,8 +32,8 @@
 			"level": "Info",
 			"reason": "Informational",
 			"site": "http://localhost:4173",
-			"key": "insight.endpoint.ctype.image/svg+xml",
-			"description": "Percentage of endpoints with content type image/svg+xml",
+			"key": "insight.endpoint.ctype.image/png",
+			"description": "Percentage of endpoints with content type image/png",
 			"statistic": "10"
 		},
 		{
@@ -90,7 +90,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.code.2xx",
 			"description": "Percentage of responses with status code 2xx",
-			"statistic": "28"
+			"statistic": "46"
 		},
 		{
 			"level": "Info",
@@ -98,7 +98,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.code.4xx",
 			"description": "Percentage of responses with status code 4xx",
-			"statistic": "71"
+			"statistic": "53"
 		},
 		{
 			"level": "Info",
@@ -106,7 +106,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.endpoint.ctype.application/json",
 			"description": "Percentage of endpoints with content type application/json",
-			"statistic": "25"
+			"statistic": "57"
 		},
 		{
 			"level": "Info",
@@ -114,7 +114,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.endpoint.ctype.text/css",
 			"description": "Percentage of endpoints with content type text/css",
-			"statistic": "25"
+			"statistic": "14"
 		},
 		{
 			"level": "Info",
@@ -122,7 +122,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.endpoint.ctype.text/html",
 			"description": "Percentage of endpoints with content type text/html",
-			"statistic": "50"
+			"statistic": "28"
 		},
 		{
 			"level": "Info",
@@ -130,7 +130,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.endpoint.method.GET",
 			"description": "Percentage of endpoints with method GET",
-			"statistic": "75"
+			"statistic": "85"
 		},
 		{
 			"level": "Info",
@@ -138,7 +138,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.endpoint.method.POST",
 			"description": "Percentage of endpoints with method POST",
-			"statistic": "25"
+			"statistic": "14"
 		},
 		{
 			"level": "Info",
@@ -146,7 +146,7 @@
 			"site": "http://localhost:8080",
 			"key": "insight.endpoint.total",
 			"description": "Count of total endpoints",
-			"statistic": "4"
+			"statistic": "7"
 		}
 	],
 	"site":[ 
@@ -167,7 +167,7 @@
 					"desc": "<p>The given request has been identified as an authentication request. The 'Other Info' field contains a set of key=value lines which identify any relevant fields. If the request is in a context which has an Authentication Method set to \"Auto-Detect\" then this rule will change the authentication to match the request identified.</p>",
 					"instances":[ 
 						{
-							"id": "10",
+							"id": "11",
 							"uri": "http://localhost:8080/oidc/login",
 							"nodeName": "http:\/\/localhost:8080\/oidc\/login ()(csrf_token,email,login_id,password)",
 							"method": "POST",
@@ -184,37 +184,7 @@
 					"reference": "<p>https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/</p>",
 					"cweid": "-1",
 					"wascid": "-1",
-					"sourceid": "60"
-				},
-				{
-					"pluginid": "10112",
-					"alertRef": "10112",
-					"alert": "Session Management Response Identified",
-					"name": "Session Management Response Identified",
-					"riskcode": "0",
-					"confidence": "2",
-					"riskdesc": "Informational (Medium)",
-					"desc": "<p>The given response has been identified as containing a session management token. The 'Other Info' field contains a set of header tokens that can be used in the Header Based Session Management Method. If the request is in a context which has a Session Management Method set to \"Auto-Detect\" then this rule will change the session management to use the tokens identified.</p>",
-					"instances":[ 
-						{
-							"id": "0",
-							"uri": "http://localhost:8080/oidc/authorize?client_id=aegis-one-console&redirect_uri=http://localhost:4173/auth/callback&state=zap&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256",
-							"nodeName": "http:\/\/localhost:8080\/oidc\/authorize (client_id,code_challenge,code_challenge_method,redirect_uri,state)",
-							"method": "GET",
-							"param": "aegis_login",
-							"attack": "",
-							"evidence": "aegis_login",
-							"otherinfo": "cookie:aegis_login"
-						}
-					],
-					"count": "1",
-					"systemic": false,
-					"solution": "<p>This is an informational alert rather than a vulnerability and so there is nothing to fix.</p>",
-					"otherinfo": "<p>cookie:aegis_login</p>",
-					"reference": "<p>https://www.zaproxy.org/docs/desktop/addons/authentication-helper/session-mgmt-id/</p>",
-					"cweid": "-1",
-					"wascid": "-1",
-					"sourceid": "41"
+					"sourceid": "73"
 				}
 			]
 		},
@@ -230,29 +200,29 @@
 					"alert": "Information Disclosure - Suspicious Comments",
 					"name": "Information Disclosure - Suspicious Comments",
 					"riskcode": "0",
-					"confidence": "2",
-					"riskdesc": "Informational (Medium)",
+					"confidence": "1",
+					"riskdesc": "Informational (Low)",
 					"desc": "<p>The response appears to contain suspicious comments which may help an attacker.</p>",
 					"instances":[ 
 						{
-							"id": "11",
-							"uri": "http://localhost:4173/assets/client-DmOQh2EC.js",
-							"nodeName": "http:\/\/localhost:4173\/assets\/client-DmOQh2EC.js",
+							"id": "12",
+							"uri": "http://localhost:4173/assets/index-eBFD0aZl.js",
+							"nodeName": "http:\/\/localhost:4173\/assets\/index-eBFD0aZl.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "ch(`${Un}${e}${Zn(t.query)}`,{method:n,header",
-							"otherinfo": "The following pattern was used: \\bQUERY\\b and was detected in likely comment: \"//reactrouter.com/v6/upgrading/future#v7_starttransition`),e?.v7_relativeSplatPath!==void 0||t&&t.v7_relativeSplatPath!==void 0|\", see evidence field for the suspicious comment/snippet."
+							"evidence": "select",
+							"otherinfo": "The following pattern was used: \\bSELECT\\b and was detected in likely comment: \"//www.w3.org/2000/svg`;case`math`:return`http://www.w3.org/1998/Math/MathML`;default:return`http://www.w3.org/1999/xhtml`}}funct\", see evidence field for the suspicious comment/snippet."
 						}
 					],
 					"count": "1",
 					"systemic": false,
 					"solution": "<p>Remove all comments that return information that may help an attacker and fix any underlying problems they refer to.</p>",
-					"otherinfo": "<p>The following pattern was used: \\bQUERY\\b and was detected in likely comment: \"//reactrouter.com/v6/upgrading/future#v7_starttransition`),e?.v7_relativeSplatPath!==void 0||t&&t.v7_relativeSplatPath!==void 0|\", see evidence field for the suspicious comment/snippet.</p>",
+					"otherinfo": "<p>The following pattern was used: \\bSELECT\\b and was detected in likely comment: \"//www.w3.org/2000/svg`;case`math`:return`http://www.w3.org/1998/Math/MathML`;default:return`http://www.w3.org/1999/xhtml`}}funct\", see evidence field for the suspicious comment/snippet.</p>",
 					"reference": "",
 					"cweid": "615",
 					"wascid": "13",
-					"sourceid": "26"
+					"sourceid": "71"
 				},
 				{
 					"pluginid": "10109",
@@ -262,51 +232,21 @@
 					"riskcode": "0",
 					"confidence": "2",
 					"riskdesc": "Informational (Medium)",
-					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.</p>",
+					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Ajax Spider may well be more effective than the standard one.</p>",
 					"instances":[ 
 						{
-							"id": "5",
+							"id": "4",
 							"uri": "http://localhost:4173",
 							"nodeName": "http:\/\/localhost:4173",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DBQT1cdX.js\"></script>",
-							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
-						},
-						{
-							"id": "6",
-							"uri": "http://localhost:4173/",
-							"nodeName": "http:\/\/localhost:4173\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DBQT1cdX.js\"></script>",
-							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
-						},
-						{
-							"id": "7",
-							"uri": "http://localhost:4173/assets",
-							"nodeName": "http:\/\/localhost:4173\/assets",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DBQT1cdX.js\"></script>",
-							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
-						},
-						{
-							"id": "2",
-							"uri": "http://localhost:4173/sitemap.xml",
-							"nodeName": "http:\/\/localhost:4173\/sitemap.xml",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DBQT1cdX.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-eBFD0aZl.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						}
 					],
-					"count": "4",
-					"systemic": false,
+					"count": "1",
+					"systemic": true,
 					"solution": "<p>This is an informational alert and so no changes are required.</p>",
 					"otherinfo": "<p>No links have been found while there are scripts, which is an indication that this is a modern web application.</p>",
 					"reference": "",

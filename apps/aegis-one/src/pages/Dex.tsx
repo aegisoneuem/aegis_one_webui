@@ -188,7 +188,7 @@ export default function Dex() {
                     Memory
                   </th>
                   <th scope="col" className={styles.numeric}>
-                    Disk free
+                    Disk Free
                   </th>
                 </tr>
               </thead>

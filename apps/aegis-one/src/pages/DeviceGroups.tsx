@@ -288,7 +288,7 @@ function GroupPane({
       <div className={styles.paneHead}>
         <h2 className={styles.paneTitle}>
           {group.name}
-          <span className={styles.tag}>{group.kind}</span>
+          <span className={styles.tag}>{group.kind === 'dynamic' ? 'Dynamic' : 'Static'}</span>
         </h2>
         <div className={styles.paneActions}>
           <Button size="sm" disabled={!canWrite}>
@@ -427,6 +427,19 @@ const MEMBER_COLUMNS: DataTableColumn<Device>[] = [
         <span className={styles.good}>Up to Date</span>
       ),
     exportValue: (d) => d.pendingPatches,
+  },
+  {
+    /*
+     * The reference's ninth column. It opens the endpoint, which is the only
+     * management action a group's member grid can offer that the contract
+     * describes — a member is a device, and everything else lives on its own
+     * page.
+     */
+    id: 'manage',
+    header: 'Manage',
+    width: 110,
+    cell: () => <span className={styles.manage}>Open</span>,
+    exportValue: () => '',
   },
 ];
 

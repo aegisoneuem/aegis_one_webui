@@ -897,7 +897,7 @@ test.describe('signed in as Super Admin', () => {
 
     // Scoped to the real grid: the three figures carry visually-hidden tables.
     const grid = page.locator('table[class*="grid"]').first();
-    for (const column of ['Computer', 'Score', 'Boot', 'CPU', 'Memory', 'Disk free'])
+    for (const column of ['Computer', 'Score', 'Boot', 'CPU', 'Memory', 'Disk Free'])
       await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
   });
 

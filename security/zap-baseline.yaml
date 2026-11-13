@@ -14,7 +14,7 @@ env:
     - name: aegis-console
       urls:
         - ${ZAP_TARGET}
-        - ${ZAP_IDP}
+        - ${ZAP_IDP_SEED}
       includePaths:
         - '${ZAP_TARGET}.*'
         - '${ZAP_IDP}.*'
@@ -35,6 +35,10 @@ env:
     # in the whole console — and they are reachable without a session, which is
     # exactly what a baseline can cover.
     ZAP_IDP: 'http://localhost:8080/oidc'
+    # `/oidc` itself serves nothing, so seeding the context with it made the
+    # spider stop on a 404 before it had crawled anything. The discovery
+    # document is a real page and the first thing any client fetches.
+    ZAP_IDP_SEED: 'http://localhost:8080/oidc/.well-known/openid-configuration'
     # ZAP resolves report paths relative to this plan file, not the working
     # directory, so this one is absolute.
     ZAP_REPORTS: 'C:/Users/sumit.jat/Aegis One/apps/aegis-one/docs/scans'

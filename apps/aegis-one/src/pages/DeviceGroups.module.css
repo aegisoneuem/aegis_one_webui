@@ -602,3 +602,10 @@
   font-size: 13px;
   text-align: center;
 }
+
+/* The member grid's Manage cell. The row already opens the device, so this
+   reads as the affordance rather than a second control. */
+.manage {
+  color: var(--st-info);
+  font-weight: 650;
+}

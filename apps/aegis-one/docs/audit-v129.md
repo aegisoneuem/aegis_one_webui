@@ -82,6 +82,35 @@ the summary the way the library list already is — not to add indexes.
 Row counts, for scale: `devices` 50,000 · `device_software` 630,281 ·
 `device_patches` 530,723 · `device_vulnerabilities` 61,103 · `software` 32.
 
+#### Correction, after doing the work
+
+This section was half wrong, and the brief was half right. Dropping the
+unused join did pay — but it was not the whole five seconds, and two of the
+three remaining causes were exactly what the brief said they were.
+
+- **One index really was missing.** Grouping 630,281 installations by
+  `outdated` used `idx_devsw_software`, which does not carry that column, so
+  every row went to the main table: **1,887 ms for one chart**. A covering
+  index on `(software_id, outdated)` makes the same query **269 ms** with
+  identical rows. So "there are already 39 indexes" was true and beside the
+  point.
+- **The statistics were missing too, and that mattered more than any index.**
+  With no `ANALYZE` over the finished database, SQLite drove the Installed
+  Software rows query from `software` and sorted 630,281 joined rows in a
+  temp B-tree — 4.6 s to return ten rows. After `ANALYZE` it walks the
+  hostname index and stops at ten: **under 1 ms**. Adding the new index
+  without statistics actually made that query _worse_, which is how this was
+  found.
+- **The other two slow reports needed nothing.** Pending Updates and Security
+  Issues were checked for the same pattern and their covering indexes already
+  exist: the candidate indexes saved 14 ms and 6 ms, so they were not added.
+- **Keyset paging was not needed either.** `OFFSET` at row 49,990 of All
+  Computers is 18 ms, and at row 600,000 of Installed Software 1,064 ms
+  against 220 ms at the first page. Worth knowing, not worth replacing the
+  cursor contract for.
+
+The measured result is in the commit that made these changes.
+
 ### 2.2 "the donut `r + stroke/2 ≠ 30` clipping"
 
 Measured in the live DOM: both donuts have `viewBox="0 0 60 60"` (half = 30)

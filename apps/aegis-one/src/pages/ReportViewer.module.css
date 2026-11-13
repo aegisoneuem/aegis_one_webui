@@ -156,10 +156,24 @@
   color: var(--ao-surface);
 }
 
+/* One per tile, on the tiles' own grid, so the row keeps its shape while
+   the counts are still being worked out. */
 .kpiSkeleton {
   display: block;
   height: 80px;
-  margin-bottom: 20px;
+}
+
+.panelTitleSkeleton {
+  display: block;
+  width: 180px;
+  height: 20px;
+}
+
+/* The height a chart body settles at, so a panel does not jump when its
+   figures arrive. */
+.panelBodySkeleton {
+  display: block;
+  height: 221px;
 }
 
 /* Panels ------------------------------------------------------------------ */

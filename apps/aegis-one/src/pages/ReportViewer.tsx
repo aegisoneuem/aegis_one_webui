@@ -262,7 +262,18 @@ export default function ReportViewer() {
   }
 
   const s = summary.data;
-  const total = rows.data?.page.total ?? s?.total ?? 0;
+  /*
+   * The library's card for this report, which the switcher has already
+   * fetched. It carries the title, the unit and how many charts the report
+   * has, so the page can draw its own heading and the right number of
+   * panels while the counts are still being worked out. Without it the
+   * heading read "Report" and the page was a blank sheet until the slowest
+   * query in the report came back.
+   */
+  const card = library.data?.find((c) => c.id === reportId);
+  const title = s?.title ?? card?.title ?? 'Report';
+  const panelCount = s?.charts.length ?? card?.charts ?? 4;
+  const total = rows.data?.page.total ?? s?.total ?? card?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
   const page = cursors.length + 1;
   const next = rows.data?.page.nextCursor ?? null;
@@ -273,7 +284,8 @@ export default function ReportViewer() {
    * computers" for Installed Software and plain "1-10 of 32 computers" for
    * All Computers.
    */
-  const devices = s?.unit === 'computers' ? null : (rows.data?.page.devices ?? null);
+  const unit = s?.unit ?? card?.unit ?? 'rows';
+  const devices = unit === 'computers' ? null : (rows.data?.page.devices ?? null);
   /*
    * With no explicit sort the server orders by the first column ascending,
    * so that column shows the ascending arrow rather than the neutral one.
@@ -293,9 +305,9 @@ export default function ReportViewer() {
           value={reportId}
           onChange={(e) => void navigate(`/reports/${e.target.value}`)}
         >
-          {(library.data ?? [{ id: reportId, title: s ? s.title : 'Report' }]).map((card) => (
-            <option key={card.id} value={card.id}>
-              {card.title}
+          {(library.data ?? [{ id: reportId, title }]).map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.title}
             </option>
           ))}
         </select>
@@ -335,7 +347,7 @@ export default function ReportViewer() {
       </div>
 
       <header className={styles.head}>
-        <h1>{s ? s.title : 'Report'}</h1>
+        <h1>{title}</h1>
         <span className={styles.grow} />
         <button
           type="button"
@@ -384,10 +396,26 @@ export default function ReportViewer() {
           ))}
         </div>
       ) : (
-        <Skeleton className={styles.kpiSkeleton} />
+        <div className={styles.kpis}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className={styles.kpiSkeleton} />
+          ))}
+        </div>
       )}
 
       <div className={styles.charts}>
+        {s === undefined
+          ? Array.from({ length: panelCount }, (_, i) => (
+              <section key={i} className={styles.panel}>
+                <header className={styles.panelHead}>
+                  <Skeleton className={styles.panelTitleSkeleton} />
+                </header>
+                <div className={styles.panelBody}>
+                  <Skeleton className={styles.panelBodySkeleton} />
+                </div>
+              </section>
+            ))
+          : null}
         {(s?.charts ?? []).map((chart) => {
           // The catalogue says which form a panel opens in, because v129
           // does: four locations are side-on bars and three computer types
@@ -426,7 +454,7 @@ export default function ReportViewer() {
                     pie={form === 'pie'}
                     share={false}
                     centreValue={num(chart.data.reduce((a, d) => a + d.value, 0))}
-                    centreLabel={s?.unit ?? ''}
+                    centreLabel={unit}
                   />
                 ) : form === 'bar' ? (
                   <Bars caption={chart.title} suffix="" axis data={data} />
@@ -554,8 +582,8 @@ export default function ReportViewer() {
         <footer className={styles.pager}>
           <span className={styles.pagerCount}>
             {total === 0
-              ? `No ${s?.unit ?? 'rows'}`
-              : `${num((page - 1) * PER_PAGE + 1)}–${num(Math.min(page * PER_PAGE, total))} of ${num(total)} ${s?.unit ?? ''}${
+              ? `No ${unit}`
+              : `${num((page - 1) * PER_PAGE + 1)}–${num(Math.min(page * PER_PAGE, total))} of ${num(total)} ${unit}${
                   devices === null ? '' : ` · ${num(devices)} computers`
                 }`}
           </span>

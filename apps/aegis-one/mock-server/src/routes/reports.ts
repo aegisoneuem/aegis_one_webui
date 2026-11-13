@@ -260,6 +260,46 @@ const SOURCE_FROM: Readonly<Record<ReportSource, string>> = {
                JOIN live_jobs lj ON lj.id = ljr.job_id`,
 };
 
+/**
+ * The same sources with the devices join left out.
+ *
+ * Every report carries the full device column set, so its rows need that
+ * join. Its charts almost never do: "Software Publishers" groups
+ * `software.publisher` over `device_software`, and the join to a
+ * fifty-thousand-row table it never reads a column from was costing three
+ * times the query. Four charts and a count per request is where the five
+ * seconds on Installed Software went.
+ *
+ * A query takes this only when nothing in it — not the grouped expression,
+ * not the report's own filter, not the Location or Group picker — mentions
+ * `d.`, which `fromFor` checks rather than assumes.
+ */
+const SOURCE_FROM_LEAN: Readonly<Record<ReportSource, string>> = {
+  devices: `devices d`,
+  software: `device_software ds JOIN software s ON s.id = ds.software_id`,
+  licenses: `device_software ds JOIN software s ON s.id = ds.software_id`,
+  updates: `device_patches dp JOIN patches p ON p.id = dp.patch_id`,
+  'update-results': `device_patches dp JOIN patches p ON p.id = dp.patch_id`,
+  issues: `device_vulnerabilities dv
+             JOIN vulnerabilities v ON v.id = dv.vulnerability_id`,
+  usb: `usb_events ue`,
+  deployments: `deployment_results dr JOIN deployments dep ON dep.id = dr.deployment_id`,
+  activity: `live_job_results ljr JOIN live_jobs lj ON lj.id = ljr.job_id`,
+};
+
+/** The device a row belongs to, for counting distinct computers leanly. */
+const SOURCE_DEVICE_ID: Readonly<Record<ReportSource, string>> = {
+  devices: 'd.id',
+  software: 'ds.device_id',
+  licenses: 'ds.device_id',
+  updates: 'dp.device_id',
+  'update-results': 'dp.device_id',
+  issues: 'dv.device_id',
+  usb: 'ue.device_id',
+  deployments: 'dr.device_id',
+  activity: 'ljr.device_id',
+};
+
 /** Rows a source always excludes, independent of the report. */
 const SOURCE_WHERE: Readonly<Partial<Record<ReportSource, string>>> = {
   updates: `dp.state IN ('pending', 'failed')`,
@@ -298,6 +338,17 @@ function scopeOf(scope: ReportScope): { sql: string[]; params: string[] } {
 function whereOf(report: ReportDef, scope: ReportScope = {}): string {
   const parts = [SOURCE_WHERE[report.source], report.filter, ...scopeOf(scope).sql].filter(Boolean);
   return parts.length > 0 ? `WHERE ${parts.join(' AND ')}` : '';
+}
+
+/**
+ * The FROM a query should use: the lean one when none of the SQL it is about
+ * to run refers to a device column, the full one otherwise.
+ */
+function fromFor(report: ReportDef, scope: ReportScope, ...fragments: string[]): string {
+  const sql = [whereOf(report, scope), ...fragments].join(' ');
+  // The word boundary matters: dp., dr., ds. and dv. are the other aliases,
+  // and none of them is the devices table.
+  return /\bd\./.test(sql) ? SOURCE_FROM[report.source] : SOURCE_FROM_LEAN[report.source];
 }
 
 /** The scope's own bound values, in the order whereOf puts its holes. */
@@ -348,7 +399,7 @@ const count = (db: Db, sql: string, ...params: unknown[]): number =>
 
 /** The row count a report would return, which is the figure on its card. */
 function totalOf(db: Db, report: ReportDef): number {
-  return count(db, `SELECT COUNT(*) AS n FROM ${SOURCE_FROM[report.source]} ${whereOf(report)}`);
+  return count(db, `SELECT COUNT(*) AS n FROM ${fromFor(report, {})} ${whereOf(report)}`);
 }
 
 /**
@@ -357,9 +408,10 @@ function totalOf(db: Db, report: ReportDef): number {
  * reference's first counter says 32.
  */
 function devicesIn(db: Db, report: ReportDef, scope: ReportScope): number {
+  const id = SOURCE_DEVICE_ID[report.source];
   return count(
     db,
-    `SELECT COUNT(DISTINCT d.id) AS n FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}`,
+    `SELECT COUNT(DISTINCT ${id}) AS n FROM ${fromFor(report, scope, id)} ${whereOf(report, scope)}`,
     ...scopeParams(scope),
   );
 }
@@ -379,10 +431,10 @@ function kpiOf(
   kpi: ReportKpiDef,
   scope: ReportScope,
 ): { label: string; value: number } {
-  const from = `FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}`;
   const base = scopeParams(scope);
   if (kpi.kind === 'rows') {
-    return { label: kpi.label, value: count(db, `SELECT COUNT(*) AS n ${from}`, ...base) };
+    const rows = `FROM ${fromFor(report, scope)} ${whereOf(report, scope)}`;
+    return { label: kpi.label, value: count(db, `SELECT COUNT(*) AS n ${rows}`, ...base) };
   }
 
   const expr = sqlFor(report, kpi.field);
@@ -390,6 +442,7 @@ function kpiOf(
   // this is unreachable; it keeps the type narrow rather than casting.
   if (!expr) return { label: kpi.label, value: 0 };
 
+  const from = `FROM ${fromFor(report, scope, expr)} ${whereOf(report, scope)}`;
   const and = whereOf(report, scope) ? 'AND' : 'WHERE';
   if (kpi.kind === 'distinct') {
     return {
@@ -430,7 +483,7 @@ function chartOf(
     db
       .prepare(
         `SELECT ${expr} AS label, COUNT(*) AS value
-           FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}
+           FROM ${fromFor(report, scope, expr)} ${whereOf(report, scope)}
           GROUP BY 1 ORDER BY value DESC, label LIMIT ?`,
       )
       .all(...scopeParams(scope), limit) as { label: unknown; value: number }[]
@@ -444,6 +497,40 @@ function chartOf(
  * they stay outside the cache and are merged on top.
  */
 const library = new TtlCache<LibraryCard[]>({ ttlMs: 60_000, maxEntries: 4 });
+
+/**
+ * One report's counters and charts, for the same reason and with the same
+ * life. The key carries the Location and Group pickers, because those change
+ * every figure; it does not carry the reader, because none of these numbers
+ * are per-user — the favourite star is fetched outside the cache and merged
+ * on top, exactly as the library's is.
+ *
+ * Twenty reports times a handful of scopes is what the entry count allows
+ * for; past that the oldest goes.
+ */
+const summaries = new TtlCache<Omit<ReportSummaryBody, 'favorite'>>({
+  ttlMs: 60_000,
+  maxEntries: 120,
+});
+
+interface ReportSummaryBody {
+  id: string;
+  title: string;
+  description: string;
+  unit: string;
+  total: number;
+  favorite: boolean;
+  locations: string[];
+  groups: { id: string; name: string; parentId?: string }[];
+  kpis: { label: string; value: number }[];
+  charts: {
+    title: string;
+    field: string;
+    form: string;
+    data: { label: string; value: number }[];
+  }[];
+  columns: { id: string; header: string }[];
+}
 
 interface LibraryCard {
   id: string;
@@ -518,9 +605,31 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
     if (!report) throw notFound();
 
     const scope = readScope(request.query as { location?: string; group?: string });
+    const email = request.auth?.email ?? '';
+
+    const body = summaries.get(`${report.id}|${scope.location ?? ''}|${scope.group ?? ''}`, () =>
+      buildSummary(report, scope),
+    );
+
+    const favorite =
+      count(
+        db,
+        `SELECT COUNT(*) AS n FROM report_favorites WHERE report_id = ? AND user_email = ?`,
+        report.id,
+        email,
+      ) > 0;
+
+    return { ...body, favorite };
+  });
+
+  /** Everything in a summary except the reader's own favourite star. */
+  function buildSummary(
+    report: ReportDef,
+    scope: ReportScope,
+  ): Omit<ReportSummaryBody, 'favorite'> {
     const total = count(
       db,
-      `SELECT COUNT(*) AS n FROM ${SOURCE_FROM[report.source]} ${whereOf(report, scope)}`,
+      `SELECT COUNT(*) AS n FROM ${fromFor(report, scope)} ${whereOf(report, scope)}`,
       ...scopeParams(scope),
     );
     const charts = report.charts.map((chart) => ({
@@ -530,22 +639,12 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
       data: chartOf(db, report, chart.field, scope),
     }));
 
-    const email = request.auth?.email ?? '';
-    const favorite =
-      count(
-        db,
-        `SELECT COUNT(*) AS n FROM report_favorites WHERE report_id = ? AND user_email = ?`,
-        report.id,
-        email,
-      ) > 0;
-
     return {
       id: report.id,
       title: report.title,
       description: report.description,
       unit: report.unit,
       total,
-      favorite,
       locations: db
         .prepare(`SELECT DISTINCT zone_name AS name FROM devices ORDER BY name`)
         .all()
@@ -570,7 +669,7 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
       charts,
       columns: report.columns.map((c) => ({ id: c.field, header: c.header })),
     };
-  });
+  }
 
   /** The report's rows, paged, in the catalogue's own column order. */
   app.get(`${basePath}/reports/:reportId/run`, async (request) => {
@@ -624,11 +723,15 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
       )
       .all(...params, limit, offset) as Record<string, unknown>[];
 
-    const total = count(
-      db,
-      `SELECT COUNT(*) AS n FROM ${SOURCE_FROM[report.source]} ${filtered}`,
-      ...params,
-    );
+    /*
+     * The two counts behind the footer do not read a device column unless
+     * the search or a picker asks them to, so they skip the devices join
+     * when they can. The rows above them always need it: every report
+     * carries the full device column set.
+     */
+    const countFrom = fromFor(report, scope, search ? 'd.' : '');
+    const deviceId = SOURCE_DEVICE_ID[report.source];
+    const total = count(db, `SELECT COUNT(*) AS n FROM ${countFrom} ${filtered}`, ...params);
 
     return {
       columns: report.columns.map((c) => ({ id: c.field, header: c.header })),
@@ -643,7 +746,7 @@ export function registerReportRoutes(app: FastifyInstance, db: Db, basePath: str
          */
         devices: count(
           db,
-          `SELECT COUNT(DISTINCT d.id) AS n FROM ${SOURCE_FROM[report.source]} ${filtered}`,
+          `SELECT COUNT(DISTINCT ${deviceId}) AS n FROM ${countFrom} ${filtered}`,
           ...params,
         ),
       },

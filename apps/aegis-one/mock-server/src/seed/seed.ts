@@ -114,6 +114,21 @@ export function seedDatabase({
   seedAuditLog(db, rng);
   onProgress('operational data');
 
+  /*
+   * Last, so every index exists and every table is full when the statistics
+   * are taken. Without them SQLite guesses, and on this data it guesses
+   * badly: the Installed Software rows query drove `software` as the outer
+   * table and sorted 630,281 joined rows in a temp B-tree, 4.6 seconds for
+   * ten rows. With statistics it walks the hostname index and stops after
+   * ten, in under a millisecond.
+   *
+   * There are ANALYZE calls inside the roll-ups too; those are for the
+   * queries each one is about to run. This is the one that matters for a
+   * freshly seeded database.
+   */
+  db.exec('ANALYZE');
+  onProgress('statistics');
+
   return db;
 }
 

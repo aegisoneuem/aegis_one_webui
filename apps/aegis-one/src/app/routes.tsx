@@ -209,7 +209,11 @@ const SUB_ROUTES: PageRoute[] = [
   {
     path: 'reports/:reportId',
     component: ReportViewer,
-    handle: { pageId: 'reports', crumbs: ['Report'], permission: 'reports:read' },
+    // No third crumb: v129's trail on an open report is "Overview > Reports",
+    // and the report names itself in the heading and the switcher just below.
+    // The static "Report" was also the only thing on the page still saying
+    // "Report" once the heading learned its own name.
+    handle: { pageId: 'reports', permission: 'reports:read' },
   },
 ];
 

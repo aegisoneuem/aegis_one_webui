@@ -1006,27 +1006,100 @@ test.describe('signed in as Super Admin', () => {
 
     await expect(page).toHaveURL(/\/reports\/computers$/);
     await expect(page.getByRole('heading', { name: 'All Computers', exact: true })).toBeVisible();
-    await expect(page.getByText('Computers in this report')).toBeVisible();
+    await expect(page.getByText('Computers in This Report')).toBeVisible();
 
     for (const panel of [
-      'Online and offline',
-      'Operating systems',
-      'Computers by location',
-      'Computer types',
+      'Online and Offline',
+      'Operating Systems',
+      'Computers by Location',
+      'Computer Types',
     ])
       await expect(page.getByRole('heading', { name: panel })).toBeVisible();
 
     // The reference lets the reader change a panel's form.
-    await page.getByLabel('Chart type: Online and offline').selectOption('column');
-    await expect(page.getByLabel('Chart type: Online and offline')).toHaveValue('column');
+    await page.getByLabel('Chart type: Online and Offline').selectOption('column');
+    await expect(page.getByLabel('Chart type: Online and Offline')).toHaveValue('column');
 
     const grid = page.locator('table[class*="grid"]');
     for (const column of ['Computer name', 'IP address', 'MAC address', 'Asset tag', 'TPM'])
       await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
 
-    await expect(page.getByText(/1–50 of .* computers/)).toBeVisible();
+    await expect(page.getByText(/1–10 of .* computers/)).toBeVisible();
     await page.getByRole('button', { name: 'All Reports' }).click();
     await expect(page).toHaveURL(/\/reports$/);
+  });
+
+  test('a report’s counters agree with the rows the grid is paging', async ({ page }) => {
+    await page.goto('/reports/computers');
+    await expect(page.getByText('Computers in This Report')).toBeVisible();
+
+    // A counter is a tile holding its label and its figure, so read the
+    // figure out of the tile that carries the label.
+    const read = async (label: string): Promise<number> => {
+      // The innermost div holding this label is the tile; an outer one is the
+      // row of tiles, whose first figure belongs to a different counter.
+      const tile = page
+        .locator('div')
+        .filter({ has: page.getByText(label, { exact: true }) })
+        .last();
+      const value = await tile.locator('strong').first().innerText();
+      return Number(value.replace(/[^0-9]/g, ''));
+    };
+
+    const online = await read('Online Computers');
+    const offline = await read('Offline Computers');
+    const footer = await page.getByText(/of [\d,]+ computers/).innerText();
+    const total = Number((footer.match(/of ([\d,]+) computers/) ?? ['', '0'])[1].replace(/,/g, ''));
+
+    // Every computer is online, offline, or waiting for a restart, so the two
+    // named states cannot add up to more than the report lists.
+    expect(online).toBeGreaterThan(0);
+    expect(offline).toBeGreaterThan(0);
+    expect(online + offline).toBeLessThanOrEqual(total);
+  });
+
+  test('Bar draws on its side and Column stands up', async ({ page }) => {
+    await page.goto('/reports/computers');
+    await expect(page.getByText('Computers in This Report')).toBeVisible();
+
+    // v129 opens "Computers by Location" side-on and "Operating Systems" as
+    // columns, so the two must not render as the same figure.
+    const bars = page.locator('[class*="barRow"]');
+    await expect(bars.first()).toBeVisible();
+    const bar = await bars.first().boundingBox();
+    if (bar === null) throw new Error('the bar chart drew no row');
+    expect(bar.width).toBeGreaterThan(bar.height);
+
+    const column = page.locator('[class*="columnBar"]').first();
+    await expect(column).toBeVisible();
+    const col = await column.boundingBox();
+    if (col === null) throw new Error('the column chart drew no bar');
+    expect(col.height).toBeGreaterThan(col.width);
+
+    // Both carry a value axis: five ticks, drawn from the reference's own
+    // choice of step.
+    await expect(page.locator('[class*="valueAxis"] span')).toHaveCount(5);
+  });
+
+  test('the Location picker narrows the counters, the charts and the rows together', async ({
+    page,
+  }) => {
+    await page.goto('/reports/computers');
+    const wholeEstate = await page.getByText(/of ([\d,]+) computers/).innerText();
+
+    await page.getByLabel('Report location').selectOption('Delhi Branch');
+    await expect(page).toHaveURL(/location=Delhi\+Branch|location=Delhi%20Branch/);
+
+    await expect
+      .poll(async () => (await page.getByText(/of ([\d,]+) computers/).innerText()) !== wholeEstate)
+      .toBe(true);
+
+    // The chart has to agree with the picker, not just the grid. By role, so
+    // this does not also match the figure's own screen-reader table caption.
+    await expect(page.getByRole('heading', { name: 'Computers by Location' })).toBeVisible();
+    const locations = page.locator('[class*="barLabel"]');
+    await expect(locations).toHaveCount(1);
+    await expect(locations.first()).toHaveText('Delhi Branch');
   });
 
   test('Aegis Zones opens on the approved layout: five counters, three panels', async ({

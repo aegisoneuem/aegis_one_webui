@@ -59,10 +59,34 @@ const PAGES = [
   { slug: 'diagnostics', label: 'Diagnostics', route: '/diagnostics' },
 ];
 
-/** Read out of the page rather than judged from a picture. */
+/**
+ * Read out of the page rather than judged from a picture.
+ *
+ * Two rules, both learnt by getting them wrong. A control is identified by
+ * its accessible name, resolved through `aria-labelledby` as a screen reader
+ * would — reading `aria-label` alone made three controls on the Overview
+ * look missing when they were there all along. And nothing is identified by
+ * a class name: the reference and this console share a design, not a
+ * stylesheet, so `[class*="tab"]` finds v129's tabs on one side and not the
+ * other. Tabs are found by their words.
+ */
 function measure() {
   const root = document.querySelector('main') ?? document.body;
   const text = root.innerText;
+
+  const accessibleName = (el) => {
+    const direct = el.getAttribute('aria-label');
+    if (direct) return direct.trim();
+    const by = el.getAttribute('aria-labelledby');
+    if (by) {
+      return by
+        .split(/\s+/)
+        .map((id) => document.getElementById(id)?.textContent?.trim() ?? '')
+        .join(' ')
+        .trim();
+    }
+    return el.textContent.replace(/\s+/g, ' ').trim();
+  };
 
   const rgbToHex = (value) => {
     const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(value ?? '');
@@ -87,6 +111,20 @@ function measure() {
 
   const svgs = [...document.querySelectorAll('svg')];
 
+  /*
+   * Named controls, so a difference in this list is a difference in what the
+   * page offers rather than in how it is marked up.
+   */
+  const named = [];
+  for (const el of root.querySelectorAll('select, button, [role="tab"], input')) {
+    const box = el.getBoundingClientRect();
+    if (box.width === 0 && box.height === 0) continue;
+    const type = el.getAttribute('type') ?? '';
+    if (type === 'checkbox' || type === 'radio') continue;
+    const name = accessibleName(el).slice(0, 40);
+    if (name !== '' && !named.includes(name)) named.push(name);
+  }
+
   return {
     heading: root.querySelector('h1')?.textContent?.trim() ?? null,
     // The approved glyphs announce themselves; anything else is a stranger.
@@ -109,6 +147,7 @@ function measure() {
         .length,
       horizontalBars: root.querySelectorAll('[class*="barRow"], [class*="aw-bar-row"]').length,
     },
+    controls: named.slice(0, 60),
     tiles: {
       count: root.querySelectorAll(
         '[class*="kpi"], [class*="summary-strip"] > div, [class*="counter"]',

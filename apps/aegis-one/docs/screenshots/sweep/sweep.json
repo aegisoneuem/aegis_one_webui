@@ -1,143 +1,184 @@
 [
  {
-  "slug": "overview",
-  "label": "Overview",
-  "route": "/",
-  "settledMs": 436,
+  "slug": "vulnerabilities",
+  "label": "Vulnerabilities",
+  "route": "/vulns",
+  "settledMs": 274,
   "reference": {
-   "heading": "Overview",
+   "heading": "Vulnerabilities",
    "icons": {
-    "total": 76,
-    "approved": 56,
-    "square": 32,
-    "accents": 62
+    "total": 38,
+    "approved": 25,
+    "square": 25,
+    "accents": 56
    },
    "colours": [
     [
+     "#1E293B",
+     702
+    ],
+    [
      "#1D2632",
-     529
+     242
     ],
     [
      "#0B1220",
-     138
+     74
     ],
     [
-     "#475569",
-     126
-    ],
-    [
-     "#1E293B",
-     98
-    ],
-    [
-     "#47617C",
-     86
-    ],
-    [
-     "#334155",
-     73
-    ],
-    [
-     "#64748B",
-     69
-    ],
-    [
-     "#A47423",
-     67
-    ],
-    [
-     "#18354F",
-     52
-    ],
-    [
-     "#1F55B8",
-     52
-    ],
-    [
-     "#94A3B8",
-     42
-    ],
-    [
-     "#3E526A",
-     42
+     "#20272D",
+     53
     ],
     [
      "#FFFFFF",
-     37
+     50
     ],
     [
-     "#0F172A",
-     35
+     "#475569",
+     48
     ],
     [
-     "#B91C1C",
+     "#ECC57C",
+     42
+    ],
+    [
+     "#B42323",
+     42
+    ],
+    [
+     "#8DA0BA",
+     36
+    ],
+    [
+     "#0F2740",
+     33
+    ],
+    [
+     "gradient",
+     33
+    ],
+    [
+     "#18354F",
+     32
+    ],
+    [
+     "#9A5B00",
+     30
+    ],
+    [
+     "#1D4ED8",
      26
     ],
     [
+     "#1D4FB8",
+     24
+    ],
+    [
+     "#0F172A",
+     22
+    ],
+    [
+     "#3E526A",
+     20
+    ],
+    [
      "#15803D",
-     19
+     20
     ],
     [
-     "#24384F",
-     15
+     "#47617C",
+     12
     ],
     [
-     "#EEF1F5",
-     15
+     "#334155",
+     8
     ],
     [
-     "#D5DCE5",
-     13
+     "#C5CED9",
+     7
     ],
     [
      "#DFE5EC",
-     12
-    ],
-    [
-     "#B7791F",
-     12
-    ],
-    [
-     "#9A6200",
-     12
+     7
     ],
     [
      "#C0262D",
-     11
+     7
     ],
     [
-     "#A16207",
-     8
+     "#526176",
+     4
     ]
    ],
    "charts": {
-    "svgs": 50,
+    "svgs": 12,
     "axisTicks": 0,
     "gridlines": 0,
     "horizontalBars": 0
    },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Vulnerabilities",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Open Patch Management",
+    "Remediate critical (30)",
+    "Findings25136 distinct issues",
+    "Critical6130 endpoints",
+    "Affected Endpoints32/320 with no finding",
+    "Exposure Score100/100Lower Is Better",
+    "Critical: 61",
+    "High: 103",
+    "Medium: 87",
+    "Low: 0",
+    "OS Update5422%",
+    "Third-Party App17469%",
+    "Security Control198%",
+    "Lifecycle42%",
+    "21",
+    "Deploy Fix",
+    "18",
+    "6",
+    "3",
+    "2",
+    "1",
+    "16",
+    "15",
+    "14",
+    "13",
+    "8",
+    "Review",
+    "5",
+    "4",
+    "17",
+    "12"
+   ],
    "tiles": {
-    "count": 26,
-    "clickable": 5
+    "count": 5,
+    "clickable": 4
    },
    "header": {
-    "selects": 3,
-    "buttons": 22,
+    "selects": 0,
+    "buttons": 10,
     "star": false
    },
    "table": {
-    "tables": 0,
-    "rows": 0,
+    "tables": 2,
+    "rows": 48,
     "search": 0,
     "sortable": 0,
     "pager": false
    },
-   "words": 2892
+   "words": 41
   },
   "build": {
-   "heading": "Overview",
+   "heading": "Vulnerabilities",
    "icons": {
-    "total": 39,
+    "total": 53,
     "approved": 26,
     "square": 20,
     "accents": 20
@@ -145,86 +186,86 @@
    "colours": [
     [
      "#20262E",
-     570
+     1024
     ],
     [
      "#69717D",
-     201
+     169
     ],
     [
      "#0B1220",
-     99
-    ],
-    [
-     "#15803D",
-     49
-    ],
-    [
-     "#18354F",
-     37
-    ],
-    [
-     "#C0262D",
-     35
-    ],
-    [
-     "#FFFFFF",
-     27
-    ],
-    [
-     "#E5E9ED",
-     25
-    ],
-    [
-     "#47617C",
-     21
+     140
     ],
     [
      "#B7791F",
-     20
+     82
     ],
     [
-     "#E4363D",
-     15
+     "#C0262D",
+     75
+    ],
+    [
+     "#FFFFFF",
+     70
+    ],
+    [
+     "#47617C",
+     56
+    ],
+    [
+     "#E5E9ED",
+     53
     ],
     [
      "#8A9099",
-     15
+     47
     ],
     [
-     "#2F5D8A",
-     14
-    ],
-    [
-     "#1D4ED8",
-     12
-    ],
-    [
-     "#0E9F6E",
-     11
+     "#D6A009",
+     45
     ],
     [
      "#EEF0F2",
-     11
+     32
     ],
     [
-     "#B4790A",
-     6
+     "#15803D",
+     30
     ],
     [
-     "#7FA0C6",
-     6
-    ],
-    [
-     "#7F6038",
-     2
+     "#18354F",
+     27
     ],
     [
      "#202329",
-     2
+     20
+    ],
+    [
+     "#94A3B8",
+     18
+    ],
+    [
+     "#7FA0C6",
+     14
     ],
     [
      "#E4C795",
+     11
+    ],
+    [
+     "#E8F6EF",
+     8
+    ],
+    [
+     "#2F5D8A",
+     7
+    ],
+    [
+     "#FCEBEC",
+     5
+    ],
+    [
+     "#7F6038",
      2
     ],
     [
@@ -232,37 +273,92 @@
      2
     ],
     [
-     "#0F2740",
-     1
+     "#FFF4DE",
+     2
     ],
     [
-     "gradient",
+     "#0F2740",
      1
     ]
    ],
    "charts": {
-    "svgs": 13,
+    "svgs": 27,
     "axisTicks": 0,
     "gridlines": 0,
-    "horizontalBars": 0
+    "horizontalBars": 11
    },
+   "controls": [
+    "15 Open Findings",
+    "5 Known Exploited",
+    "5 SLA Overdue",
+    "48,146/50,000 Devices Scanned",
+    "2 Projects",
+    "Open Patch Management",
+    "Remediate critical (9)",
+    "Scan history",
+    "+ New Scan",
+    "Exposure Score44/ 1000Grade A",
+    "Open Findings15on 27,165 devices",
+    "Critical & High960%fix first",
+    "Known Exploited5exploited in the wild",
+    "SLA Overdue533%past their due date",
+    "Scan Coverage96%48,146 / 50,000 devices",
+    "Within SLA: 8",
+    "Due soon: 2",
+    "Overdue: 5",
+    "All findings →",
+    "0–30 days: 4",
+    "31–60 days: 3",
+    "61–90 days: 4",
+    "Over 90 days: 4",
+    "Remediations →",
+    "Known exploited: 5",
+    "Public exploit: 1",
+    "Ransomware: 2",
+    "Wormable: 2",
+    "Zero-day: 2",
+    "Remote: 7",
+    "Malware: 1",
+    "No fix yet: 1",
+    "Findings",
+    "Devices",
+    "Remediations",
+    "Projects",
+    "Scans",
+    "Search findings",
+    "Severity",
+    "Platform",
+    "Detection",
+    "Threat",
+    "Status",
+    "SLA",
+    "State",
+    "Known exploited 5",
+    "Public exploit 1",
+    "Ransomware 2",
+    "Wormable 2",
+    "Zero-day 2",
+    "Remote 7",
+    "Malware 1",
+    "No fix yet 1"
+   ],
    "tiles": {
-    "count": 21,
-    "clickable": 5
+    "count": 25,
+    "clickable": 6
    },
    "header": {
-    "selects": 3,
-    "buttons": 11,
+    "selects": 0,
+    "buttons": 9,
     "star": false
    },
    "table": {
-    "tables": 5,
-    "rows": 19,
-    "search": 0,
+    "tables": 6,
+    "rows": 42,
+    "search": 1,
     "sortable": 0,
     "pager": false
    },
-   "words": 4491
+   "words": 4716
   }
  }
 ]

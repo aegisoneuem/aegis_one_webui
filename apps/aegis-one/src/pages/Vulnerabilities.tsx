@@ -158,10 +158,12 @@ const PER_PAGE = 15;
 const FILTER_KEYS = ['severity', 'platform', 'detection', 'threat', 'confidence', 'sla', 'state'];
 
 export default function Vulnerabilities() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') ?? 'findings';
   const openFindingId = params.get('finding');
   const canScan = useCan('vulns:scan');
+  const canRemediate = useCan('deployments:create');
   const [newScan, setNewScan] = useState(false);
 
   const set = (changes: Record<string, string | null>): void => {
@@ -210,6 +212,9 @@ export default function Vulnerabilities() {
   }
 
   const s = summary.data;
+  // The figure the reference puts on its own button: what is open and
+  // critical right now, not a total of everything ever found.
+  const criticalOpen = s?.criticalAndHigh ?? 0;
 
   return (
     <div className={styles.page}>
@@ -263,6 +268,20 @@ export default function Vulnerabilities() {
           )}
         </div>
         <div className={styles.headActions}>
+          {/*
+           * The reference's two shortcuts out of this page. A finding is
+           * fixed somewhere else — by a patch, or by an action sent to the
+           * endpoints that have it — so the page that reports them offers
+           * the way to both rather than leaving the reader to find it.
+           */}
+          <Button size="sm" onClick={() => void navigate('/patches')}>
+            Open Patch Management
+          </Button>
+          {canRemediate && criticalOpen > 0 ? (
+            <Button size="sm" onClick={() => void navigate('/deployments/new')}>
+              Remediate critical ({num(criticalOpen)})
+            </Button>
+          ) : null}
           <Button size="sm" onClick={() => set({ tab: 'scans' })}>
             Scan history
           </Button>

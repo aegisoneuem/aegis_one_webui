@@ -45,7 +45,7 @@ having no "Loading" text left.
 | Live Activity   | `/liveops`        | 24/27 | clean   | n/a   | 3 svg  | — ¹    | matches                | search              | 287ms |
 | Remote Control  | `/remote-control` | 30/30 | clean   | n/a   | 6 svg  | — ¹    | no reference ²         | search              | 239ms |
 | Deployments     | `/deployments`    | 24/40 | clean   | n/a   | 16 svg | 19 / 6 | matches                | 16 rows, sort       | 265ms |
-| Vulnerabilities | `/vulns`          | 24/51 | clean   | done  | 27 svg | 25 / 6 | **differs in shape**   | 42 rows, 7 filters  | 428ms |
+| Vulnerabilities | `/vulns`          | 24/51 | clean   | done  | 27 svg | 25 / 6 | matches ²              | 42 rows, 7 filters  | 428ms |
 | Configuration   | `/profiles`       | 24/24 | clean   | n/a   | —      | — ¹    | matches                | 6 filters           | 553ms |
 | DEX             | `/dex`            | 24/33 | clean   | n/a   | 9 svg  | 11 / 0 | matches                | 31 rows             | 269ms |
 | AEGIS Insight   | `/insight`        | 24/24 | clean   | done  | —      | — ¹    | **no PREVIEW tag**     | —                   | 436ms |
@@ -64,7 +64,9 @@ contain the word. This is the audit's finding 3.2 showing up from the
 outside, and it is why "tiles correct and clickable" cannot yet be answered
 in one pass.
 
-² v129 has no Remote Control page. The build's is from v130.
+² Two per-row actions are worded differently; see 3.5.
+
+³ v129 has no Remote Control page. The build's is from v130.
 
 ---
 
@@ -218,17 +220,46 @@ build's is accurate. The reference promises "or any field"; this server
 searches hostname, IP, serial, user and model, and the placeholder says so.
 The build's `Default view` control and its pager are additions, not losses.
 
-### 3.5 Vulnerabilities is a different page, not a drifted one
+### 3.5 Vulnerabilities — there was no decision to make
 
-The reference offers `Open Patch Management`, `Deploy Fix` and `Review`
-against a findings list. The build has five tabs — Findings, Devices,
-Remediations, Projects, Scans — with seven filter selects, a scan history and
-`+ New Scan`. Neither is a subset of the other.
+**This section was wrong, and it was the most misleading thing in the
+document.** It said the build's page was "a different page, not a drifted
+one" and that it needed a product decision. It needed neither.
 
-This one needs a decision rather than a fix: the build's page is richer and
-may well be the newer intent, but it is not what the reference shows, and the
-brief says the reference wins where both have a page. **I have not touched
-it.**
+v129's Vulnerabilities page has the same five tabs the build has — Findings,
+Devices, Remediations, Projects, Scans — the same six counter cards led by an
+Exposure Score out of 1000 with a letter grade, and the same dashboard of
+trend, SLA, top priorities and age. The build was restored to exactly that in
+an earlier commit, which says so in its own subject line.
+
+Three things made the sweep report otherwise, all the same fault: it looked
+for tabs with `[class*="tab"]`, and v129's tab buttons carry classes like
+`on` and `inline-flex`; it looked for counters by class too; and v129 renders
+its tabs outside `<main>`, which the reader scopes to. A reader that
+identifies controls by markup finds what one codebase happens to call things.
+
+v130 was checked as well, in case the build's page was a newer design rather
+than drift. It is not: v130 carries the same page v129 does.
+
+**The reader is fixed**, not just this paragraph. `scripts/sweep.mjs` now
+identifies a control by its accessible name, resolving `aria-labelledby` the
+way a screen reader would, and finds nothing by class name. That is the same
+fault that produced the wrong claims about the Overview's scope bar and about
+Devices' saved views.
+
+What was actually missing, and is now there:
+
+- `Open Patch Management` and `Remediate critical (N)`, the reference's two
+  shortcuts off this page. Both are navigation — to Patches, and to the
+  deployment wizard — which is what they do in the reference too.
+
+What is still different:
+
+- The reference puts `Deploy Fix` and `Review` on each finding row. The build
+  opens the finding in a drawer on row click, which is `Review` by another
+  interaction, and offers "Open in Patch Management" on the Remediations tab,
+  which is `Deploy Fix` under another name. Worth aligning the words; not
+  worth calling a gap.
 
 ### 3.6 Smaller, page by page
 

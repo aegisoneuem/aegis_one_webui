@@ -572,6 +572,49 @@ export type ConfigProfileDetail = {
 /** The four categories the Reports library counts. */
 export type ReportCategory = 'computers-software' | 'daily-operations' | 'security' | 'leadership';
 
+/* Remote Control ---------------------------------------------------------- */
+
+/** How a session treats the endpoint: watch, take over, or only message. */
+export type RemoteSessionMode = 'view' | 'control' | 'chat';
+
+/** The estate-wide rules every remote session is held to. */
+export type RemotePolicy = {
+  /** 'ask' is attended, 'notify' is unattended. There is no silent option. */
+  consent: 'ask' | 'notify';
+  requireReason: boolean;
+  record: boolean;
+  chat: boolean;
+  idleMinutes: number;
+  maxMinutes: number;
+  /** Always true; reported so the console can draw it as locked. */
+  onScreenIndicator: boolean;
+  updatedAt: string;
+  updatedBy: string;
+};
+
+export type RemoteSession = {
+  id: string;
+  deviceId: string;
+  hostname: string;
+  os?: string;
+  user?: string;
+  operator: string;
+  mode: RemoteSessionMode;
+  reason: string;
+  state: 'pending-consent' | 'open' | 'ended';
+  consent: 'ask' | 'notify';
+  recorded: boolean;
+  startedAt: string;
+  endedAt: string | null;
+  endedBy: string | null;
+  endReason: string | null;
+};
+
+export type RemoteSessionPage = {
+  sessions: RemoteSession[];
+  page: { nextCursor: string | null; total: number };
+};
+
 /** One card in the Reports library. */
 export type ReportCard = {
   id: string;

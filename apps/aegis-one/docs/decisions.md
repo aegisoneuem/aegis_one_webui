@@ -79,7 +79,12 @@ for how this differs from the reference build.
 
 ## D-011 — The software catalogue drops three remote-access titles
 
-Product rule 4 removes remote control from the console. It says nothing about
+> **Superseded in part.** Remote control is now a requirement and the console
+> has a Remote Control page, taken from v130. What follows still holds for the
+> software catalogue: a UEM console should report third-party remote-access
+> tools whether or not it has one of its own.
+
+Product rule 4 removed remote control from the console. It says nothing about
 which third-party software an estate happens to have installed, and a UEM
 console that could not report AnyDesk or TeamViewer would be worse at its job.
 
@@ -87,8 +92,11 @@ So the Remote Access category stays, with one exception: the three titles whose
 names literally contain "Remote Desktop" or "Remote Control" are not seeded —
 Microsoft Remote Desktop, Remote Desktop Connection Manager and Chrome Remote
 Desktop Host. A row reading "Microsoft Remote Desktop" in a console that
-deliberately has no remote control reads like a feature, and the point of the
-rule is that nobody should be able to think the console offers one.
+deliberately had no remote control read like a feature, and the point of the
+rule was that nobody should be able to think the console offered one. Now that
+it does offer one, under its own name and its own policy, the three titles
+could reasonably come back; they are left out until someone asks, because
+nothing depends on them.
 
 AnyDesk, TeamViewer, Citrix Workspace and Omnissa Horizon Client remain.
 

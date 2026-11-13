@@ -979,3 +979,46 @@ CREATE INDEX idx_devices_firewall ON devices(firewall_ok);
 CREATE INDEX idx_devices_zone_compliance ON devices(zone_id, compliance_pct);
 CREATE INDEX idx_devices_osname ON devices(os_family, os_name);
 CREATE INDEX idx_devpatch_state ON device_patches(state);
+
+-- Remote Control -------------------------------------------------------------
+-- One row, because the policy is estate-wide. The console edits it; the server
+-- is what enforces it, which is why `record` and `consent` are read on every
+-- session start rather than trusted from the client.
+CREATE TABLE remote_policy (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  -- 'ask' means the end user accepts before anything is shown; 'notify' means
+  -- an unattended machine tells them a session has begun. There is no third
+  -- value, and in particular no silent one.
+  consent TEXT NOT NULL DEFAULT 'ask',
+  require_reason INTEGER NOT NULL DEFAULT 1,
+  record INTEGER NOT NULL DEFAULT 1,
+  chat INTEGER NOT NULL DEFAULT 1,
+  idle_minutes INTEGER NOT NULL DEFAULT 15,
+  max_minutes INTEGER NOT NULL DEFAULT 120,
+  updated_at TEXT NOT NULL,
+  updated_by TEXT NOT NULL
+);
+
+CREATE TABLE remote_sessions (
+  id TEXT PRIMARY KEY,
+  device_id TEXT NOT NULL REFERENCES devices(id),
+  operator_email TEXT NOT NULL,
+  operator_name TEXT NOT NULL,
+  -- 'view' watches, 'control' takes mouse and keyboard, 'chat' never opens the
+  -- screen at all.
+  mode TEXT NOT NULL,
+  reason TEXT NOT NULL DEFAULT '',
+  -- 'pending-consent' is the state a session sits in until the end user
+  -- accepts; nothing is shown while it is there.
+  state TEXT NOT NULL,
+  consent TEXT NOT NULL,
+  recorded INTEGER NOT NULL,
+  started_at TEXT NOT NULL,
+  ended_at TEXT,
+  ended_by TEXT,
+  -- Why it ended: 'operator', 'user-declined', 'idle', 'max-duration'.
+  end_reason TEXT
+);
+
+CREATE INDEX idx_remote_sessions_state ON remote_sessions(state, started_at);
+CREATE INDEX idx_remote_sessions_device ON remote_sessions(device_id, started_at);

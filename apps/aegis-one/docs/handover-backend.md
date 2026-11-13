@@ -127,15 +127,43 @@ the same `requestId`, which you should also return in `x-request-id`.
   filter — never a list of 12,480 ids. A client-supplied list is an assertion
   you have not checked, and a scoped role could name devices outside its zones.
 
-### Remote script execution — read this one carefully
+### Remote control — read this one carefully
 
-The console has **no remote control** and must never gain any. No remote
-desktop, no screen view or share, no remote shell or terminal session, no
-mouse or keyboard takeover. There is no such endpoint in the contract and no
-such permission in `x-roles`. Please do not add one, do not stub one, and do
-not add a disabled "coming soon" entry.
+This section used to say the console had no remote control and must never
+gain any. That changed: service desk support needs it. What has not changed
+is why the rule existed, so the feature is narrow and the server is what
+holds the line.
 
-Remote script execution is a different thing and is fully supported:
+```
+GET  /remote-control/policy              the estate-wide rules
+PUT  /remote-control/policy              remote:configure only
+GET  /remote-control/sessions            ?state=open | finished
+POST /remote-control/sessions            request one; 409 if the endpoint has one
+POST /remote-control/sessions/{id}       end one, with a reason
+```
+
+What a backend implementing this must do, not merely allow:
+
+- **Read the policy on every start.** `consent: 'ask'` means the session is
+  created `pending-consent` and nothing is shown until the end user accepts.
+  `notify` is for unattended machines and still tells them. Do not add a
+  third value.
+- **Ignore the client on recording.** `recorded` comes from the policy, never
+  from the request body. An operator cannot turn it off for their own
+  session.
+- **Keep the on-screen indicator unsettable.** It is reported in
+  `RemotePolicy` so the console can draw it locked. There is no field to
+  change it and there must not be one.
+- **Require the reason when the policy says so**, and reject with 400 rather
+  than storing an empty one.
+- **One open session per endpoint.** Two operators on one screen, neither
+  knowing, is the thing consent exists to prevent.
+- **Three permissions:** `remote:read`, `remote:control`, `remote:configure`.
+  Auditor gets only the first, so the log can be reviewed by someone who
+  cannot connect.
+- **TLS 1.3** for the session transport.
+
+Remote script execution is still a different thing and is unchanged:
 
 ```
 POST /liveops/script-jobs      submit a job, get a job id

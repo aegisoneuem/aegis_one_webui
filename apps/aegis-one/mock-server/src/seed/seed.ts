@@ -112,6 +112,7 @@ export function seedDatabase({
   seedReports(db);
   seedUsbEvents(db, rng);
   seedAuditLog(db, rng);
+  seedRemotePolicy(db);
   onProgress('operational data');
 
   /*
@@ -2946,6 +2947,22 @@ function seedTokens(db: Db, rng: Rng): void {
  * to. Only Windows 10's is a hard fact with a date attached, because it has
  * actually ended.
  */
+/**
+ * The estate-wide remote-control policy, seeded at its safe defaults: the end
+ * user accepts before a session starts, a reason is required, and every
+ * session is recorded. There are no seeded sessions, because a session is
+ * something an operator did and inventing one would put a name against an
+ * access that never happened.
+ */
+function seedRemotePolicy(db: Db): void {
+  db.prepare(
+    `INSERT INTO remote_policy
+       (id, consent, require_reason, record, chat, idle_minutes, max_minutes,
+        updated_at, updated_by)
+     VALUES (1, 'ask', 1, 1, 1, 15, 120, ?, 'seed')`,
+  ).run(new Date().toISOString());
+}
+
 function seedPatchSettings(db: Db): void {
   /*
    * The rings target real device groups. The reference's own ids belong to

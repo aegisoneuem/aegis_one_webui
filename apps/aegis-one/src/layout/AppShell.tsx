@@ -1,16 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { Outlet, useMatches, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
-  CaretLineLeft,
-  CaretLineRight,
-  House,
-  SignOut,
-  User,
-} from '@phosphor-icons/react';
-import {
   Breadcrumb,
   Button,
+  Icon,
   Menu,
   NavGroup,
   NavItem,
@@ -97,7 +90,9 @@ export function AppShell(): JSX.Element {
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {collapsed ? <CaretLineRight size={16} /> : <CaretLineLeft size={16} />}
+            {/* One glyph either way, as v129 has it: the sidebar mark, not a
+                pair of carets pointing opposite ways. */}
+            <Icon name="sidebar" size={16} />
             {collapsed ? null : <span>Collapse</span>}
           </button>
         }
@@ -119,7 +114,7 @@ export function AppShell(): JSX.Element {
                 <NavItem
                   key={p.id}
                   href={p.path}
-                  icon={<p.icon size={18} weight={activeId === p.id ? 'fill' : 'regular'} />}
+                  icon={<Icon name={p.icon} />}
                   label={p.label}
                   tag={p.tag}
                   active={activeId === p.id}
@@ -135,8 +130,8 @@ export function AppShell(): JSX.Element {
           items={crumbs}
           onBack={() => navigate(-1)}
           onHome={() => navigate('/')}
-          backIcon={<ArrowLeft size={14} />}
-          homeIcon={<House size={14} />}
+          backIcon={<Icon name="back" size={15} />}
+          homeIcon={<Icon name="home" size={15} />}
           trailing={
             user ? (
               <Menu
@@ -146,13 +141,13 @@ export function AppShell(): JSX.Element {
                   {
                     id: 'sign-out',
                     label: 'Sign out',
-                    icon: <SignOut size={15} />,
+                    icon: <Icon name="sign-out" size={15} />,
                     onSelect: () => void signOut(),
                   },
                 ]}
               >
                 {(trigger) => (
-                  <Button size="sm" variant="ghost" icon={<User size={15} />} {...trigger}>
+                  <Button size="sm" variant="ghost" icon={<Icon name="user" size={15} />} {...trigger}>
                     {user.name}
                   </Button>
                 )}

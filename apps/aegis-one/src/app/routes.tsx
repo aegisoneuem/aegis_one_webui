@@ -17,6 +17,7 @@ const Enrollment = lazy(() => import('../pages/Enrollment'));
 const Patches = lazy(() => import('../pages/Patches'));
 const Software = lazy(() => import('../pages/Software'));
 const LiveActivity = lazy(() => import('../pages/LiveActivity'));
+const RemoteControl = lazy(() => import('../pages/RemoteControl'));
 const Deployments = lazy(() => import('../pages/Deployments'));
 const DeploymentWizard = lazy(() => import('../pages/DeploymentWizard'));
 const DeploymentDetail = lazy(() => import('../pages/DeploymentDetail'));
@@ -117,6 +118,11 @@ const PAGES: PageRoute[] = [
     path: 'liveops',
     component: LiveActivity,
     handle: { pageId: 'liveops', permission: 'liveops:read' },
+  },
+  {
+    path: 'remote-control',
+    component: RemoteControl,
+    handle: { pageId: 'remote', permission: 'remote:read' },
   },
   {
     path: 'deployments',

@@ -68,6 +68,9 @@ x-roles:
   - software:write
   - liveops:read
   - liveops:run
+  - remote:read
+  - remote:control
+  - remote:configure
   - deployments:read
   - deployments:create
   - deployments:cancel
@@ -103,6 +106,8 @@ x-roles:
   - software:read
   - liveops:read
   - liveops:run
+  - remote:read
+  - remote:control
   - deployments:read
   - deployments:create
   - vulns:read
@@ -123,6 +128,7 @@ x-roles:
   - patches:read
   - software:read
   - liveops:read
+  - remote:read
   - deployments:read
   - vulns:read
   - config:read
@@ -2439,6 +2445,144 @@ paths:
       responses:
         '204':
           description: Saved
+  /remote-control/policy:
+    get:
+      tags:
+      - remote-control
+      operationId: getRemotePolicy
+      summary: The estate-wide rules every remote session is held to.
+      x-required-permission: remote:read
+      responses:
+        '200':
+          description: Policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemotePolicy'
+    put:
+      tags:
+      - remote-control
+      operationId: setRemotePolicy
+      summary: Change the remote-session policy.
+      description: |
+        The on-screen indicator is not settable. It is always on, and a request
+        that tries to turn it off is rejected rather than quietly ignored.
+      x-required-permission: remote:configure
+      x-csrf: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemotePolicyInput'
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemotePolicy'
+  /remote-control/sessions:
+    get:
+      tags:
+      - remote-control
+      operationId: listRemoteSessions
+      summary: Remote sessions, open ones first.
+      x-required-permission: remote:read
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - name: state
+        in: query
+        description: Narrows to open sessions or to the ones that have finished.
+        schema:
+          type: string
+          enum:
+          - open
+          - finished
+      responses:
+        '200':
+          description: Sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoteSessionPage'
+    post:
+      tags:
+      - remote-control
+      operationId: startRemoteSession
+      summary: Ask an endpoint for a remote session.
+      description: |
+        Does not connect anything. The session is created in `pending-consent`
+        where the policy says the user must accept, and the endpoint shows the
+        request; it becomes `open` only when the user accepts. Where the policy
+        is `notify` the session opens and the endpoint says so on screen.
+        Recording follows the policy and the operator cannot turn it off.
+      x-required-permission: remote:control
+      x-csrf: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoteSessionInput'
+      responses:
+        '201':
+          description: Requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoteSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: That endpoint already has an open session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /remote-control/sessions/{sessionId}:
+    parameters:
+    - name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - remote-control
+      operationId: endRemoteSession
+      summary: End a remote session.
+      x-required-permission: remote:control
+      x-csrf: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - endReason
+              properties:
+                endReason:
+                  type: string
+                  enum:
+                  - operator
+                  - user-declined
+                  - idle
+                  - max-duration
+      responses:
+        '200':
+          description: Ended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoteSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /reports/{reportId}/summary:
     get:
       tags:
@@ -7352,6 +7496,175 @@ components:
                 type: integer
         favorite:
           type: boolean
+    RemotePolicy:
+      type: object
+      additionalProperties: false
+      required:
+      - consent
+      - requireReason
+      - record
+      - chat
+      - idleMinutes
+      - maxMinutes
+      - onScreenIndicator
+      - updatedAt
+      - updatedBy
+      properties:
+        consent:
+          description: >-
+            'ask' is attended: the user accepts before the session starts.
+            'notify' is unattended: the endpoint says a session has begun.
+            There is no silent option.
+          type: string
+          enum:
+          - ask
+          - notify
+        requireReason:
+          type: boolean
+        record:
+          type: boolean
+        chat:
+          type: boolean
+        idleMinutes:
+          type: integer
+          minimum: 1
+          maximum: 240
+        maxMinutes:
+          type: integer
+          minimum: 5
+          maximum: 720
+        onScreenIndicator:
+          description: Always true. Reported so the console can show it as locked.
+          type: boolean
+          enum:
+          - true
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+    RemotePolicyInput:
+      type: object
+      additionalProperties: false
+      required:
+      - consent
+      - requireReason
+      - record
+      - chat
+      - idleMinutes
+      - maxMinutes
+      properties:
+        consent:
+          type: string
+          enum:
+          - ask
+          - notify
+        requireReason:
+          type: boolean
+        record:
+          type: boolean
+        chat:
+          type: boolean
+        idleMinutes:
+          type: integer
+          minimum: 1
+          maximum: 240
+        maxMinutes:
+          type: integer
+          minimum: 5
+          maximum: 720
+    RemoteSessionMode:
+      type: string
+      enum:
+      - view
+      - control
+      - chat
+    RemoteSession:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - deviceId
+      - hostname
+      - operator
+      - mode
+      - state
+      - consent
+      - recorded
+      - startedAt
+      properties:
+        id:
+          type: string
+        deviceId:
+          type: string
+        hostname:
+          type: string
+        os:
+          type: string
+        user:
+          type: string
+        operator:
+          type: string
+        mode:
+          $ref: '#/components/schemas/RemoteSessionMode'
+        reason:
+          type: string
+        state:
+          type: string
+          enum:
+          - pending-consent
+          - open
+          - ended
+        consent:
+          type: string
+          enum:
+          - ask
+          - notify
+        recorded:
+          type: boolean
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type:
+          - string
+          - 'null'
+        endedBy:
+          type:
+          - string
+          - 'null'
+        endReason:
+          type:
+          - string
+          - 'null'
+    RemoteSessionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - sessions
+      - page
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemoteSession'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+    RemoteSessionInput:
+      type: object
+      additionalProperties: false
+      required:
+      - deviceId
+      - mode
+      properties:
+        deviceId:
+          type: string
+        mode:
+          $ref: '#/components/schemas/RemoteSessionMode'
+        reason:
+          description: Required when the policy says so; rejected as 400 when missing.
+          type: string
+          maxLength: 200
     ReportSummary:
       type: object
       additionalProperties: false

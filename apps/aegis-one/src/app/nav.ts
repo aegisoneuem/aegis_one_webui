@@ -1,25 +1,4 @@
-import type { Icon } from '@phosphor-icons/react';
-import {
-  Buildings,
-  ChartLineUp,
-  ClipboardText,
-  DeviceMobile,
-  FileText,
-  FirstAid,
-  GearSix,
-  Heartbeat,
-  HardDrives,
-  IdentificationBadge,
-  Lightning,
-  ListChecks,
-  Package,
-  PlugsConnected,
-  Rocket,
-  ShieldCheck,
-  SquaresFour,
-  Stethoscope,
-  UsersThree,
-} from '@phosphor-icons/react';
+import type { IconName } from '@aegis/ui';
 
 export type PageId =
   | 'home'
@@ -29,6 +8,7 @@ export type PageId =
   | 'patches'
   | 'software'
   | 'liveops'
+  | 'remote'
   | 'deployments'
   | 'vulns'
   | 'profiles'
@@ -46,7 +26,8 @@ export interface PageDef {
   id: PageId;
   label: string;
   path: string;
-  icon: Icon;
+  /** A glyph from the approved set, named as `packages/ui` keys it. */
+  icon: IconName;
   tag?: string;
   /** One line shown under the page title. */
   summary: string;
@@ -58,7 +39,7 @@ export interface NavGroupDef {
   pages: PageDef[];
 }
 
-/** Six groups, nineteen pages. Ids, labels and order are fixed by the product spec. */
+/** Six groups, twenty pages. Ids, labels and order are fixed by the product spec. */
 export const NAV_GROUPS: NavGroupDef[] = [
   {
     id: 'console',
@@ -68,28 +49,28 @@ export const NAV_GROUPS: NavGroupDef[] = [
         id: 'home',
         label: 'Overview',
         path: '/',
-        icon: SquaresFour,
+        icon: 'overview',
         summary: 'Fleet health, patch compliance, security posture and recent activity',
       },
       {
         id: 'devices',
         label: 'Devices',
         path: '/devices',
-        icon: DeviceMobile,
+        icon: 'devices',
         summary: 'Endpoint inventory',
       },
       {
         id: 'groups',
         label: 'Device groups',
         path: '/groups',
-        icon: UsersThree,
+        icon: 'device-groups',
         summary: 'Static and rule-based groups with sub-groups and policies',
       },
       {
         id: 'enrollment',
         label: 'Enrollment',
         path: '/enrollment',
-        icon: IdentificationBadge,
+        icon: 'enrollment',
         summary: 'Enrollment methods, install commands and tokens',
       },
     ],
@@ -102,28 +83,35 @@ export const NAV_GROUPS: NavGroupDef[] = [
         id: 'patches',
         label: 'Patches',
         path: '/patches',
-        icon: FirstAid,
+        icon: 'patches',
         summary: 'Patch compliance, policies and update catalogue',
       },
       {
         id: 'software',
         label: 'Software',
         path: '/software',
-        icon: Package,
+        icon: 'software',
         summary: 'Software catalogue and packages',
       },
       {
         id: 'liveops',
         label: 'Live Activity',
         path: '/liveops',
-        icon: Lightning,
+        icon: 'live-operations',
         summary: 'Live data queries, remote scripts and log collection',
+      },
+      {
+        id: 'remote',
+        label: 'Remote Control',
+        path: '/remote-control',
+        icon: 'remote-control',
+        summary: 'Consent-first remote sessions, their history and the policy behind them',
       },
       {
         id: 'deployments',
         label: 'Deployments',
         path: '/deployments',
-        icon: Rocket,
+        icon: 'deployments',
         summary: 'Actions, schedules and per-endpoint results',
       },
     ],
@@ -136,14 +124,14 @@ export const NAV_GROUPS: NavGroupDef[] = [
         id: 'vulns',
         label: 'Vulnerabilities',
         path: '/vulns',
-        icon: ShieldCheck,
+        icon: 'vulnerabilities',
         summary: 'Findings, remediations, projects and scans',
       },
       {
         id: 'profiles',
         label: 'Configuration',
         path: '/profiles',
-        icon: ListChecks,
+        icon: 'configuration',
         tag: 'Beta',
         summary: 'Configuration compliance against CIS, STIG, PCI DSS and HIPAA',
       },
@@ -157,14 +145,14 @@ export const NAV_GROUPS: NavGroupDef[] = [
         id: 'dex',
         label: 'DEX',
         path: '/dex',
-        icon: Heartbeat,
+        icon: 'dex',
         summary: 'Digital employee experience scores',
       },
       {
         id: 'insight',
         label: 'AEGIS Insight',
         path: '/insight',
-        icon: Stethoscope,
+        icon: 'insight',
         tag: 'Beta',
         summary: 'Describe a problem, run diagnostics, apply remediation',
       },
@@ -178,14 +166,14 @@ export const NAV_GROUPS: NavGroupDef[] = [
         id: 'sites',
         label: 'Aegis Zones',
         path: '/sites',
-        icon: Buildings,
+        icon: 'zones',
         summary: 'Zones, delivery distribution and content path',
       },
       {
         id: 'peercache',
         label: 'Peer cache',
         path: '/peercache',
-        icon: HardDrives,
+        icon: 'peer-cache',
         summary: 'Elected peer caches per zone',
       },
     ],
@@ -198,35 +186,35 @@ export const NAV_GROUPS: NavGroupDef[] = [
         id: 'reports',
         label: 'Reports',
         path: '/reports',
-        icon: ChartLineUp,
+        icon: 'reports',
         summary: 'Standard, compliance, leadership and custom reports',
       },
       {
         id: 'integrations',
         label: 'Integrations',
         path: '/integrations',
-        icon: PlugsConnected,
+        icon: 'integrations',
         summary: 'Connectors, SIEM and syslog, notifications and delivery log',
       },
       {
         id: 'admin',
         label: 'Administration',
         path: '/admin',
-        icon: GearSix,
+        icon: 'administration',
         summary: 'Identity and SSO, users, roles, agent enrollment and API access',
       },
       {
         id: 'licensing',
         label: 'Licensing',
         path: '/licensing',
-        icon: FileText,
+        icon: 'licensing',
         summary: 'Seat usage, term and modules',
       },
       {
         id: 'diagnostics',
         label: 'Diagnostics',
         path: '/diagnostics',
-        icon: ClipboardText,
+        icon: 'diagnostics',
         summary: 'Service health and diagnostic bundle',
       },
     ],
@@ -254,6 +242,7 @@ export const PAGE_PERMISSIONS: Record<PageId, string | undefined> = {
   patches: 'patches:read',
   software: 'software:read',
   liveops: 'liveops:read',
+  remote: 'remote:read',
   deployments: 'deployments:read',
   vulns: 'vulns:read',
   profiles: 'config:read',

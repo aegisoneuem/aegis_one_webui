@@ -17,6 +17,8 @@ export type { PageHeaderProps } from './components/PageHeader/PageHeader';
 // Actions
 export { Button } from './components/Button/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button/Button';
+export { Icon } from './components/Icon/Icon';
+export type { IconName, IconProps } from './components/Icon/Icon';
 export { IconButton } from './components/IconButton/IconButton';
 export type { IconButtonProps } from './components/IconButton/IconButton';
 export { Menu } from './components/Menu/Menu';

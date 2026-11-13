@@ -105,8 +105,29 @@ survived.
 `VITE_API_BASE_URL`. Nothing else in the console knows which implementation is
 on the other end.
 
-**There is no remote control, and there must not be.** No remote desktop, no
-screen view or share, no remote shell or terminal session. The contract has no
-such endpoint and `x-roles` has no such permission. Remote script execution is
-supported and is a different thing: a non-interactive job you submit, poll and
-read results from, with no session to attach to.
+**Remote control is consent-first, and the server is what enforces that.**
+An earlier version of this file said there must be no remote control at all.
+That is out of date — service desk support needs it — but the caution behind
+it stands, so the feature is built the careful way round:
+
+- The policy is estate-wide, stored server-side, and read on every session
+  start. `ask` means the person at the keyboard accepts before anything is
+  shown; `notify` means an unattended endpoint says a session has begun.
+  There is no silent option, in the contract or in the database.
+- The on-screen indicator is not a setting. `RemotePolicy.onScreenIndicator`
+  is reported so the console can draw it as locked, and there is no field to
+  turn it off.
+- A session is a row with a named operator, a reason, what was recorded and
+  how it ended. One endpoint can have one session; a second request is a 409.
+- Three permissions, not one: `remote:read` to see sessions and history,
+  `remote:control` to hold one, `remote:configure` to change the policy.
+  Auditor has only the first.
+- Sessions are carried over TLS 1.3.
+
+The console does not stream a screen. That needs the endpoint agent, which
+this mock does not have, so Remote Control here is the record of a session
+rather than the session itself.
+
+Remote script execution remains a different thing and is unchanged: a
+non-interactive job you submit, poll and read results from, with no session
+to attach to.

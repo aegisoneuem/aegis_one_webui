@@ -24,6 +24,7 @@ import { registerLiveOpsRoutes } from './routes/liveops';
 import { registerVulnerabilityRoutes } from './routes/vulnerabilities';
 import { registerConfigurationRoutes } from './routes/configuration';
 import { registerDexRoutes } from './routes/dex';
+import { registerRemoteControlRoutes } from './routes/remote-control';
 import { registerReportRoutes } from './routes/reports';
 import { registerZoneRoutes } from './routes/zones';
 import { registerInsightRoutes } from './routes/insight';
@@ -163,6 +164,7 @@ export async function start(): Promise<void> {
   registerVulnerabilityRoutes(app, db, BASE_PATH);
   registerConfigurationRoutes(app, db, BASE_PATH);
   registerDexRoutes(app, db, BASE_PATH);
+  registerRemoteControlRoutes(app, db, BASE_PATH);
   registerReportRoutes(app, db, BASE_PATH);
   registerZoneRoutes(app, db, BASE_PATH);
   registerInsightRoutes(app, db, BASE_PATH);

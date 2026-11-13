@@ -28,7 +28,8 @@ import styles from './LiveActivity.module.css';
  * back per endpoint. There is no interactive session here and no channel to
  * attach to. Once a job is submitted the only things the console can do are
  * watch it and cancel it, which is the difference between running a script
- * and remote control.
+ * and remote control — and remote control is its own page now, next door,
+ * with its own consent rules.
  */
 
 const TABS = [

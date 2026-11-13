@@ -1884,6 +1884,121 @@ const run = async () => {
     `HTTP ${badGroup.status}`,
   );
 
+  // --- Remote Control: the rules the server holds, not merely offers -------
+  {
+    const rc = await signIn('rohan.deshpande@example.co.in', 'Aegis-Demo-2026');
+    const write = (extra = {}) =>
+      authed(rc.body.accessToken, {
+        'content-type': 'application/json',
+        'x-csrf-token': rc.body.csrfToken,
+        ...extra,
+      });
+
+    const policy = await fetch(`${API}/remote-control/policy`, {
+      headers: authed(rc.body.accessToken),
+    }).then((r) => r.json());
+    check(
+      'remote control defaults to attended consent and recording',
+      policy.consent === 'ask' && policy.record === true,
+      `${policy.consent}, record ${policy.record}`,
+    );
+    check('the on-screen indicator is reported as always on', policy.onScreenIndicator === true);
+
+    const device = await fetch(`${API}/devices?limit=1`, {
+      headers: authed(rc.body.accessToken),
+    })
+      .then((r) => r.json())
+      .then((p) => p.items[0]);
+
+    const noReason = await fetch(`${API}/remote-control/sessions`, {
+      method: 'POST',
+      headers: write(),
+      body: JSON.stringify({ deviceId: device.id, mode: 'control' }),
+    });
+    check(
+      'a session without a reason is 400 while the policy requires one',
+      noReason.status === 400,
+      `HTTP ${noReason.status}`,
+    );
+
+    const started = await fetch(`${API}/remote-control/sessions`, {
+      method: 'POST',
+      headers: write(),
+      body: JSON.stringify({
+        deviceId: device.id,
+        mode: 'control',
+        reason: 'INC-1 contract check',
+      }),
+    });
+    const session = await started.json();
+    check(
+      'a session waits for the user rather than opening',
+      started.status === 201 && session.state === 'pending-consent',
+      `HTTP ${started.status} ${session.state}`,
+    );
+    check('recording follows the policy, not the request', session.recorded === true);
+
+    const second = await fetch(`${API}/remote-control/sessions`, {
+      method: 'POST',
+      headers: write(),
+      body: JSON.stringify({ deviceId: device.id, mode: 'view', reason: 'second operator' }),
+    });
+    check(
+      'a second session on the same endpoint is 409',
+      second.status === 409,
+      `HTTP ${second.status}`,
+    );
+
+    const ended = await fetch(`${API}/remote-control/sessions/${session.id}`, {
+      method: 'POST',
+      headers: write(),
+      body: JSON.stringify({ endReason: 'operator' }),
+    });
+    const endedBody = await ended.json();
+    check(
+      'ending a session records who and when',
+      ended.status === 200 && endedBody.state === 'ended' && Boolean(endedBody.endedBy),
+      `HTTP ${ended.status}`,
+    );
+
+    const indicator = await fetch(`${API}/remote-control/policy`, {
+      method: 'PUT',
+      headers: write(),
+      body: JSON.stringify({
+        consent: 'ask',
+        requireReason: true,
+        record: true,
+        chat: true,
+        idleMinutes: 15,
+        maxMinutes: 120,
+        onScreenIndicator: false,
+      }),
+    });
+    check(
+      'the contract refuses an attempt to switch off the on-screen indicator',
+      indicator.status === 400,
+      `HTTP ${indicator.status}`,
+    );
+
+    const limits = await fetch(`${API}/remote-control/policy`, {
+      method: 'PUT',
+      headers: write(),
+      body: JSON.stringify({
+        consent: 'ask',
+        requireReason: true,
+        record: true,
+        chat: true,
+        idleMinutes: 60,
+        maxMinutes: 30,
+      }),
+    });
+    check(
+      'a maximum session below the idle timeout is 400',
+      limits.status === 400,
+      `HTTP ${limits.status}`,
+    );
+  }
+
   const bad = await fetch(`${API}/devices`, {
     headers: { authorization: 'Bearer not-a-real-token' },
   });

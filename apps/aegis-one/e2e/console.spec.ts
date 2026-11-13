@@ -571,8 +571,15 @@ test.describe('signed in as Super Admin', () => {
 
     await expect(page.getByRole('status').filter({ hasText: 'Request submitted' })).toBeVisible();
 
-    // Rule 4: nothing anywhere on this page offers interactive access.
-    const body = (await page.locator('body').innerText()).toLowerCase();
+    /*
+     * Live Activity still offers no interactive access: a job is submitted,
+     * polled and read back, with no session to attach to. The scan is of the
+     * page rather than the document, because the console does have remote
+     * control now — it is the next item in the sidebar, on its own page,
+     * with its own consent rules. Keeping this assertion on `main` is what
+     * stops the two from blurring back together.
+     */
+    const main = (await page.locator('main').innerText()).toLowerCase();
     for (const banned of [
       'remote desktop',
       'remote control',
@@ -582,7 +589,7 @@ test.describe('signed in as Super Admin', () => {
       'terminal session',
       'take control',
     ]) {
-      expect(body, `"${banned}" must not appear in Live Activity`).not.toContain(banned);
+      expect(main, `"${banned}" must not appear on Live Activity itself`).not.toContain(banned);
     }
   });
 

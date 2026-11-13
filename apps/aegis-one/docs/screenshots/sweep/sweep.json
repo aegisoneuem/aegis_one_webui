@@ -1,0 +1,4401 @@
+[
+ {
+  "slug": "overview",
+  "label": "Overview",
+  "route": "/",
+  "settledMs": 358,
+  "reference": {
+   "heading": "Overview",
+   "icons": {
+    "total": 76,
+    "approved": 56,
+    "square": 32,
+    "accents": 62
+   },
+   "colours": [
+    [
+     "#1D2632",
+     529
+    ],
+    [
+     "#0B1220",
+     138
+    ],
+    [
+     "#475569",
+     126
+    ],
+    [
+     "#1E293B",
+     98
+    ],
+    [
+     "#47617C",
+     86
+    ],
+    [
+     "#334155",
+     73
+    ],
+    [
+     "#64748B",
+     69
+    ],
+    [
+     "#A47423",
+     67
+    ],
+    [
+     "#18354F",
+     52
+    ],
+    [
+     "#1F55B8",
+     52
+    ],
+    [
+     "#94A3B8",
+     42
+    ],
+    [
+     "#3E526A",
+     42
+    ],
+    [
+     "#FFFFFF",
+     37
+    ],
+    [
+     "#0F172A",
+     35
+    ],
+    [
+     "#B91C1C",
+     26
+    ],
+    [
+     "#15803D",
+     19
+    ],
+    [
+     "#24384F",
+     15
+    ],
+    [
+     "#EEF1F5",
+     15
+    ],
+    [
+     "#D5DCE5",
+     13
+    ],
+    [
+     "#DFE5EC",
+     12
+    ],
+    [
+     "#B7791F",
+     12
+    ],
+    [
+     "#9A6200",
+     12
+    ],
+    [
+     "#C0262D",
+     11
+    ],
+    [
+     "#A16207",
+     8
+    ]
+   ],
+   "charts": {
+    "svgs": 50,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 26,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 3,
+    "buttons": 22,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2892
+  },
+  "build": {
+   "heading": "Overview",
+   "icons": {
+    "total": 37,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     569
+    ],
+    [
+     "#69717D",
+     197
+    ],
+    [
+     "#0B1220",
+     99
+    ],
+    [
+     "#15803D",
+     49
+    ],
+    [
+     "#18354F",
+     38
+    ],
+    [
+     "#C0262D",
+     35
+    ],
+    [
+     "#FFFFFF",
+     27
+    ],
+    [
+     "#E5E9ED",
+     26
+    ],
+    [
+     "#B7791F",
+     24
+    ],
+    [
+     "#47617C",
+     21
+    ],
+    [
+     "#E4363D",
+     15
+    ],
+    [
+     "#8A9099",
+     15
+    ],
+    [
+     "#2F5D8A",
+     14
+    ],
+    [
+     "#1D4ED8",
+     12
+    ],
+    [
+     "#0E9F6E",
+     11
+    ],
+    [
+     "#EEF0F2",
+     11
+    ],
+    [
+     "#B4790A",
+     6
+    ],
+    [
+     "#7FA0C6",
+     6
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#202329",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 13,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 21,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 3,
+    "buttons": 11,
+    "star": false
+   },
+   "table": {
+    "tables": 5,
+    "rows": 19,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 4461
+  }
+ },
+ {
+  "slug": "devices",
+  "label": "Devices",
+  "route": "/devices",
+  "settledMs": 344,
+  "reference": {
+   "heading": "Devices",
+   "icons": {
+    "total": 50,
+    "approved": 35,
+    "square": 34,
+    "accents": 62
+   },
+   "colours": [
+    [
+     "#1E293B",
+     366
+    ],
+    [
+     "#ECC57C",
+     150
+    ],
+    [
+     "#FFFFFF",
+     135
+    ],
+    [
+     "#18354F",
+     125
+    ],
+    [
+     "#FAFBFD",
+     105
+    ],
+    [
+     "#859AB6",
+     90
+    ],
+    [
+     "#94A3B8",
+     88
+    ],
+    [
+     "#20272D",
+     46
+    ],
+    [
+     "#1D4ED8",
+     32
+    ],
+    [
+     "#53657A",
+     27
+    ],
+    [
+     "#0F172A",
+     25
+    ],
+    [
+     "#334155",
+     25
+    ],
+    [
+     "#1D2632",
+     22
+    ],
+    [
+     "#0B1220",
+     20
+    ],
+    [
+     "#15803D",
+     17
+    ],
+    [
+     "#DFE5EC",
+     15
+    ],
+    [
+     "#486482",
+     14
+    ],
+    [
+     "#47617C",
+     10
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#64748B",
+     8
+    ],
+    [
+     "#B91C1C",
+     5
+    ],
+    [
+     "#C5CED9",
+     4
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ]
+   ],
+   "charts": {
+    "svgs": 24,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 10,
+    "search": 1,
+    "sortable": 20,
+    "pager": true
+   },
+   "words": 3446
+  },
+  "build": {
+   "heading": "Devices",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1895
+    ],
+    [
+     "#E4C795",
+     150
+    ],
+    [
+     "#FFFFFF",
+     70
+    ],
+    [
+     "#18354F",
+     50
+    ],
+    [
+     "#15803D",
+     34
+    ],
+    [
+     "#202329",
+     24
+    ],
+    [
+     "#E5E9ED",
+     18
+    ],
+    [
+     "#69717D",
+     13
+    ],
+    [
+     "#0B1220",
+     8
+    ],
+    [
+     "#B7791F",
+     8
+    ],
+    [
+     "#8A9099",
+     7
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 13,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 40,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 21,
+    "search": 1,
+    "sortable": 38,
+    "pager": true
+   },
+   "words": 6373
+  }
+ },
+ {
+  "slug": "device-groups",
+  "label": "Device groups",
+  "route": "/groups",
+  "settledMs": 262,
+  "reference": {
+   "heading": "Device Groups",
+   "icons": {
+    "total": 32,
+    "approved": 20,
+    "square": 19,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#1E293B",
+     454
+    ],
+    [
+     "#20272D",
+     179
+    ],
+    [
+     "#1D2632",
+     93
+    ],
+    [
+     "#18354F",
+     62
+    ],
+    [
+     "#47617C",
+     47
+    ],
+    [
+     "#B7791F",
+     44
+    ],
+    [
+     "#1D4ED8",
+     44
+    ],
+    [
+     "#FFFFFF",
+     42
+    ],
+    [
+     "#15803D",
+     42
+    ],
+    [
+     "#ECC57C",
+     39
+    ],
+    [
+     "#8A94A6",
+     32
+    ],
+    [
+     "#0F172A",
+     21
+    ],
+    [
+     "#334155",
+     20
+    ],
+    [
+     "#D5DEE8",
+     15
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#C0262D",
+     8
+    ],
+    [
+     "#C5CED9",
+     6
+    ],
+    [
+     "#DFE5EC",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#DFE3E8",
+     3
+    ],
+    [
+     "#E3E8EE",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 12,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 22,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2805
+  },
+  "build": {
+   "heading": "Device Groups",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1975
+    ],
+    [
+     "#202329",
+     228
+    ],
+    [
+     "#1D4ED8",
+     200
+    ],
+    [
+     "#15803D",
+     142
+    ],
+    [
+     "#FFFFFF",
+     91
+    ],
+    [
+     "#47617C",
+     70
+    ],
+    [
+     "#E4C795",
+     66
+    ],
+    [
+     "#B7791F",
+     56
+    ],
+    [
+     "#18354F",
+     44
+    ],
+    [
+     "#E5E9ED",
+     19
+    ],
+    [
+     "#69717D",
+     13
+    ],
+    [
+     "#C0262D",
+     8
+    ],
+    [
+     "#0B1220",
+     4
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 14,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 19,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 50,
+    "search": 0,
+    "sortable": 16,
+    "pager": true
+   },
+   "words": 6754
+  }
+ },
+ {
+  "slug": "enrollment",
+  "label": "Enrollment",
+  "route": "/enrollment",
+  "settledMs": 314,
+  "reference": {
+   "heading": "Enrollment",
+   "icons": {
+    "total": 42,
+    "approved": 30,
+    "square": 28,
+    "accents": 59
+   },
+   "colours": [
+    [
+     "#1D2632",
+     99
+    ],
+    [
+     "#1E293B",
+     62
+    ],
+    [
+     "#3E526A",
+     60
+    ],
+    [
+     "#18354F",
+     40
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#475569",
+     24
+    ],
+    [
+     "#ECC57C",
+     24
+    ],
+    [
+     "#47617C",
+     24
+    ],
+    [
+     "#FFFFFF",
+     23
+    ],
+    [
+     "#0F172A",
+     19
+    ],
+    [
+     "#20272D",
+     18
+    ],
+    [
+     "#0B1220",
+     8
+    ],
+    [
+     "#DFE5EC",
+     8
+    ],
+    [
+     "#F1F4F8",
+     6
+    ],
+    [
+     "#E1E6ED",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#334155",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#127A4F",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#1D4ED8",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#976519",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 16,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 3,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1108
+  },
+  "build": {
+   "heading": "Enrollment",
+   "icons": {
+    "total": 27,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     156
+    ],
+    [
+     "#18354F",
+     38
+    ],
+    [
+     "#69717D",
+     26
+    ],
+    [
+     "#47617C",
+     18
+    ],
+    [
+     "#FFFFFF",
+     14
+    ],
+    [
+     "#E4C795",
+     14
+    ],
+    [
+     "#E5E9ED",
+     11
+    ],
+    [
+     "#15803D",
+     10
+    ],
+    [
+     "#202329",
+     9
+    ],
+    [
+     "#2F5D8A",
+     6
+    ],
+    [
+     "#0B1220",
+     3
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#D6A009",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#C0262D",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 3,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 18,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 5,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1485
+  }
+ },
+ {
+  "slug": "patches",
+  "label": "Patches",
+  "route": "/patches",
+  "settledMs": 240,
+  "reference": {
+   "heading": "Patch Management",
+   "icons": {
+    "total": 43,
+    "approved": 30,
+    "square": 26,
+    "accents": 57
+   },
+   "colours": [
+    [
+     "#202124",
+     275
+    ],
+    [
+     "#1D2632",
+     179
+    ],
+    [
+     "#1E293B",
+     160
+    ],
+    [
+     "#0F172A",
+     75
+    ],
+    [
+     "#ECC57C",
+     59
+    ],
+    [
+     "#3E526A",
+     57
+    ],
+    [
+     "#475569",
+     52
+    ],
+    [
+     "#334155",
+     49
+    ],
+    [
+     "#FFFFFF",
+     48
+    ],
+    [
+     "#20272D",
+     42
+    ],
+    [
+     "#F0F1F3",
+     42
+    ],
+    [
+     "#1F2937",
+     36
+    ],
+    [
+     "#18354F",
+     34
+    ],
+    [
+     "#C0262D",
+     34
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#161616",
+     29
+    ],
+    [
+     "#47617C",
+     28
+    ],
+    [
+     "#3C4043",
+     24
+    ],
+    [
+     "#0B1220",
+     20
+    ],
+    [
+     "#1D4ED8",
+     12
+    ],
+    [
+     "#F1F2F4",
+     11
+    ],
+    [
+     "#B42323",
+     10
+    ],
+    [
+     "#DFE5EC",
+     9
+    ],
+    [
+     "#C5CED9",
+     8
+    ]
+   ],
+   "charts": {
+    "svgs": 17,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 11,
+    "star": false
+   },
+   "table": {
+    "tables": 4,
+    "rows": 21,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1621
+  },
+  "build": {
+   "heading": "Patch Management",
+   "icons": {
+    "total": 44,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     447
+    ],
+    [
+     "#0B1220",
+     132
+    ],
+    [
+     "#15803D",
+     84
+    ],
+    [
+     "#E5E9ED",
+     56
+    ],
+    [
+     "#C0262D",
+     55
+    ],
+    [
+     "#18354F",
+     36
+    ],
+    [
+     "#B7791F",
+     34
+    ],
+    [
+     "#FFFFFF",
+     23
+    ],
+    [
+     "#8A9099",
+     19
+    ],
+    [
+     "#69717D",
+     18
+    ],
+    [
+     "#E4C795",
+     18
+    ],
+    [
+     "#EEF0F2",
+     15
+    ],
+    [
+     "#7FA0C6",
+     13
+    ],
+    [
+     "#2F5D8A",
+     13
+    ],
+    [
+     "#202329",
+     10
+    ],
+    [
+     "#AEB2BC",
+     4
+    ],
+    [
+     "#47617C",
+     4
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 20,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 14
+   },
+   "tiles": {
+    "count": 17,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 3,
+    "buttons": 3,
+    "star": false
+   },
+   "table": {
+    "tables": 5,
+    "rows": 35,
+    "search": 0,
+    "sortable": 6,
+    "pager": false
+   },
+   "words": 2677
+  }
+ },
+ {
+  "slug": "software",
+  "label": "Software",
+  "route": "/software",
+  "settledMs": 254,
+  "reference": {
+   "heading": "Software Catalog",
+   "icons": {
+    "total": 32,
+    "approved": 19,
+    "square": 20,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#253F59",
+     2000
+    ],
+    [
+     "#FFFFFF",
+     1816
+    ],
+    [
+     "#536C85",
+     1600
+    ],
+    [
+     "#24384F",
+     1216
+    ],
+    [
+     "#0F172A",
+     824
+    ],
+    [
+     "#47617C",
+     410
+    ],
+    [
+     "#C5CED9",
+     403
+    ],
+    [
+     "#4C637B",
+     402
+    ],
+    [
+     "gradient",
+     401
+    ],
+    [
+     "#1D2632",
+     400
+    ],
+    [
+     "#A16207",
+     400
+    ],
+    [
+     "#18354F",
+     366
+    ],
+    [
+     "#DFE5EC",
+     204
+    ],
+    [
+     "#0F2740",
+     201
+    ],
+    [
+     "#DCE5EC",
+     200
+    ],
+    [
+     "#8B1A1F",
+     200
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#ECC57C",
+     5
+    ],
+    [
+     "#29455F",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#20272D",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 6,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 26584
+  },
+  "build": {
+   "heading": "Software Catalog",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     733
+    ],
+    [
+     "#0B1220",
+     340
+    ],
+    [
+     "#8A9099",
+     271
+    ],
+    [
+     "#FFFFFF",
+     111
+    ],
+    [
+     "#E5E9ED",
+     109
+    ],
+    [
+     "#18354F",
+     76
+    ],
+    [
+     "#69717D",
+     70
+    ],
+    [
+     "#E4C795",
+     68
+    ],
+    [
+     "#47617C",
+     66
+    ],
+    [
+     "#202329",
+     35
+    ],
+    [
+     "#7F6038",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 16,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 3,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 5364
+  }
+ },
+ {
+  "slug": "live-activity",
+  "label": "Live Activity",
+  "route": "/liveops",
+  "settledMs": 235,
+  "reference": {
+   "heading": "Live Activity",
+   "icons": {
+    "total": 69,
+    "approved": 19,
+    "square": 56,
+    "accents": 87
+   },
+   "colours": [
+    [
+     "#8492A4",
+     288
+    ],
+    [
+     "#344D66",
+     224
+    ],
+    [
+     "#334155",
+     144
+    ],
+    [
+     "#FFFFFF",
+     101
+    ],
+    [
+     "#183650",
+     82
+    ],
+    [
+     "#3C4D64",
+     64
+    ],
+    [
+     "#15803D",
+     54
+    ],
+    [
+     "#20272D",
+     42
+    ],
+    [
+     "#243449",
+     42
+    ],
+    [
+     "#F0F3F7",
+     32
+    ],
+    [
+     "#E6EBF1",
+     32
+    ],
+    [
+     "#18354F",
+     26
+    ],
+    [
+     "#ECC57C",
+     23
+    ],
+    [
+     "#0B1220",
+     18
+    ],
+    [
+     "#0F172A",
+     17
+    ],
+    [
+     "#3D4E63",
+     16
+    ],
+    [
+     "#DFE5EC",
+     15
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#805617",
+     10
+    ],
+    [
+     "#47617C",
+     10
+    ],
+    [
+     "#45566A",
+     10
+    ],
+    [
+     "#B91C1C",
+     10
+    ],
+    [
+     "#8E9AA8",
+     9
+    ],
+    [
+     "#475569",
+     8
+    ]
+   ],
+   "charts": {
+    "svgs": 43,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2852
+  },
+  "build": {
+   "heading": "Live Activity",
+   "icons": {
+    "total": 27,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     299
+    ],
+    [
+     "#69717D",
+     138
+    ],
+    [
+     "#18354F",
+     128
+    ],
+    [
+     "#15803D",
+     84
+    ],
+    [
+     "#47617C",
+     40
+    ],
+    [
+     "#7F6038",
+     25
+    ],
+    [
+     "#E4C795",
+     25
+    ],
+    [
+     "#FFFFFF",
+     22
+    ],
+    [
+     "#E5E9ED",
+     20
+    ],
+    [
+     "#B7791F",
+     16
+    ],
+    [
+     "#202329",
+     5
+    ],
+    [
+     "#EEF0F2",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#F4EFE6",
+     2
+    ],
+    [
+     "#8A9099",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 3,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 4321
+  }
+ },
+ {
+  "slug": "remote-control",
+  "label": null,
+  "route": "/remote-control",
+  "settledMs": 293,
+  "reference": null,
+  "build": {
+   "heading": "Remote Control",
+   "icons": {
+    "total": 30,
+    "approved": 30,
+    "square": 26,
+    "accents": 26
+   },
+   "colours": [
+    [
+     "#69717D",
+     109
+    ],
+    [
+     "#20262E",
+     82
+    ],
+    [
+     "#18354F",
+     37
+    ],
+    [
+     "#7F6038",
+     27
+    ],
+    [
+     "#E5E9ED",
+     23
+    ],
+    [
+     "#FFFFFF",
+     20
+    ],
+    [
+     "#E8F6EF",
+     9
+    ],
+    [
+     "#F5F6F7",
+     5
+    ],
+    [
+     "#47617C",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#C6A16B",
+     1
+    ],
+    [
+     "#F1F4F8",
+     1
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1224
+  }
+ },
+ {
+  "slug": "deployments",
+  "label": "Deployments",
+  "route": "/deployments",
+  "settledMs": 279,
+  "reference": {
+   "heading": "Deployments",
+   "icons": {
+    "total": 32,
+    "approved": 19,
+    "square": 20,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#18354F",
+     194
+    ],
+    [
+     "#47617C",
+     74
+    ],
+    [
+     "#24384F",
+     38
+    ],
+    [
+     "#FFFFFF",
+     34
+    ],
+    [
+     "#334155",
+     28
+    ],
+    [
+     "#0F172A",
+     24
+    ],
+    [
+     "#ECC57C",
+     21
+    ],
+    [
+     "#20272D",
+     15
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#29455F",
+     12
+    ],
+    [
+     "#137C55",
+     12
+    ],
+    [
+     "#4F6C83",
+     12
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#DFE5EC",
+     7
+    ],
+    [
+     "#E7EDF2",
+     6
+    ],
+    [
+     "#16855E",
+     6
+    ],
+    [
+     "#CA3F52",
+     6
+    ],
+    [
+     "#CDD8E2",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#4C637B",
+     4
+    ],
+    [
+     "#15803D",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 7,
+    "clickable": 6
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 6,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1809
+  },
+  "build": {
+   "heading": "Deployments",
+   "icons": {
+    "total": 40,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     740
+    ],
+    [
+     "#47617C",
+     186
+    ],
+    [
+     "#18354F",
+     152
+    ],
+    [
+     "#E4C795",
+     74
+    ],
+    [
+     "#FFFFFF",
+     44
+    ],
+    [
+     "#15803D",
+     40
+    ],
+    [
+     "#C0262D",
+     28
+    ],
+    [
+     "#E5E9ED",
+     25
+    ],
+    [
+     "#202329",
+     25
+    ],
+    [
+     "#EEF0F2",
+     16
+    ],
+    [
+     "#19845B",
+     16
+    ],
+    [
+     "#D34249",
+     16
+    ],
+    [
+     "#69717D",
+     4
+    ],
+    [
+     "#B7791F",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 16,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 19,
+    "clickable": 6
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 12,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 16,
+    "search": 1,
+    "sortable": 10,
+    "pager": false
+   },
+   "words": 4366
+  }
+ },
+ {
+  "slug": "vulnerabilities",
+  "label": "Vulnerabilities",
+  "route": "/vulns",
+  "settledMs": 223,
+  "reference": {
+   "heading": "Vulnerabilities",
+   "icons": {
+    "total": 38,
+    "approved": 25,
+    "square": 25,
+    "accents": 56
+   },
+   "colours": [
+    [
+     "#1E293B",
+     702
+    ],
+    [
+     "#1D2632",
+     242
+    ],
+    [
+     "#0B1220",
+     74
+    ],
+    [
+     "#20272D",
+     53
+    ],
+    [
+     "#FFFFFF",
+     50
+    ],
+    [
+     "#475569",
+     48
+    ],
+    [
+     "#ECC57C",
+     42
+    ],
+    [
+     "#B42323",
+     42
+    ],
+    [
+     "#8DA0BA",
+     36
+    ],
+    [
+     "#0F2740",
+     33
+    ],
+    [
+     "gradient",
+     33
+    ],
+    [
+     "#18354F",
+     32
+    ],
+    [
+     "#9A5B00",
+     30
+    ],
+    [
+     "#1D4ED8",
+     26
+    ],
+    [
+     "#1D4FB8",
+     24
+    ],
+    [
+     "#0F172A",
+     22
+    ],
+    [
+     "#3E526A",
+     20
+    ],
+    [
+     "#15803D",
+     20
+    ],
+    [
+     "#47617C",
+     12
+    ],
+    [
+     "#334155",
+     8
+    ],
+    [
+     "#C5CED9",
+     7
+    ],
+    [
+     "#DFE5EC",
+     7
+    ],
+    [
+     "#C0262D",
+     7
+    ],
+    [
+     "#526176",
+     4
+    ]
+   ],
+   "charts": {
+    "svgs": 12,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 2,
+    "rows": 48,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 41
+  },
+  "build": {
+   "heading": "Vulnerabilities",
+   "icons": {
+    "total": 51,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1022
+    ],
+    [
+     "#69717D",
+     169
+    ],
+    [
+     "#0B1220",
+     140
+    ],
+    [
+     "#B7791F",
+     82
+    ],
+    [
+     "#C0262D",
+     75
+    ],
+    [
+     "#FFFFFF",
+     68
+    ],
+    [
+     "#47617C",
+     56
+    ],
+    [
+     "#E5E9ED",
+     51
+    ],
+    [
+     "#8A9099",
+     47
+    ],
+    [
+     "#D6A009",
+     45
+    ],
+    [
+     "#EEF0F2",
+     32
+    ],
+    [
+     "#15803D",
+     30
+    ],
+    [
+     "#18354F",
+     28
+    ],
+    [
+     "#202329",
+     20
+    ],
+    [
+     "#94A3B8",
+     18
+    ],
+    [
+     "#7FA0C6",
+     14
+    ],
+    [
+     "#E4C795",
+     11
+    ],
+    [
+     "#E8F6EF",
+     8
+    ],
+    [
+     "#2F5D8A",
+     7
+    ],
+    [
+     "#FCEBEC",
+     5
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#FFF4DE",
+     2
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 27,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 11
+   },
+   "tiles": {
+    "count": 25,
+    "clickable": 6
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 7,
+    "star": false
+   },
+   "table": {
+    "tables": 6,
+    "rows": 42,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 4671
+  }
+ },
+ {
+  "slug": "configuration",
+  "label": "Configuration",
+  "route": "/profiles",
+  "settledMs": 535,
+  "reference": {
+   "heading": "Configuration Compliance",
+   "icons": {
+    "total": 38,
+    "approved": 21,
+    "square": 20,
+    "accents": 53
+   },
+   "colours": [
+    [
+     "#1D2632",
+     367
+    ],
+    [
+     "#1E293B",
+     350
+    ],
+    [
+     "#20272D",
+     151
+    ],
+    [
+     "#18354F",
+     104
+    ],
+    [
+     "#47617C",
+     93
+    ],
+    [
+     "#FFFFFF",
+     62
+    ],
+    [
+     "#475569",
+     56
+    ],
+    [
+     "#ECC57C",
+     49
+    ],
+    [
+     "#C0262D",
+     46
+    ],
+    [
+     "#B7791F",
+     35
+    ],
+    [
+     "#1D4ED8",
+     29
+    ],
+    [
+     "#0F172A",
+     22
+    ],
+    [
+     "#DFE5EC",
+     18
+    ],
+    [
+     "#19845B",
+     18
+    ],
+    [
+     "#344154",
+     18
+    ],
+    [
+     "#242930",
+     16
+    ],
+    [
+     "#15803D",
+     14
+    ],
+    [
+     "#C7D5E3",
+     12
+    ],
+    [
+     "#EBD7AE",
+     10
+    ],
+    [
+     "#B8DCC4",
+     10
+    ],
+    [
+     "#BFD0F5",
+     9
+    ],
+    [
+     "#334155",
+     8
+    ],
+    [
+     "#DFE3E8",
+     7
+    ],
+    [
+     "#C5CED9",
+     5
+    ]
+   ],
+   "charts": {
+    "svgs": 11,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 6,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 14,
+    "star": false
+   },
+   "table": {
+    "tables": 2,
+    "rows": 14,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2780
+  },
+  "build": {
+   "heading": "Configuration Compliance",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     71
+    ],
+    [
+     "#47617C",
+     22
+    ],
+    [
+     "#FFFFFF",
+     12
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#18354F",
+     2
+    ],
+    [
+     "#202329",
+     1
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 312
+  }
+ },
+ {
+  "slug": "dex",
+  "label": "DEX",
+  "route": "/dex",
+  "settledMs": 315,
+  "reference": {
+   "heading": "Digital Employee Experience",
+   "icons": {
+    "total": 39,
+    "approved": 26,
+    "square": 26,
+    "accents": 57
+   },
+   "colours": [
+    [
+     "#1E293B",
+     254
+    ],
+    [
+     "#1D2632",
+     213
+    ],
+    [
+     "#475569",
+     50
+    ],
+    [
+     "#C0262D",
+     43
+    ],
+    [
+     "#8DA0BA",
+     36
+    ],
+    [
+     "#18354F",
+     34
+    ],
+    [
+     "#ECC57C",
+     32
+    ],
+    [
+     "#3E526A",
+     30
+    ],
+    [
+     "#0B1220",
+     28
+    ],
+    [
+     "#1D4ED8",
+     22
+    ],
+    [
+     "#20272D",
+     21
+    ],
+    [
+     "#0F172A",
+     18
+    ],
+    [
+     "#FFFFFF",
+     14
+    ],
+    [
+     "#47617C",
+     14
+    ],
+    [
+     "#DFE5EC",
+     8
+    ],
+    [
+     "#B7791F",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#334155",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#C7D5E3",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#F1F4F8",
+     3
+    ],
+    [
+     "#E1E6ED",
+     3
+    ]
+   ],
+   "charts": {
+    "svgs": 13,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 2,
+    "rows": 20,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1410
+  },
+  "build": {
+   "heading": "Digital Employee Experience",
+   "icons": {
+    "total": 33,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     488
+    ],
+    [
+     "#C0262D",
+     49
+    ],
+    [
+     "#69717D",
+     48
+    ],
+    [
+     "#E4C795",
+     27
+    ],
+    [
+     "#0B1220",
+     26
+    ],
+    [
+     "#1D4ED8",
+     20
+    ],
+    [
+     "#B7791F",
+     15
+    ],
+    [
+     "#2F5D8A",
+     14
+    ],
+    [
+     "#1E3A5F",
+     14
+    ],
+    [
+     "#18354F",
+     12
+    ],
+    [
+     "#FFFFFF",
+     11
+    ],
+    [
+     "#202329",
+     11
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#0EA5A4",
+     7
+    ],
+    [
+     "#47617C",
+     6
+    ],
+    [
+     "#15803D",
+     6
+    ],
+    [
+     "#AEB2BC",
+     4
+    ],
+    [
+     "#E3E8EF",
+     2
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 9,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 11,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 5,
+    "rows": 31,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1854
+  }
+ },
+ {
+  "slug": "insight",
+  "label": "AEGIS Insight",
+  "route": "/insight",
+  "settledMs": 429,
+  "reference": {
+   "heading": "AEGIS Insight PREVIEW",
+   "icons": {
+    "total": 31,
+    "approved": 19,
+    "square": 19,
+    "accents": 54
+   },
+   "colours": [
+    [
+     "#1E293B",
+     72
+    ],
+    [
+     "#18354F",
+     50
+    ],
+    [
+     "#475569",
+     41
+    ],
+    [
+     "#FFFFFF",
+     25
+    ],
+    [
+     "#0F172A",
+     17
+    ],
+    [
+     "#15803D",
+     16
+    ],
+    [
+     "#DFE5EC",
+     11
+    ],
+    [
+     "#47617C",
+     6
+    ],
+    [
+     "#C0262D",
+     6
+    ],
+    [
+     "#ECC57C",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "gradient",
+     4
+    ],
+    [
+     "#E4C795",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#20272D",
+     3
+    ],
+    [
+     "#C5CED9",
+     2
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#0F2740",
+     2
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#B8BDC5",
+     2
+    ],
+    [
+     "#B7791F",
+     2
+    ],
+    [
+     "#FFF9EC",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 200
+  },
+  "build": {
+   "heading": "AEGIS Insight",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     21
+    ],
+    [
+     "#FFFFFF",
+     6
+    ],
+    [
+     "#E5E9ED",
+     5
+    ],
+    [
+     "#18354F",
+     4
+    ],
+    [
+     "#69717D",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#47617C",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 196
+  }
+ },
+ {
+  "slug": "zones",
+  "label": "Aegis Zones",
+  "route": "/sites",
+  "settledMs": 234,
+  "reference": {
+   "heading": "Aegis Zones",
+   "icons": {
+    "total": 36,
+    "approved": 19,
+    "square": 19,
+    "accents": 51
+   },
+   "colours": [
+    [
+     "#1E293B",
+     181
+    ],
+    [
+     "#18354F",
+     57
+    ],
+    [
+     "#19845B",
+     31
+    ],
+    [
+     "#ECC57C",
+     26
+    ],
+    [
+     "#47617C",
+     24
+    ],
+    [
+     "#475569",
+     22
+    ],
+    [
+     "#0F172A",
+     19
+    ],
+    [
+     "#20272D",
+     18
+    ],
+    [
+     "#FFFFFF",
+     16
+    ],
+    [
+     "#242930",
+     16
+    ],
+    [
+     "#334155",
+     16
+    ],
+    [
+     "#DFE5EC",
+     14
+    ],
+    [
+     "#253345",
+     12
+    ],
+    [
+     "#172334",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#D7D9DC",
+     4
+    ],
+    [
+     "#C6A16B",
+     4
+    ],
+    [
+     "#FFF5D6",
+     4
+    ],
+    [
+     "#E5E9ED",
+     4
+    ],
+    [
+     "#896400",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#D6A009",
+     3
+    ],
+    [
+     "#C5CED9",
+     2
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 4,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 886
+  },
+  "build": {
+   "heading": "Aegis Zones",
+   "icons": {
+    "total": 34,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     387
+    ],
+    [
+     "#69717D",
+     76
+    ],
+    [
+     "#15803D",
+     48
+    ],
+    [
+     "#B7791F",
+     39
+    ],
+    [
+     "#0B1220",
+     34
+    ],
+    [
+     "#8A9099",
+     34
+    ],
+    [
+     "#18354F",
+     22
+    ],
+    [
+     "#E4C795",
+     16
+    ],
+    [
+     "#E5E9ED",
+     13
+    ],
+    [
+     "#47617C",
+     12
+    ],
+    [
+     "#FFFFFF",
+     11
+    ],
+    [
+     "#202329",
+     9
+    ],
+    [
+     "#F5F6F7",
+     4
+    ],
+    [
+     "#EEF0F2",
+     1
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 10,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 6,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 3,
+    "rows": 20,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1978
+  }
+ },
+ {
+  "slug": "peer-cache",
+  "label": "Peer cache",
+  "route": "/peercache",
+  "settledMs": 223,
+  "reference": {
+   "heading": "Peer Cache",
+   "icons": {
+    "total": 31,
+    "approved": 19,
+    "square": 19,
+    "accents": 59
+   },
+   "colours": [
+    [
+     "#1E293B",
+     66
+    ],
+    [
+     "#18354F",
+     27
+    ],
+    [
+     "#0F172A",
+     26
+    ],
+    [
+     "#ECC57C",
+     25
+    ],
+    [
+     "#20272D",
+     17
+    ],
+    [
+     "#FFFFFF",
+     16
+    ],
+    [
+     "#475569",
+     16
+    ],
+    [
+     "#DFE5EC",
+     11
+    ],
+    [
+     "#1D4ED8",
+     6
+    ],
+    [
+     "#19845B",
+     6
+    ],
+    [
+     "#C5CED9",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#896400",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#15803D",
+     2
+    ],
+    [
+     "#FFF9EC",
+     1
+    ],
+    [
+     "#B58A45",
+     1
+    ],
+    [
+     "#FAFAF8",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 3,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 419
+  },
+  "build": {
+   "heading": "Peer Cache",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#47617C",
+     162
+    ],
+    [
+     "#20262E",
+     51
+    ],
+    [
+     "#69717D",
+     32
+    ],
+    [
+     "#0B1220",
+     20
+    ],
+    [
+     "#FFFFFF",
+     19
+    ],
+    [
+     "#E5E9ED",
+     19
+    ],
+    [
+     "#E4C795",
+     18
+    ],
+    [
+     "#15803D",
+     18
+    ],
+    [
+     "#1D4ED8",
+     10
+    ],
+    [
+     "#202329",
+     8
+    ],
+    [
+     "#B7791F",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 9,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1189
+  }
+ },
+ {
+  "slug": "reports",
+  "label": "Reports",
+  "route": "/reports",
+  "settledMs": 251,
+  "reference": {
+   "heading": "Reports 20",
+   "icons": {
+    "total": 159,
+    "approved": 19,
+    "square": 74,
+    "accents": 105
+   },
+   "colours": [
+    [
+     "#24384F",
+     805
+    ],
+    [
+     "#334155",
+     500
+    ],
+    [
+     "#18354F",
+     272
+    ],
+    [
+     "#8A94A6",
+     142
+    ],
+    [
+     "#415E75",
+     120
+    ],
+    [
+     "#FFFFFF",
+     112
+    ],
+    [
+     "#29455F",
+     62
+    ],
+    [
+     "#DFE5EC",
+     52
+    ],
+    [
+     "#47617C",
+     52
+    ],
+    [
+     "#7790A4",
+     40
+    ],
+    [
+     "#526B80",
+     40
+    ],
+    [
+     "#62798D",
+     40
+    ],
+    [
+     "#213E57",
+     40
+    ],
+    [
+     "#627B8E",
+     40
+    ],
+    [
+     "#F1F5F9",
+     25
+    ],
+    [
+     "#E8EEF3",
+     23
+    ],
+    [
+     "#15803D",
+     22
+    ],
+    [
+     "#0F172A",
+     21
+    ],
+    [
+     "#EEF1F4",
+     21
+    ],
+    [
+     "#BA3043",
+     20
+    ],
+    [
+     "#956925",
+     20
+    ],
+    [
+     "#F7F9FB",
+     20
+    ],
+    [
+     "#E3EAF0",
+     20
+    ],
+    [
+     "#B7791F",
+     19
+    ]
+   ],
+   "charts": {
+    "svgs": 133,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 52,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2950
+  },
+  "build": {
+   "heading": "Reports",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     27
+    ],
+    [
+     "#47617C",
+     17
+    ],
+    [
+     "#FFFFFF",
+     13
+    ],
+    [
+     "#E5E9ED",
+     10
+    ],
+    [
+     "#18354F",
+     8
+    ],
+    [
+     "#202329",
+     3
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#F5F6F7",
+     2
+    ],
+    [
+     "#69717D",
+     2
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": true
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 203
+  }
+ },
+ {
+  "slug": "integrations",
+  "label": "Integrations",
+  "route": "/integrations",
+  "settledMs": 304,
+  "reference": {
+   "heading": "Integrations",
+   "icons": {
+    "total": 31,
+    "approved": 19,
+    "square": 19,
+    "accents": 69
+   },
+   "colours": [
+    [
+     "#18354F",
+     72
+    ],
+    [
+     "#1E293B",
+     65
+    ],
+    [
+     "#FFFFFF",
+     49
+    ],
+    [
+     "#475569",
+     40
+    ],
+    [
+     "#0F172A",
+     35
+    ],
+    [
+     "#47617C",
+     24
+    ],
+    [
+     "#DFE5EC",
+     20
+    ],
+    [
+     "#20272D",
+     15
+    ],
+    [
+     "#1D2632",
+     9
+    ],
+    [
+     "#C5CED9",
+     8
+    ],
+    [
+     "#15803D",
+     8
+    ],
+    [
+     "#E3E8EE",
+     6
+    ],
+    [
+     "#EEF1F5",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#0B1220",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#ECC57C",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#976519",
+     2
+    ],
+    [
+     "#758297",
+     2
+    ],
+    [
+     "#A16207",
+     2
+    ],
+    [
+     "#334155",
+     2
+    ],
+    [
+     "#FFF9EC",
+     1
+    ],
+    [
+     "#B58A45",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 806
+  },
+  "build": {
+   "heading": "Integrations",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     70
+    ],
+    [
+     "#47617C",
+     48
+    ],
+    [
+     "#69717D",
+     26
+    ],
+    [
+     "#FFFFFF",
+     25
+    ],
+    [
+     "#0B1220",
+     14
+    ],
+    [
+     "#E5E9ED",
+     14
+    ],
+    [
+     "#18354F",
+     14
+    ],
+    [
+     "#E4C795",
+     12
+    ],
+    [
+     "#202329",
+     8
+    ],
+    [
+     "#15803D",
+     8
+    ],
+    [
+     "#B7791F",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 799
+  }
+ },
+ {
+  "slug": "administration",
+  "label": "Administration",
+  "route": "/admin",
+  "settledMs": 271,
+  "reference": {
+   "heading": "Administration",
+   "icons": {
+    "total": 32,
+    "approved": 19,
+    "square": 19,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#24384F",
+     36
+    ],
+    [
+     "#253F59",
+     24
+    ],
+    [
+     "#28528A",
+     22
+    ],
+    [
+     "#0F172A",
+     21
+    ],
+    [
+     "#4C637B",
+     20
+    ],
+    [
+     "#FFFFFF",
+     18
+    ],
+    [
+     "#18354F",
+     18
+    ],
+    [
+     "#536C85",
+     16
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#1D2632",
+     10
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#6B7C8F",
+     8
+    ],
+    [
+     "#C5CED9",
+     6
+    ],
+    [
+     "#DFE5EC",
+     6
+    ],
+    [
+     "#47617C",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#E2E8F0",
+     4
+    ],
+    [
+     "#DCE5EC",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#ECC57C",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#20272D",
+     2
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#A16207",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 526
+  },
+  "build": {
+   "heading": "Administration",
+   "icons": {
+    "total": 24,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     63
+    ],
+    [
+     "#69717D",
+     24
+    ],
+    [
+     "#47617C",
+     16
+    ],
+    [
+     "#FFFFFF",
+     11
+    ],
+    [
+     "#0B1220",
+     10
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#E4C795",
+     8
+    ],
+    [
+     "#B7791F",
+     8
+    ],
+    [
+     "#202329",
+     5
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 508
+  }
+ },
+ {
+  "slug": "licensing",
+  "label": "Licensing",
+  "route": "/licensing",
+  "settledMs": 258,
+  "reference": {
+   "heading": "Licensing",
+   "icons": {
+    "total": 44,
+    "approved": 30,
+    "square": 29,
+    "accents": 60
+   },
+   "colours": [
+    [
+     "#1D2632",
+     159
+    ],
+    [
+     "#18354F",
+     109
+    ],
+    [
+     "#1E293B",
+     52
+    ],
+    [
+     "#47617C",
+     44
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#20272D",
+     29
+    ],
+    [
+     "#334155",
+     27
+    ],
+    [
+     "#475569",
+     22
+    ],
+    [
+     "#FFFFFF",
+     21
+    ],
+    [
+     "#15803D",
+     21
+    ],
+    [
+     "#0F172A",
+     18
+    ],
+    [
+     "#E3E8EE",
+     11
+    ],
+    [
+     "#C7D5E3",
+     9
+    ],
+    [
+     "#F1F4F8",
+     7
+    ],
+    [
+     "#EDF1F5",
+     6
+    ],
+    [
+     "#ECC57C",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#DFE5EC",
+     3
+    ],
+    [
+     "#D9A845",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#976519",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 18,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 10,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 787
+  },
+  "build": {
+   "heading": "Licensing",
+   "icons": {
+    "total": 30,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     238
+    ],
+    [
+     "#0B1220",
+     54
+    ],
+    [
+     "#69717D",
+     34
+    ],
+    [
+     "#1E3A5F",
+     28
+    ],
+    [
+     "#E5E9ED",
+     22
+    ],
+    [
+     "#15803D",
+     20
+    ],
+    [
+     "#47617C",
+     18
+    ],
+    [
+     "#FFFFFF",
+     17
+    ],
+    [
+     "#8A9099",
+     12
+    ],
+    [
+     "#18354F",
+     8
+    ],
+    [
+     "#B7791F",
+     8
+    ],
+    [
+     "#F5F6F7",
+     7
+    ],
+    [
+     "#202329",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#EEF0F2",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 3,
+    "rows": 8,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1199
+  }
+ },
+ {
+  "slug": "diagnostics",
+  "label": "Diagnostics",
+  "route": "/diagnostics",
+  "settledMs": 272,
+  "reference": {
+   "heading": "System Health",
+   "icons": {
+    "total": 37,
+    "approved": 25,
+    "square": 23,
+    "accents": 54
+   },
+   "colours": [
+    [
+     "#1D2632",
+     113
+    ],
+    [
+     "#1E293B",
+     70
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#18354F",
+     32
+    ],
+    [
+     "#CBD5E1",
+     24
+    ],
+    [
+     "gradient",
+     20
+    ],
+    [
+     "#0F172A",
+     18
+    ],
+    [
+     "#47617C",
+     18
+    ],
+    [
+     "#ECC57C",
+     17
+    ],
+    [
+     "#3E526A",
+     17
+    ],
+    [
+     "#0B1220",
+     16
+    ],
+    [
+     "#475569",
+     14
+    ],
+    [
+     "#334155",
+     14
+    ],
+    [
+     "#FFFFFF",
+     12
+    ],
+    [
+     "#127A4F",
+     12
+    ],
+    [
+     "#20272D",
+     11
+    ],
+    [
+     "#DFE5EC",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#C7D5E3",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#EEF1F4",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 11,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 7,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 674
+  },
+  "build": {
+   "heading": "System Health",
+   "icons": {
+    "total": 25,
+    "approved": 24,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     156
+    ],
+    [
+     "#47617C",
+     72
+    ],
+    [
+     "#0B1220",
+     28
+    ],
+    [
+     "#B7791F",
+     18
+    ],
+    [
+     "#FFFFFF",
+     12
+    ],
+    [
+     "#15803D",
+     12
+    ],
+    [
+     "#E4C795",
+     10
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#69717D",
+     8
+    ],
+    [
+     "#EEF0F2",
+     8
+    ],
+    [
+     "#18354F",
+     6
+    ],
+    [
+     "#202329",
+     6
+    ],
+    [
+     "#C0262D",
+     4
+    ],
+    [
+     "#AEB2BC",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 1,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "tiles": {
+    "count": 5,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 2,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 7,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 651
+  }
+ }
+]

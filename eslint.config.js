@@ -46,6 +46,12 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
+    // These two drive a browser, so part of each file is evaluated in the
+    // page rather than in Node. Both runtimes' globals are in scope.
+    files: ['scripts/sweep.mjs', 'security/zap-proxy-crawl.mjs'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+  {
     // k6 scripts run in k6's own runtime, which supplies these globals.
     files: ['loadtest/**/*.js'],
     languageOptions: {

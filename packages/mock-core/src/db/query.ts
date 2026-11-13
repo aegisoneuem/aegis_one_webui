@@ -14,7 +14,86 @@ import { badRequest } from '../errors';
 export const MAX_PAGE_SIZE = 200;
 export const DEFAULT_PAGE_SIZE = 50;
 
-export type FilterOp = 'eq' | 'in' | 'like' | 'gte' | 'lte' | 'ne';
+export type FilterOp =
+  | 'eq'
+  | 'in'
+  | 'like'
+  | 'gte'
+  | 'lte'
+  | 'ne'
+  /* The four the advanced filter adds. They are not declared per column:
+     a column that accepts `like` accepts `nlike` and `starts`, and one that
+     accepts `eq` accepts the two emptiness tests, because each is the same
+     column read the same way. */
+  | 'nlike'
+  | 'starts'
+  | 'empty'
+  | 'notEmpty';
+
+/** Ops a column allows implicitly, given the ones it declares. */
+function impliedBy(declared: readonly FilterOp[]): FilterOp[] {
+  const extra: FilterOp[] = [];
+  if (declared.includes('like')) extra.push('nlike', 'starts');
+  if (declared.includes('eq')) extra.push('empty', 'notEmpty');
+  return extra;
+}
+
+/**
+ * One rule's SQL, or null where it has nothing to say.
+ *
+ * Shared by the ordinary `field.op` parameters and by the advanced filter,
+ * so both go through the same column allowlist and the same parameter
+ * binding. A rule that reached SQL any other way would be the one that got
+ * it wrong.
+ */
+export function clauseFor(
+  spec: TableSpec,
+  field: string,
+  op: FilterOp,
+  values: readonly unknown[],
+): WhereClause | null {
+  const columnSpec = spec.columns[field];
+  if (!columnSpec) return null;
+
+  const declared = columnSpec.filters ?? (['eq', 'in'] as const);
+  if (!declared.includes(op) && !impliedBy(declared).includes(op)) {
+    throw badRequest(`Cannot filter ${field} with ${op}.`, { [field]: 'unsupported' });
+  }
+
+  const column = quote(columnSpec.column);
+  const first = values[0];
+
+  switch (op) {
+    case 'eq':
+    case 'in':
+      if (values.length === 0) return null;
+      return {
+        sql: `${column} IN (${values.map(() => '?').join(',')})`,
+        params: [...values],
+      };
+    case 'ne':
+      return { sql: `${column} <> ?`, params: [first] };
+    case 'like':
+      return { sql: `LOWER(${column}) LIKE ?`, params: [`%${String(first).toLowerCase()}%`] };
+    case 'nlike':
+      return {
+        // COALESCE so a null column counts as "does not contain" rather than
+        // dropping the row, which is what a reader means by it.
+        sql: `COALESCE(LOWER(${column}), '') NOT LIKE ?`,
+        params: [`%${String(first).toLowerCase()}%`],
+      };
+    case 'starts':
+      return { sql: `LOWER(${column}) LIKE ?`, params: [`${String(first).toLowerCase()}%`] };
+    case 'empty':
+      return { sql: `(${column} IS NULL OR ${column} = '')`, params: [] };
+    case 'notEmpty':
+      return { sql: `(${column} IS NOT NULL AND ${column} <> '')`, params: [] };
+    case 'gte':
+      return { sql: `${column} >= ?`, params: [first] };
+    case 'lte':
+      return { sql: `${column} <= ?`, params: [first] };
+  }
+}
 
 export interface ColumnSpec {
   /** Physical column. */
@@ -141,43 +220,12 @@ function buildWhere(spec: TableSpec, query: ListQuery, extra?: WhereClause): Whe
     if (!spec_) continue; // unknown parameters are ignored, not echoed back
 
     const op = (opRaw ?? (Array.isArray(raw) ? 'in' : 'eq')) as FilterOp;
-    const allowed = spec_.filters ?? ['eq', 'in'];
-    if (!allowed.includes(op)) {
-      throw badRequest(`Cannot filter ${field} with ${op}.`, { [key]: 'unsupported' });
-    }
-
-    const column = quote(spec_.column);
     const values = Array.isArray(raw) ? raw : raw.split(',').filter(Boolean);
 
-    switch (op) {
-      case 'eq':
-      case 'in': {
-        if (values.length === 0) continue;
-        parts.push(`${column} IN (${values.map(() => '?').join(',')})`);
-        params.push(...values);
-        break;
-      }
-      case 'ne': {
-        parts.push(`${column} <> ?`);
-        params.push(values[0]);
-        break;
-      }
-      case 'like': {
-        parts.push(`LOWER(${column}) LIKE ?`);
-        params.push(`%${String(values[0]).toLowerCase()}%`);
-        break;
-      }
-      case 'gte': {
-        parts.push(`${column} >= ?`);
-        params.push(values[0]);
-        break;
-      }
-      case 'lte': {
-        parts.push(`${column} <= ?`);
-        params.push(values[0]);
-        break;
-      }
-    }
+    const clause = clauseFor(spec, field, op, values);
+    if (!clause) continue;
+    parts.push(clause.sql);
+    params.push(...clause.params);
   }
 
   return { sql: parts.join(' AND '), params };

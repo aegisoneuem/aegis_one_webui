@@ -63,7 +63,7 @@ export { openDb, bulkInsert } from './db/sqlite';
 export type { Db, OpenDbOptions } from './db/sqlite';
 export { createRng } from './db/rng';
 export type { Rng } from './db/rng';
-export { listRows, countBy, MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE } from './db/query';
+export { listRows, countBy, clauseFor, MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE } from './db/query';
 export type {
   TableSpec,
   ColumnSpec,

@@ -421,7 +421,20 @@ paths:
           - offline
       - name: filter
         in: query
-        description: Advanced filter rules, JSON array of {field, op, value}, URL-encoded.
+        description: >-
+          Advanced filter rules, a URL-encoded JSON array of
+          {field, op, value}. All of them must match. `field` is a field this
+          resource exposes and `op` is one the field accepts; either being
+          unknown is a 400 rather than a rule that is quietly dropped, since
+          a filter that silently does nothing returns everything.
+
+          Operators: `eq`, `ne`, `in`, `like` (contains), `nlike` (does not
+          contain), `starts`, `empty`, `notEmpty`, `gte`, `lte`. A field that
+          accepts `like` also accepts `nlike` and `starts`; one that accepts
+          `eq` also accepts `empty` and `notEmpty`. `empty` and `notEmpty`
+          take no value.
+
+          At most twenty rules.
         schema:
           type: string
           maxLength: 4096

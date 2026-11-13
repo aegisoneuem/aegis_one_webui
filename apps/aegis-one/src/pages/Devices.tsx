@@ -6,6 +6,7 @@ import { useListController, useResource } from '../app/useListController';
 import { useCan } from '../app/auth';
 import { dateTime, humanise, num, pct } from '../app/format';
 import { segment } from '../app/safeNavigate';
+import { AdvancedFilter, type FilterRule } from './shared/AdvancedFilter';
 import { ResourceList } from './shared/ResourceList';
 import type { Device, DeviceGroup, DevicesSummary, ZoneList } from '../api/types';
 import { api } from '../api/client';
@@ -403,7 +404,49 @@ export default function Devices() {
 
   const setFilter = (key: string, value: string) => controller.setFilter(key, value || undefined);
 
+  /*
+   * The advanced rules ride in the same filter map as everything else, as
+   * the contract's `?filter=` — one JSON array of {field, op, value}, all of
+   * which must match.
+   */
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const rules = useMemo<FilterRule[]>(() => {
+    const raw = controller.filters['filter'];
+    if (typeof raw !== 'string' || raw === '') return [];
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as FilterRule[]) : [];
+    } catch {
+      // A hand-edited URL should not take the page down with it.
+      return [];
+    }
+  }, [controller.filters]);
+
+  /*
+   * Every column the grid has, bar the one the API cannot filter on:
+   * `dnsNameFull` is assembled for display and is not a column on the
+   * device table, so offering it would only ever return a 400.
+   */
+  const filterFields = useMemo(
+    () =>
+      COLUMNS.filter((c) => c.id !== 'dnsNameFull').map((c) => ({
+        value: c.id,
+        label: c.header,
+      })),
+    [],
+  );
+
   const chips = [
+    ...(rules.length > 0
+      ? [
+          {
+            id: 'filter',
+            label: 'Advanced',
+            value: `${rules.length} rule${rules.length === 1 ? '' : 's'}`,
+            onRemove: () => controller.setFilter('filter', undefined),
+          },
+        ]
+      : []),
     ...(controller.filters['group']
       ? [
           {
@@ -562,6 +605,10 @@ export default function Devices() {
         }
         filters={
           <>
+            <Button size="sm" onClick={() => setBuilderOpen(true)}>
+              Advanced Filter
+              {rules.length > 0 ? <span className={styles.ruleCount}>{rules.length}</span> : null}
+            </Button>
             <Select
               size="sm"
               aria-label="Device group"
@@ -595,6 +642,19 @@ export default function Devices() {
               onChange={(e) => setFilter('status', e.target.value)}
             />
           </>
+        }
+      />
+
+      {/* Remounted per open, so the builder always starts from what is
+          applied rather than from the last thing that was typed. */}
+      <AdvancedFilter
+        key={builderOpen ? 'open' : 'closed'}
+        open={builderOpen}
+        onClose={() => setBuilderOpen(false)}
+        fields={filterFields}
+        rules={rules}
+        onApply={(next) =>
+          controller.setFilter('filter', next.length > 0 ? JSON.stringify(next) : undefined)
         }
       />
 

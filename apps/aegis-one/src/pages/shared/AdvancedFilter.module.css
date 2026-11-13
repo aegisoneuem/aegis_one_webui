@@ -1,0 +1,57 @@
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* Field, operator, value, remove — the reference's own four columns. */
+.rule {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr) 32px;
+  align-items: center;
+}
+
+.value {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 12.5px;
+}
+
+.value:focus {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Said rather than left blank, so an empty cell does not read as a bug. */
+.noValue {
+  color: var(--ao-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.remove {
+  width: 32px;
+  height: 30px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.remove:hover:not(:disabled) {
+  border-color: var(--st-bad);
+  color: var(--st-bad);
+}
+
+.remove:disabled {
+  cursor: default;
+  opacity: 0.4;
+}

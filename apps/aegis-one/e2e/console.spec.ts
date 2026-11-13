@@ -1725,6 +1725,15 @@ test.describe('signed in as Super Admin', () => {
   test('Alt+Left goes back, like the Back button', async ({ page }) => {
     await page.goto('/devices');
     await page.goto('/patches');
+
+    /*
+     * The shortcut is a listener the shell attaches on mount, and `goto`
+     * resolves on load rather than on mount. Waiting for the page to have
+     * drawn is what stops this racing on a loaded machine — it flaked twice
+     * in full runs and never on its own.
+     */
+    await expect(page.getByRole('heading', { name: 'Patch Management' })).toBeVisible();
+
     await page.keyboard.press('Alt+ArrowLeft');
     await expect(page).toHaveURL(/\/devices$/);
   });
@@ -1746,6 +1755,56 @@ test.describe('signed in as Super Admin', () => {
     await page.getByRole('combobox', { name: 'Device group' }).selectOption({ index: 1 });
     await expect(page).toHaveURL(/[?&]group=/);
     await expect.poll(total).toBeLessThan(estate ?? 0);
+  });
+
+  test('Advanced Filter builds rules that all have to match', async ({ page }) => {
+    await page.goto('/devices');
+
+    const total = async (): Promise<number | null> => {
+      const found = /of ([\d,]+) devices/.exec(await page.locator('main').innerText());
+      return found === null ? null : Number(found[1].replace(/,/g, ''));
+    };
+    await expect.poll(total).not.toBeNull();
+    const estate = await total();
+
+    await page.getByRole('button', { name: /^Advanced Filter/ }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText(/All rules must match · \d+ fields/);
+
+    await dialog.getByRole('combobox', { name: 'Field for rule 1' }).selectOption('hostname');
+    await dialog.getByRole('combobox', { name: 'Operator for rule 1' }).selectOption('starts');
+    await dialog.getByRole('textbox', { name: 'Value for rule 1' }).fill('mum');
+
+    await dialog.getByRole('button', { name: '+ Add rule' }).click();
+    await dialog.getByRole('combobox', { name: 'Field for rule 2' }).selectOption('status');
+    await dialog.getByRole('combobox', { name: 'Operator for rule 2' }).selectOption('eq');
+    await dialog.getByRole('textbox', { name: 'Value for rule 2' }).fill('online');
+
+    await dialog.getByRole('button', { name: 'Apply' }).click();
+
+    // Both rules, not just the last one.
+    await expect(page).toHaveURL(/[?&]filter=/);
+    await expect.poll(total).toBeLessThan(estate ?? 0);
+    await expect(
+      page.locator('[class*="chip"]').filter({ hasText: 'Advanced' }).first(),
+    ).toContainText('2 rules');
+
+    // Reopening shows what is applied rather than a blank sheet.
+    await page.getByRole('button', { name: /^Advanced Filter/ }).click();
+    await expect(
+      page.getByRole('dialog').getByRole('combobox', { name: 'Field for rule 1' }),
+    ).toHaveValue('hostname');
+  });
+
+  test('an operator a field cannot take is reported, not swallowed', async ({ page }) => {
+    // The old behaviour for ?filter= was to accept it and return everything,
+    // which is the failure mode worth a test of its own.
+    const rules = encodeURIComponent(
+      JSON.stringify([{ field: 'hostname', op: 'gte', value: 'x' }]),
+    );
+    await page.goto(`/devices?filter=${rules}`);
+
+    await expect(page.getByText('Cannot filter hostname with gte.')).toBeVisible();
   });
 
   test('the Columns control says how many columns are showing', async ({ page }) => {

@@ -1,9 +1,12 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import {
+  badRequest,
+  clauseFor,
   listRows,
   notFound,
   zoneScope,
   type Db,
+  type FilterOp,
   type ListQuery,
   type TableSpec,
   type WhereClause,
@@ -284,6 +287,62 @@ function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): voi
  * A membership test rather than an id list. The largest group here holds
  * 32,710 devices, and resolving it would put all of them in the query.
  */
+/**
+ * The contract's `?filter=`: a JSON array of {field, op, value}, all of which
+ * must match. Declared since the first version of the spec and, until now,
+ * accepted and ignored — a console could send a rule and get the whole
+ * estate back believing it had filtered.
+ *
+ * Built as one ANDed clause rather than written into the filter map, because
+ * the map is keyed by `field.op` and two rules on the same field would
+ * overwrite each other. Every rule still goes through `clauseFor`, so the
+ * column allowlist, the operator allowlist and the parameter binding are the
+ * same ones the ordinary query parameters use. Nothing here reaches SQL by
+ * another route.
+ */
+function advancedFilter(spec: TableSpec, raw: unknown): WhereClause | undefined {
+  const text = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof text !== 'string' || text.trim() === '') return undefined;
+  if (text.length > 4096) throw badRequest('That filter is too long.', { filter: 'too-long' });
+
+  let rules: unknown;
+  try {
+    rules = JSON.parse(text);
+  } catch {
+    throw badRequest('That filter is not valid JSON.', { filter: 'malformed' });
+  }
+  if (!Array.isArray(rules)) {
+    throw badRequest('A filter is a list of rules.', { filter: 'not-a-list' });
+  }
+  if (rules.length > 20) {
+    throw badRequest('A filter may hold at most twenty rules.', { filter: 'too-many' });
+  }
+
+  const parts: string[] = [];
+  const params: unknown[] = [];
+  for (const rule of rules) {
+    if (typeof rule !== 'object' || rule === null) {
+      throw badRequest('Each rule is an object.', { filter: 'bad-rule' });
+    }
+    const { field, op, value } = rule as { field?: unknown; op?: unknown; value?: unknown };
+    if (typeof field !== 'string' || typeof op !== 'string') {
+      throw badRequest('Each rule names a field and an operator.', { filter: 'bad-rule' });
+    }
+    // An unknown field is a mistake worth reporting rather than ignoring:
+    // silence here is what made the old behaviour so misleading.
+    if (!spec.columns[field]) {
+      throw badRequest(`There is no field called ${field}.`, { filter: 'unknown-field' });
+    }
+    const values = value === undefined || value === null ? [] : [value];
+    const clause = clauseFor(spec, field, op as FilterOp, values);
+    if (!clause) continue;
+    parts.push(`(${clause.sql})`);
+    params.push(...clause.params);
+  }
+
+  return parts.length > 0 ? { sql: parts.join(' AND '), params } : undefined;
+}
+
 function deviceGroupScope(
   _db: Db,
   filters: ListQuery['filters'] & object,
@@ -299,8 +358,15 @@ function deviceGroupScope(
   };
 }
 
+/** The device list's own two: its group, and its advanced rules. */
+function deviceScope(db: Db, filters: ListQuery['filters'] & object): WhereClause | undefined {
+  const rules = filters['filter'];
+  filters['filter'] = undefined;
+  return both(deviceGroupScope(db, filters), advancedFilter(devicesSpec, rules));
+}
+
 const RESOURCES: readonly ResourceDef[] = [
-  { path: 'devices', spec: devicesSpec, zoneScoped: true, scopeFrom: deviceGroupScope },
+  { path: 'devices', spec: devicesSpec, zoneScoped: true, scopeFrom: deviceScope },
   { path: 'software', spec: softwareSpec, envelope: softwareCounts },
   { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
   {

@@ -202,14 +202,16 @@ time.
 
 **Still open:**
 
-- **`Advanced Filter`** really is missing. The reference opens a rule builder
-  — "All rules must match · 80 fields" — and the contract has `?filter=`, a
-  JSON array of `{field, op, value}`, for exactly it. That parameter is the
-  third one found declared and unimplemented: `?filter=` is accepted and
-  ignored like `?group=` was. The builder plus a parser with a field and
-  operator allowlist is its own piece of work.
+- ~~`Advanced Filter`~~ **done.** The reference opens a rule builder over
+  eighty fields and the contract has `?filter=` for exactly it — which was
+  the third parameter found declared and unimplemented, accepted and ignored
+  like `?group=` was. Both halves are built: the parameter is parsed through
+  the same column and operator allowlist the ordinary parameters use, and the
+  builder offers the reference's nine operators over the grid's 29 filterable
+  columns. An unknown field or an operator a column cannot take is a 400
+  naming it, not a rule that quietly does nothing.
 - Two columns carry no sort indicator where the reference gives every column
-  one.
+  one. Still open.
 
 **Not a difference:** the search placeholders read differently because the
 build's is accurate. The reference promises "or any field"; this server

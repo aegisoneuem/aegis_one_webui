@@ -122,33 +122,87 @@ distinguishing the two is evidence the flags are set as intended.
 
 #### Authenticated active scan
 
-124 endpoints imported from the contract, four minutes of attack traffic:
-injection payloads, traversal, tampering, fuzzing.
+Re-run after the design restoration, against the fixed build. **142 URLs
+imported from the contract** (144 declared operations minus the two the plan
+excludes), 30 minutes of attack traffic, **65,725 requests**.
 
 **No injection, no XSS, no traversal, no authentication or authorisation
-bypass.** One Medium — "HTTP Only Site" — is ZAP noting that `http://localhost`
-is not TLS. Expected in development; production is behind TLS with HSTS.
+bypass**, and — this is the part worth checking first — **no 401, no 429 and
+no 500 anywhere in the run**.
 
-Traffic during the scan, from the server's own logs:
+| Response | Count  | What it means                                     |
+| -------- | ------ | ------------------------------------------------- |
+| 400      | 31,980 | Payloads rejected by schema validation            |
+| 404      | 23,992 | Probes for paths that do not exist                |
+| 200      | 6,291  | Authenticated requests that succeeded             |
+| 201      | 1,766  | Objects the scanner created                       |
+| 409      | 1,675  | Conflicts it caused and the server refused        |
+| **500**  | **0**  |                                                   |
+| **401**  | **0**  | The token held for the whole run                  |
+| **429**  | **0**  | Nothing was turned away before reaching a handler |
 
-| Response      | Count | What it means                                                             |
-| ------------- | ----- | ------------------------------------------------------------------------- |
-| 404           | 9,209 | ZAP probing paths that do not exist                                       |
-| 400           | 4,228 | Payloads rejected by contract schema validation before reaching a handler |
-| 200           | 731   | Authenticated requests that succeeded                                     |
-| **500**       | **0** |                                                                           |
-| **401 / 403** | **0** |                                                                           |
+##### It took three runs to get one that tested anything
 
-**That verification matters more than the finding count.** The first two
-attempts at this scan reported exactly the same "nothing found" — while every
-request came back 401, because ZAP's `${VAR}` substitution never reached the
-replacer's `replacementString`. A scan that bounces off the auth layer finds
-nothing and looks identical to a clean one.
+Both earlier attempts finished, reported success, and were worthless — in two
+different ways that look identical to a clean scan from the outside.
 
-`security/run-active-scan.mjs` now signs in, verifies the token against a real
-endpoint before handing it to ZAP, and injects the session cookie as well as
-the bearer and CSRF headers — the server uses a double-submit pair, so a header
-alone is always refused.
+- **Run 1: 44,519 of 69,521 responses were 429.** The rate limiter was working
+  exactly as designed, and the effect was that two thirds of the attack
+  traffic never reached a handler. The scan was testing the rate limiter.
+- **Run 2, with the limit raised: 32,341 of 69,505 were 401.** The scan ran
+  17m52s and the access token lasts 15 minutes. ZAP injects one static bearer
+  and cannot renew it, so the second half of the run tested nothing — and the
+  plan still said "Automation plan succeeded!".
+
+The access-token lifetime is now part of `TokenConfig`, defaulting to the same
+15 minutes, and the mock server reads `MOCK_ACCESS_TTL_SECONDS`. Run 3 set it
+to an hour.
+
+**Check the status mix before believing an active scan.** The finding count
+tells you nothing on its own: all three runs reported roughly the same number
+of alerts.
+
+##### What run 1 found before the rate limiter swallowed it
+
+85 responses were 500, where the run before the restoration had none. Three
+distinct defects, all now fixed with assertions in `check:api` — see F-4, F-5
+and F-6 below.
+
+##### The two findings
+
+| Finding                                                     | Count | Risk   | Disposition                                                                                            |
+| ----------------------------------------------------------- | ----- | ------ | ------------------------------------------------------------------------------------------------------ |
+| HTTP Only Site                                              | 1     | Medium | ZAP noting `http://localhost` is not TLS. Expected in development; production is behind TLS with HSTS. |
+| Cross Site Scripting Weakness (Persistent in JSON Response) | 7     | Low    | **Stored, and not exploitable.** Checked rather than assumed — see below.                              |
+
+##### The persistent-XSS finding, checked three ways
+
+ZAP posted `<script>alert(1);</script>` as a `name`, `description` or array
+element on `/admin/api-tokens`, `/admin/roles`, `/insight/templates` and
+`/integrations/connectors`, and a later `GET` returned it. The finding is
+accurate: the API stores what it is given and gives it back.
+
+It is not exploitable, for three independent reasons, each verified:
+
+1. **Nothing renders it as HTML.** There is no `dangerouslySetInnerHTML`,
+   `innerHTML` or equivalent anywhere in `apps/aegis-one/src` or
+   `packages/ui/src`. React escapes by default.
+2. **Proven in the browser, not argued.** A token named
+   `<script>alert(1)</script>` was created through the API and the
+   Administration → API access tab was opened. The page contained **zero**
+   injected `<script>` elements, and the cell's `innerHTML` read
+   `&lt;script&gt;alert(1)&lt;/script&gt;` — escaped to entities, rendered as
+   text. The token was then revoked and its row removed.
+3. **The response cannot be rendered as a document anyway.** It is served as
+   `application/json` with `X-Content-Type-Options: nosniff`, so a browser
+   pointed straight at the endpoint will not sniff it as HTML, and the CSP
+   sends `script-src 'self'` with `script-src-attr 'none'`.
+
+Worth stating plainly: the API does **not** reject HTML in a name, and that is
+a deliberate gap rather than an oversight. Stripping markup from free-text
+names breaks legitimate values, and the control that actually protects here is
+output encoding. If a future client renders these fields as HTML, this finding
+becomes real — so it is recorded rather than closed.
 
 ### Fixes from the ZAP scans
 
@@ -158,9 +212,13 @@ alone is always refused.
 | F-2 | **Unknown paths returned 500.** A request to a contract endpoint the mock does not implement went through the auth hook, which threw into the not-found context — whose error handler is not the app's. The caller was told "something went wrong on our side" for what is simply an unknown path. The scan produced 1,930 of them.                                                                                  | The auth hook skips requests with no matched route, and the not-found context gets its own copy of the error handler so the envelope survives.                                                                        |
 | F-3 | **Rate limiting returned 500 instead of 429.** `@fastify/rate-limit` throws whatever `errorResponseBuilder` returns, and it was returning the envelope _object_, not an Error. The app's handler did not recognise it, logged it as unhandled, and answered 500. A client over its budget was told the server had broken rather than to slow down — and nothing backs off on a 500. The scan produced 3,199 of them. | `errorResponseBuilder` returns an `ApiError`, which the handler maps to 429 with the right envelope.                                                                                                                  |
 
+| F-4 | **`PUT /admin/agent-enrollment` was always 500.** It validated the target group against a table called `groups`; the table is `device_groups`, so every call threw `SqliteError` — including the ordinary case of naming a group that does not exist. | The query names the real table. `check:api` asserts an unknown group is 400. |
+| F-5 | **A non-numeric `limit` was 500 on five listers.** The guard was `Number(query.limit ?? 50)`, which only falls back when the parameter is absent. `Math.max(NaN, 1)` is NaN, so NaN reached better-sqlite3 and it threw "datatype mismatch". A malformed query string answered "something went wrong on our side". | `Number(query.limit) \|\| 50`, which is what the shared lister already did. A sixth site the scan never reached was found by grep and fixed too. Five assertions in `check:api`. |
+| F-6 | **A malformed body on a path with no such method was 500.** Fastify gives the not-found handler its own encapsulation context with its own error handler, and that one was a copy of the main handler missing the branch that honours a 4xx `statusCode` — so the body parser's own 400 became a 500. | Both handlers now share one function, so they cannot drift apart again. `check:api` asserts the 4xx. |
+
 Both server-side fixes have regression coverage: `check:api` asserts an unknown
 path is 404 with a proper envelope, and a unit test asserts the rate-limit
-error is an `ApiError` carrying 429.
+error is an `ApiError` carrying 429. F-4 to F-6 add eight more assertions.
 
 ### `pnpm audit` findings
 

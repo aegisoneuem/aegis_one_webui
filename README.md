@@ -18,8 +18,11 @@ pnpm install
 cp .env.example .env     # set JWT_SECRET to 32+ characters
 ```
 
+The mock server reads that `.env` from the repo root. The console does not
+need it: it defaults to `http://localhost:8080`.
+
 ```bash
-pnpm mock                # terminal 1 — seeds 50,000 devices on first run (~20s)
+pnpm mock                # terminal 1 — seeds 50,000 devices on first run (~2-3 min)
 ```
 
 ```bash

@@ -36,26 +36,89 @@ estimated.**
 ### ZAP results
 
 ZAP 2.17.0. Plans are in `security/`; `security/README.md` explains how to run
-them.
+them. The passive baseline below was re-run after the design restoration; the
+authenticated active scan has **not** been re-run since, and says so.
 
 #### Passive baseline
 
-Crawls the console and the identity provider's sign-in pages. **0 high, 0
-medium, 0 low, 4 informational.**
+Re-run after the design restoration, over the production bundle. **0 high and
+0 medium against the console or its API**; 24 in-scope instances, all Low or
+Informational, every one dispositioned below.
 
-The first run found one Medium — **Absence of Anti-CSRF Tokens** on the sign-in
-and MFA forms — and it was right. See fix F-1.
+##### The spider could not do this, so it was not used
 
-The four informational findings are benign: "Authentication Request Identified"
-and "Session Management Response Identified" are ZAP noting that it found a
-login flow and a session cookie, "Modern Web Application" is it noting the app
-is a SPA, and "Information Disclosure — Suspicious Comments" matched the word
-`QUERY` inside a React Router deprecation URL in minified vendor code.
+Three runs of the packaged plan reported `spiderAjax found 0 URLs`. ZAP's
+bundled chromedriver is 143, the installed Chrome is 156, and SeleniumManager
+had no network to fetch a match — so the AJAX spider never started a browser,
+and a SPA is invisible to the traditional spider. **A scan that crawls nothing
+passes.** The first version of this run reported 35 messages and would have
+been written up as clean.
 
-The baseline covers the IdP's sign-in pages deliberately. They are hand-built
-HTML rather than React output, which makes them the one place in the console
-where an escaping mistake could produce XSS — and they are reachable without a
-session, which is exactly what a passive baseline can reach.
+Instead ZAP was started as a daemon proxy on 8099 and Playwright drove the
+built bundle through it, walking all 19 routes plus the 9 tabbed views: **28
+of 28 views reached, 1,644 messages analysed** over two crawls of the same
+ground. Reports are in `docs/scans/zap-baseline.*`.
+
+The second crawl was the committed script (`pnpm scan:zap:crawl`) being
+exercised rather than a new attempt, and it changed no finding: both crawls
+produce the same seven alerts over the same parameters, which is the closest
+thing this scan has to a reproducibility check.
+
+##### Third-party traffic is excluded, and why the raw totals differ
+
+Raw totals across all sites were 0 high / 53 medium / 132 low. **Every one of
+the 53 Mediums is against a Google domain** — `fonts.gstatic.com`,
+`www.google-analytics.com`, `apis.google.com`, `ogads-pa.clients6.google.com`,
+`feedback-pa.clients6.google.com`. That is the browser's own background
+traffic passing through the proxy, not the console. The console loads no
+Google fonts and no analytics.
+
+Judge this scan on the two in-scope sites only: `http://localhost:4173` (the
+bundle) and `http://localhost:8080` (the API and the IdP).
+
+##### Every in-scope finding
+
+| Finding                                        | Count | Risk | Disposition                                                                                                                                                                                                  |
+| ---------------------------------------------- | ----- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cookie No HttpOnly Flag — `aegis_csrf`         | 2     | Low  | **By design, and the finding is accurate.** Accepted as AR-5.                                                                                                                                                |
+| Private IP Disclosure                          | 7     | Low  | **Not a defect.** The values are fixture endpoint addresses (`10.28.228.5`) returned by `/devices` and `/groups` to an authenticated administrator. Returning the estate's addresses is what the API is for. |
+| User Controllable HTML Element Attribute (XSS) | 2     | Info | **Not reachable, and escaped anyway.** Verified below.                                                                                                                                                       |
+| Session Management Response Identified         | 6     | Info | ZAP noting it found `aegis_csrf` and `aegis_login`. Correct, not a defect.                                                                                                                                   |
+| Authentication Request Identified              | 1     | Info | ZAP noting it found the sign-in flow.                                                                                                                                                                        |
+| Modern Web Application                         | 5     | Info | ZAP noting the bundle is a SPA.                                                                                                                                                                              |
+| Information Disclosure — Suspicious Comments   | 1     | Info | Matched `query:this` inside minified vendor code in `assets/index-*.js`. No comment, no disclosure.                                                                                                          |
+
+##### The two potential-XSS findings, checked rather than assumed
+
+ZAP flagged `login_id` and `csrf_token` on `POST /oidc/login` because both
+arrive as request parameters and come back inside an HTML attribute. That is
+true, and it is the one place worth checking by hand: the IdP's sign-in pages
+are hand-built HTML rather than React output, so this is where an escaping
+mistake would actually produce XSS.
+
+Two independent reasons it does not:
+
+1. **The echo is unreachable with attacker input.** Posting a crafted
+   `login_id` returns `400 bad_request` — the id must name a live pending
+   login, and `assertLoginCsrf` then requires `csrf_token` to equal that
+   login's server-generated token. Both values reaching the renderer are the
+   server's own. Confirmed by running the real `/authorize` → failed `/login`
+   flow: the re-rendered form carried a UUID and an opaque token, nothing else.
+2. **Escaping is structural, not per-call-site.** Every page is built with a
+   `html` tagged template whose interpolation escapes `& < > " '` unless the
+   value is already a `SafeHtml` instance
+   (`packages/mock-core/src/oidc/idp.ts`). A new field cannot be left
+   unescaped by forgetting to escape it; it has to be wrapped deliberately.
+   Both quote characters are covered, so an attribute value cannot break out
+   of its quotes.
+
+##### What the scan confirms about the cookies
+
+The refresh cookie was **not** flagged, and `aegis_csrf` was. That is the
+correct split: the refresh cookie is set `httpOnly`, `secure`,
+`SameSite=Strict` on a path scoped to `/auth`, and the CSRF cookie is
+deliberately readable so the client can echo it in `X-CSRF-Token`. The scan
+distinguishing the two is evidence the flags are set as intended.
 
 #### Authenticated active scan
 
@@ -299,6 +362,30 @@ unauthenticated endpoints should be limited more tightly than authenticated
 ones. Keep the stricter auth bucket.
 
 ---
+
+### AR-5 — The CSRF cookie is readable by JavaScript
+
+ZAP reports **Cookie No HttpOnly Flag** on `aegis_csrf` at
+`/api/v1/auth/token` and `/api/v1/auth/refresh`. The finding is accurate and
+the cookie is deliberate.
+
+The console uses double-submit CSRF: the server sets `aegis_csrf` and every
+state-changing request must echo the same value in `X-CSRF-Token`. The client
+can only echo a cookie it can read, so `httpOnly` would break the mechanism.
+
+**Why this is an acceptable trade.** The cookie carries no authority on its
+own — it authenticates nothing, and a request bearing it without a valid
+session is refused. The value it protects, the refresh token, is in a separate
+cookie that _is_ `httpOnly`, `secure` and `SameSite=Strict`. An attacker who
+could read `aegis_csrf` would need script execution in the console's origin,
+and at that point they can issue requests directly and the CSRF token is no
+longer what stands in their way.
+
+**What would change this.** The alternative is a per-session token delivered
+in the response body and held in memory rather than in a cookie, which
+survives XSS no better but removes the finding. It is worth doing if a
+reviewer requires a clean passive scan; it is not worth doing for the security
+difference alone.
 
 ## 4. Not run, and what it would take
 

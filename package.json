@@ -21,6 +21,7 @@
     "scan:semgrep": "semgrep --config p/react --config p/typescript --config p/owasp-top-ten --exclude node_modules --exclude dist --exclude storybook-static --exclude test-results .",
     "scan:zap:baseline": "zap.bat -cmd -autorun security/zap-baseline.yaml",
     "scan:zap:active": "zap.bat -cmd -autorun security/zap-active-api.yaml",
+    "scan:zap:crawl": "node security/zap-proxy-crawl.mjs",
     "scan:token": "node security/get-token.mjs --export",
     "perf:lighthouse": "pnpm --filter @aegis/console lighthouse",
     "load:smoke": "k6 run -e PROFILE=smoke loadtest/scenarios.js",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@redocly/cli": "^2.72.1",
     "eslint": "^10.14.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",

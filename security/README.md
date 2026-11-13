@@ -36,6 +36,42 @@ The plan uses ZAP's **AJAX spider** as well as the traditional one. The console
 is a single-page app: a traditional spider sees one HTML file and stops, so a
 baseline without the AJAX spider reports almost nothing and looks like a pass.
 
+#### If the AJAX spider finds 0 URLs, do not accept the report
+
+Check the log for `spiderAjax found 0 URLs`. On this machine the AJAX spider
+could not start a browser at all: ZAP 2.17 bundles chromedriver 143, the
+installed Chrome is 156, and SeleniumManager had no network to fetch a match.
+The plan still completed and still wrote a report — over 35 messages.
+
+The fallback drives the built bundle through ZAP as a plain proxy, which needs
+no chromedriver. Start ZAP as a daemon:
+
+```bash
+zap.bat -daemon -host 127.0.0.1 -port 8099 -config api.disablekey=true
+```
+
+Then, with the preview server on 4173 and the mock server on 8080:
+
+```bash
+pnpm scan:zap:crawl
+```
+
+It signs in, walks all 19 routes plus 9 tabbed views, and **exits non-zero if
+it reached fewer views than it set out to** — a partial crawl is a partial
+scan. The reference run covered 28 views and 953 messages.
+
+Write the report from the daemon when the crawl is done:
+
+```bash
+curl "http://127.0.0.1:8099/OTHER/core/other/htmlreport/" -o apps/aegis-one/docs/scans/zap-baseline.html
+```
+
+Two things to know when reading a proxy-crawled report. Totals include **every
+host the browser touched**, so fonts, analytics and other third-party traffic
+appear as findings against their own domains — judge only `localhost:4173` and
+`localhost:8080`. And the crawl signs in: an unauthenticated one reaches the
+sign-in screen and nothing else, which also looks like a pass.
+
 ### Authenticated active scan
 
 **Run this against the mock server only.** It sends injection payloads,

@@ -669,3 +669,15 @@ you.
     The cause was orphaned node processes from repeated server restarts. Check
     the wall time before trusting a red run, and check for stray `tsx` and
     `vite` processes.
+73. **ZAP's AJAX spider cannot run on this machine.** Its bundled chromedriver
+    is 143 against Chrome 156, with SeleniumManager offline, so it reports
+    `spiderAjax found 0 URLs` and the plan completes anyway. The passive
+    baseline in `docs/vapt-checklist.md` was produced by proxy-crawling the
+    bundle instead (`pnpm scan:zap:crawl`). Fixing the driver would let the
+    packaged plan stand on its own; until then, check the message count before
+    trusting a baseline.
+74. **The authenticated active scan has not been re-run since the design
+    restoration.** Roughly twenty endpoints were added across Insight,
+    Integrations, Peer Cache, Administration, Licensing, Diagnostics and patch
+    settings, and none of them has seen active attack traffic. The passive
+    baseline covers them; `pnpm scan:zap:active` does not yet.

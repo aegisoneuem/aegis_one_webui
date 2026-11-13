@@ -116,16 +116,33 @@
 
 /* Scope bar -------------------------------------------------------------- */
 
+/* A strip, not a card: v129 gives this row no border and 8px/12px of
+   padding, and it reads as part of the page rather than a panel on it. */
 .scope {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  padding: var(--ui-space-4) var(--ui-space-5);
-  border: 1px solid var(--ao-border);
-  border-radius: var(--ui-radius-lg);
+  padding: 8px 12px;
   background: var(--ao-surface);
   margin-bottom: var(--ui-space-6);
+}
+
+/* Shown only while something is narrowed. */
+.reset {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.reset:hover {
+  background: var(--ui-surface-hover);
 }
 
 .scopeField {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, ErrorState, Select, Skeleton } from '@aegis/ui';
 import { useResource } from '../app/useListController';
@@ -104,9 +104,25 @@ const PROTECTION_TARGET = 95;
 export default function Overview() {
   const navigate = useNavigate();
 
-  const [zone, setZone] = useState('');
-  const [platform, setPlatform] = useState('');
-  const [department, setDepartment] = useState('');
+  /*
+   * The scope lives in the query string, so a narrowed dashboard is a link
+   * someone can send — "the estate, Bengaluru only" is a thing people pass
+   * around in a ticket. The reference keeps it in memory; this console puts
+   * filters in the URL everywhere else, and section D of the brief asks for
+   * the same here.
+   */
+  const [params, setParams] = useSearchParams();
+  const zone = params.get('zone') ?? '';
+  const platform = params.get('platform') ?? '';
+  const department = params.get('department') ?? '';
+  const scoped = zone !== '' || platform !== '' || department !== '';
+
+  const setScope = (key: 'zone' | 'platform' | 'department', value: string): void => {
+    const next = new URLSearchParams(params);
+    if (value === '') next.delete(key);
+    else next.set(key, value);
+    setParams(next, { replace: true });
+  };
 
   const query = new URLSearchParams();
   if (zone) query.set('zone', zone);
@@ -480,7 +496,7 @@ export default function Overview() {
             options={zoneOptions}
             placeholder="All"
             value={zone}
-            onChange={(e) => setZone(e.target.value)}
+            onChange={(e) => setScope('zone', e.target.value)}
           />
         </div>
         <div className={styles.scopeField}>
@@ -490,7 +506,7 @@ export default function Overview() {
             options={PLATFORMS}
             placeholder="All"
             value={platform}
-            onChange={(e) => setPlatform(e.target.value)}
+            onChange={(e) => setScope('platform', e.target.value)}
           />
         </div>
         <div className={styles.scopeField}>
@@ -500,9 +516,23 @@ export default function Overview() {
             options={DEPARTMENTS}
             placeholder="All"
             value={department}
-            onChange={(e) => setDepartment(e.target.value)}
+            onChange={(e) => setScope('department', e.target.value)}
           />
         </div>
+        {/*
+         * The reference shows this only once something is narrowed, which is
+         * the right moment: an always-present Reset invites a reader to
+         * wonder what it would reset.
+         */}
+        {scoped ? (
+          <button
+            type="button"
+            className={styles.reset}
+            onClick={() => setParams(new URLSearchParams(), { replace: true })}
+          >
+            Reset
+          </button>
+        ) : null}
         <span className={styles.updated}>
           Updated {dateTime(data.updatedAt)}
           <button
@@ -641,6 +671,7 @@ export default function Overview() {
           </div>
 
           <ChartTools
+            panel="Overall Health Score"
             view={healthView}
             onView={setHealthView}
             viewOptions={[
@@ -681,6 +712,7 @@ export default function Overview() {
           footer="Click a slice or bar to see matching details"
         >
           <ChartTools
+            panel="Patch compliance"
             view={patchView}
             onView={setPatchView}
             viewOptions={[
@@ -760,6 +792,7 @@ export default function Overview() {
           footer="Click a control to see the endpoints missing it"
         >
           <ChartTools
+            panel="Security Posture"
             view={postureView}
             onView={setPostureView}
             viewOptions={[
@@ -796,6 +829,7 @@ export default function Overview() {
           footer="Click a slice or bar to see matching details"
         >
           <ChartTools
+            panel="Deployment status"
             view="status"
             onView={() => undefined}
             viewOptions={[{ value: 'status', label: 'By Current Status' }]}
@@ -1041,7 +1075,16 @@ function Panel({
   );
 }
 
+/**
+ * The two selects a panel carries.
+ *
+ * `panel` is not decoration: four panels each offering "View" and "Chart
+ * type" give a screen reader four controls with the same name and no way to
+ * tell them apart. The reference names them per panel — "Overall Health
+ * Score view", "Patch compliance chart type" — and so does this.
+ */
 function ChartTools({
+  panel,
   view,
   onView,
   viewOptions,
@@ -1049,6 +1092,7 @@ function ChartTools({
   onChart,
   chartOptions,
 }: {
+  panel: string;
   view: string;
   onView: (value: string) => void;
   viewOptions: readonly { value: string; label: string }[];
@@ -1059,14 +1103,14 @@ function ChartTools({
   return (
     <div className={styles.tools}>
       <Select
-        aria-label="View"
+        aria-label={`${panel} view`}
         options={viewOptions}
         value={view}
         onChange={(e) => onView(e.target.value)}
         disabled={viewOptions.length < 2}
       />
       <Select
-        aria-label="Chart type"
+        aria-label={`${panel} chart type`}
         options={chartOptions}
         value={chart}
         onChange={(e) => onChart(e.target.value)}

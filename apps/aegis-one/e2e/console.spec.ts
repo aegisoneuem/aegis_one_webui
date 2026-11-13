@@ -1729,6 +1729,51 @@ test.describe('signed in as Super Admin', () => {
     await expect(page).toHaveURL(/\/devices$/);
   });
 
+  test('the Overview scope bar narrows the dashboard and says so in the URL', async ({ page }) => {
+    await page.goto('/');
+
+    /*
+     * Null rather than a throw while the figure is absent: the dashboard
+     * drops back to a skeleton between scopes, and a poll that throws there
+     * fails instead of waiting.
+     */
+    const managed = async (): Promise<number | null> => {
+      const found = /Managed Endpoints\s*([\d,]+)/i.exec(await page.locator('main').innerText());
+      return found === null ? null : Number(found[1].replace(/,/g, ''));
+    };
+
+    await expect.poll(managed).not.toBeNull();
+    const estate = await managed();
+    expect(estate).toBeGreaterThan(0);
+
+    // Reset is offered only once something is narrowed, as the reference has it.
+    await expect(page.getByRole('button', { name: 'Reset', exact: true })).toHaveCount(0);
+
+    await page.getByRole('combobox', { name: 'Zone', exact: true }).selectOption({ index: 1 });
+    await expect(page).toHaveURL(/[?&]zone=/);
+    await expect.poll(managed).toBeLessThan(estate ?? 0);
+
+    await page.getByRole('button', { name: 'Reset', exact: true }).click();
+    await expect(page).not.toHaveURL(/[?&]zone=/);
+    await expect.poll(managed).toBe(estate);
+  });
+
+  test('each Overview panel names its own view and chart controls', async ({ page }) => {
+    await page.goto('/');
+
+    // Four panels offering "View" would give a screen reader four controls
+    // with one name between them; v129 names them per panel.
+    for (const panel of [
+      'Overall Health Score',
+      'Patch compliance',
+      'Security Posture',
+      'Deployment status',
+    ]) {
+      await expect(page.getByRole('combobox', { name: `${panel} view` })).toHaveCount(1);
+      await expect(page.getByRole('combobox', { name: `${panel} chart type` })).toHaveCount(1);
+    }
+  });
+
   test('the top bar carries the reference’s four controls', async ({ page }) => {
     await page.goto('/devices');
 

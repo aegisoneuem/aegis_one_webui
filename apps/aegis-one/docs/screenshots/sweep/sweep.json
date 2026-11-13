@@ -1,365 +1,143 @@
 [
  {
-  "slug": "devices",
-  "label": "Devices",
-  "route": "/devices",
-  "settledMs": 555,
+  "slug": "overview",
+  "label": "Overview",
+  "route": "/",
+  "settledMs": 436,
   "reference": {
-   "heading": "Devices",
+   "heading": "Overview",
    "icons": {
-    "total": 50,
-    "approved": 35,
-    "square": 34,
+    "total": 76,
+    "approved": 56,
+    "square": 32,
     "accents": 62
    },
    "colours": [
     [
+     "#1D2632",
+     529
+    ],
+    [
+     "#0B1220",
+     138
+    ],
+    [
+     "#475569",
+     126
+    ],
+    [
      "#1E293B",
-     366
+     98
     ],
     [
-     "#ECC57C",
-     150
-    ],
-    [
-     "#FFFFFF",
-     135
-    ],
-    [
-     "#18354F",
-     125
-    ],
-    [
-     "#FAFBFD",
-     105
-    ],
-    [
-     "#859AB6",
-     90
-    ],
-    [
-     "#94A3B8",
-     88
-    ],
-    [
-     "#20272D",
-     46
-    ],
-    [
-     "#1D4ED8",
-     32
-    ],
-    [
-     "#53657A",
-     27
-    ],
-    [
-     "#0F172A",
-     25
+     "#47617C",
+     86
     ],
     [
      "#334155",
-     25
-    ],
-    [
-     "#1D2632",
-     22
-    ],
-    [
-     "#0B1220",
-     20
-    ],
-    [
-     "#15803D",
-     17
-    ],
-    [
-     "#DFE5EC",
-     15
-    ],
-    [
-     "#486482",
-     14
-    ],
-    [
-     "#47617C",
-     10
-    ],
-    [
-     "#475569",
-     8
+     73
     ],
     [
      "#64748B",
-     8
+     69
     ],
     [
-     "#B91C1C",
-     5
-    ],
-    [
-     "#C5CED9",
-     4
-    ],
-    [
-     "#526176",
-     4
-    ],
-    [
-     "#24384F",
-     4
-    ]
-   ],
-   "charts": {
-    "svgs": 24,
-    "axisTicks": 0,
-    "gridlines": 0,
-    "horizontalBars": 0
-   },
-   "tiles": {
-    "count": 0,
-    "clickable": 0
-   },
-   "header": {
-    "selects": 0,
-    "buttons": 10,
-    "star": false
-   },
-   "table": {
-    "tables": 1,
-    "rows": 10,
-    "search": 1,
-    "sortable": 20,
-    "pager": true
-   },
-   "words": 3446
-  },
-  "build": {
-   "heading": "Devices",
-   "icons": {
-    "total": 26,
-    "approved": 26,
-    "square": 20,
-    "accents": 20
-   },
-   "colours": [
-    [
-     "#20262E",
-     1895
-    ],
-    [
-     "#E4C795",
-     150
-    ],
-    [
-     "#FFFFFF",
-     70
+     "#A47423",
+     67
     ],
     [
      "#18354F",
-     49
+     52
     ],
     [
-     "#15803D",
-     34
+     "#1F55B8",
+     52
     ],
     [
-     "#202329",
-     24
+     "#94A3B8",
+     42
     ],
     [
-     "#E5E9ED",
-     18
-    ],
-    [
-     "#69717D",
-     13
-    ],
-    [
-     "#0B1220",
-     8
-    ],
-    [
-     "#B7791F",
-     8
-    ],
-    [
-     "#8A9099",
-     7
-    ],
-    [
-     "#0F2740",
-     1
-    ],
-    [
-     "gradient",
-     1
-    ]
-   ],
-   "charts": {
-    "svgs": 0,
-    "axisTicks": 0,
-    "gridlines": 0,
-    "horizontalBars": 0
-   },
-   "tiles": {
-    "count": 13,
-    "clickable": 4
-   },
-   "header": {
-    "selects": 0,
-    "buttons": 40,
-    "star": false
-   },
-   "table": {
-    "tables": 1,
-    "rows": 21,
-    "search": 1,
-    "sortable": 38,
-    "pager": true
-   },
-   "words": 6373
-  }
- },
- {
-  "slug": "software",
-  "label": "Software",
-  "route": "/software",
-  "settledMs": 281,
-  "reference": {
-   "heading": "Software Catalog",
-   "icons": {
-    "total": 32,
-    "approved": 19,
-    "square": 20,
-    "accents": 50
-   },
-   "colours": [
-    [
-     "#253F59",
-     2000
+     "#3E526A",
+     42
     ],
     [
      "#FFFFFF",
-     1816
-    ],
-    [
-     "#536C85",
-     1600
-    ],
-    [
-     "#24384F",
-     1216
+     37
     ],
     [
      "#0F172A",
-     824
+     35
     ],
     [
-     "#47617C",
-     410
+     "#B91C1C",
+     26
     ],
     [
-     "#C5CED9",
-     403
+     "#15803D",
+     19
     ],
     [
-     "#4C637B",
-     402
+     "#24384F",
+     15
     ],
     [
-     "gradient",
-     401
+     "#EEF1F5",
+     15
     ],
     [
-     "#1D2632",
-     400
-    ],
-    [
-     "#A16207",
-     400
-    ],
-    [
-     "#18354F",
-     366
+     "#D5DCE5",
+     13
     ],
     [
      "#DFE5EC",
-     204
+     12
     ],
     [
-     "#0F2740",
-     201
+     "#B7791F",
+     12
     ],
     [
-     "#DCE5EC",
-     200
+     "#9A6200",
+     12
     ],
     [
-     "#8B1A1F",
-     200
+     "#C0262D",
+     11
     ],
     [
-     "#1E293B",
-     14
-    ],
-    [
-     "#475569",
+     "#A16207",
      8
-    ],
-    [
-     "#ECC57C",
-     5
-    ],
-    [
-     "#29455F",
-     5
-    ],
-    [
-     "#526176",
-     4
-    ],
-    [
-     "#89631D",
-     3
-    ],
-    [
-     "#20272D",
-     3
-    ],
-    [
-     "#BBC2C9",
-     2
     ]
    ],
    "charts": {
-    "svgs": 6,
+    "svgs": 50,
     "axisTicks": 0,
     "gridlines": 0,
     "horizontalBars": 0
    },
    "tiles": {
-    "count": 6,
+    "count": 26,
     "clickable": 5
    },
    "header": {
-    "selects": 0,
-    "buttons": 10,
+    "selects": 3,
+    "buttons": 22,
     "star": false
    },
    "table": {
     "tables": 0,
     "rows": 0,
-    "search": 1,
+    "search": 0,
     "sortable": 0,
     "pager": false
    },
-   "words": 26584
+   "words": 2892
   },
   "build": {
-   "heading": "Software Catalog",
+   "heading": "Overview",
    "icons": {
-    "total": 26,
+    "total": 39,
     "approved": 26,
     "square": 20,
     "accents": 20
@@ -367,80 +145,124 @@
    "colours": [
     [
      "#20262E",
-     733
-    ],
-    [
-     "#0B1220",
-     340
-    ],
-    [
-     "#8A9099",
-     271
-    ],
-    [
-     "#FFFFFF",
-     111
-    ],
-    [
-     "#E5E9ED",
-     109
+     570
     ],
     [
      "#69717D",
-     70
+     201
     ],
     [
-     "#E4C795",
-     68
+     "#0B1220",
+     99
     ],
     [
-     "#47617C",
-     66
+     "#15803D",
+     49
     ],
     [
      "#18354F",
-     42
+     37
     ],
     [
-     "#202329",
+     "#C0262D",
      35
     ],
     [
-     "#0F2740",
-     34
+     "#FFFFFF",
+     27
     ],
     [
-     "gradient",
-     34
+     "#E5E9ED",
+     25
+    ],
+    [
+     "#47617C",
+     21
+    ],
+    [
+     "#B7791F",
+     20
+    ],
+    [
+     "#E4363D",
+     15
+    ],
+    [
+     "#8A9099",
+     15
+    ],
+    [
+     "#2F5D8A",
+     14
+    ],
+    [
+     "#1D4ED8",
+     12
+    ],
+    [
+     "#0E9F6E",
+     11
+    ],
+    [
+     "#EEF0F2",
+     11
+    ],
+    [
+     "#B4790A",
+     6
+    ],
+    [
+     "#7FA0C6",
+     6
     ],
     [
      "#7F6038",
      2
+    ],
+    [
+     "#202329",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
     ]
    ],
    "charts": {
-    "svgs": 0,
+    "svgs": 13,
     "axisTicks": 0,
     "gridlines": 0,
     "horizontalBars": 0
    },
    "tiles": {
-    "count": 16,
-    "clickable": 4
+    "count": 21,
+    "clickable": 5
    },
    "header": {
-    "selects": 0,
-    "buttons": 3,
+    "selects": 3,
+    "buttons": 11,
     "star": false
    },
    "table": {
-    "tables": 0,
-    "rows": 0,
-    "search": 1,
+    "tables": 5,
+    "rows": 19,
+    "search": 0,
     "sortable": 0,
     "pager": false
    },
-   "words": 5364
+   "words": 4491
   }
  }
 ]

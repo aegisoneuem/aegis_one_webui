@@ -9,6 +9,13 @@ anything. Nothing in this document has been fixed.
 `docs/screenshots/sweep/<page>-ref.png` and `<page>-build.png`, with the raw
 measurements in `sweep.json` beside them.
 
+**One caveat, learnt the hard way.** The control inventory below reads a
+control's `aria-label`. A control named with `aria-labelledby` is named just
+as well and this reader cannot see it, which is how section 3.3 came to
+claim the Overview had no scope bar when it had one all along. Where a
+difference here is about a control being _missing_, check it against the
+accessibility tree before acting on it.
+
 Screenshots are the evidence a person reads; they are a poor thing to judge
 from. Thirty-eight of them is where a sweep quietly turns into an impression,
 so the colour, icon, chart, table and timing columns below are measured out
@@ -29,7 +36,7 @@ having no "Loading" text left.
 
 | Page            | Route             | Icons | Palette | Gloss | Charts | Tiles  | Header / filters       | Table               | Load  |
 | --------------- | ----------------- | ----- | ------- | ----- | ------ | ------ | ---------------------- | ------------------- | ----- |
-| Overview        | `/`               | 24/37 | clean   | n/a   | 13 svg | 21 / 5 | **7 controls short**   | 19 rows, no pager   | 358ms |
+| Overview        | `/`               | 24/37 | clean   | n/a   | 13 svg | 21 / 5 | scope done, 2 open ¹   | 19 rows, no pager   | 358ms |
 | Devices         | `/devices`        | 24/24 | clean   | n/a   | —      | 13 / 4 | **5 controls short**   | search, sort, pager | 301ms |
 | Device groups   | `/groups`         | 24/24 | clean   | n/a   | —      | 14 / 0 | matches                | sort, pager         | 236ms |
 | Enrollment      | `/enrollment`     | 24/27 | clean   | n/a   | 3 svg  | 18 / 0 | matches                | 5 rows              | 324ms |
@@ -131,18 +138,41 @@ colour, so this is a design-system default rather than a requirement.
 Measured: gradient, border and box-shadow on the primary button match the
 reference string for string.
 
-### 3.3 Overview is missing its scope bar and its panel controls
+### 3.3 Overview — part wrong, and the rest now done
 
-- No `Zone`, `Platform` or `Department` selects above the dashboard.
-- No `+ Custom Widget`, no `Customize`.
-- The health panel has no `How it's calculated`, no `Thresholds`, no
-  `Patching +7.8`-style driver chips (the build shows two drivers, the
-  reference three).
-- Every panel's two selects are named `View` and `Chart type` in the build;
-  the reference names them per panel (`Overall Health Score view`,
-  `Patch compliance chart type`), which is what a screen reader reads out.
-- The build adds a `⟳` refresh control and an `All` select the reference does
-  not have.
+**Correction.** The first version of this section said the build had no
+`Zone`, `Platform` or `Department` selects. It had all three, correctly
+named, the whole time. The sweep's control reader looked at `aria-label` and
+nothing else; these three are named with `aria-labelledby`, which names a
+control just as well, so the reader saw three anonymous selects and the diff
+called them missing. Checked afterwards with Playwright's own role-and-name
+resolution: `combobox "Zone"`, `combobox "Platform"`, `combobox "Department"`,
+one each. The "extra `All` select" in the same list was one of those three
+read by its placeholder.
+
+What was actually different, and is now fixed:
+
+- **No `Reset`.** The reference offers one the moment something is narrowed,
+  and nothing before that. The build now does the same.
+- **The scope was not in the URL.** It is now — `/?zone=zn-mum-hq` — so a
+  narrowed dashboard is a link someone can send. The reference keeps it in
+  memory; section D of the brief asks for the query string, and the rest of
+  this console already works that way.
+- **The panel selects were named generically.** Four panels each offering
+  `View` and `Chart type` give a screen reader eight controls with two names
+  between them. They are now `Overall Health Score view`, `Patch compliance
+chart type` and so on, as the reference names them.
+- **The row was drawn as a card.** v129 gives it no border and 8px/12px of
+  padding, so it reads as part of the page rather than a panel on it.
+
+Still different, and not done:
+
+- No `+ Custom Widget`, no `Customize`. That is dashboard composition, which
+  is a feature rather than a scope bar.
+- The health panel has no `How it's calculated` and no `Thresholds`, and
+  shows two driver chips where the reference shows three.
+- The build keeps a `⟳` refresh the reference does not have. It is useful and
+  it is not in the way, so it stays unless you would rather it went.
 
 ### 3.4 Devices is missing most of its filter bar
 

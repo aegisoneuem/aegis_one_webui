@@ -6,6 +6,7 @@ import {
   type Db,
   type ListQuery,
   type TableSpec,
+  type WhereClause,
 } from '@aegis/mock-core';
 import { shapeFinding } from './vulnerabilities';
 import {
@@ -61,6 +62,13 @@ interface ResourceDef {
    * so a parameter it does not produce still cannot reach SQL.
    */
   derive?: (db: Db, filters: ListQuery['filters'] & object) => void;
+  /**
+   * A constraint this resource builds from its own query parameters, ANDed
+   * with whatever scope the caller's role already imposes. It exists for a
+   * filter that is a join rather than a column — group membership, where
+   * resolving to a list of ids would mean a thirty-thousand-element IN.
+   */
+  scopeFrom?: (db: Db, filters: ListQuery['filters'] & object) => WhereClause | undefined;
   /**
    * Extra top-level fields the contract's page envelope carries beside
    * `items` and `page` — the catalogue counters, for instance, which describe
@@ -268,8 +276,31 @@ function derivePatchFilters(db: Db, filters: ListQuery['filters'] & object): voi
   filters['id'] = ids.length ? ids.map((row) => row.id).join(',') : '\u0000none';
 }
 
+/**
+ * `?group=` on the device list, which the contract has always declared and
+ * no server answered: the parameter was accepted and ignored, so a filtered
+ * grid quietly showed the whole estate.
+ *
+ * A membership test rather than an id list. The largest group here holds
+ * 32,710 devices, and resolving it would put all of them in the query.
+ */
+function deviceGroupScope(
+  _db: Db,
+  filters: ListQuery['filters'] & object,
+): WhereClause | undefined {
+  const raw = filters['group'];
+  filters['group'] = undefined;
+  const group = Array.isArray(raw) ? raw[0] : raw;
+  if (!group) return undefined;
+  return {
+    sql: `EXISTS (SELECT 1 FROM group_members gm
+                   WHERE gm.device_id = devices.id AND gm.group_id = ?)`,
+    params: [group],
+  };
+}
+
 const RESOURCES: readonly ResourceDef[] = [
-  { path: 'devices', spec: devicesSpec, zoneScoped: true },
+  { path: 'devices', spec: devicesSpec, zoneScoped: true, scopeFrom: deviceGroupScope },
   { path: 'software', spec: softwareSpec, envelope: softwareCounts },
   { path: 'patches', spec: patchesSpec, derive: derivePatchFilters },
   {
@@ -328,18 +359,27 @@ function safeParse(value: string): unknown {
   }
 }
 
+/** Two constraints, both of which must hold. Either may be absent. */
+function both(a?: WhereClause, b?: WhereClause): WhereClause | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return { sql: `(${a.sql}) AND (${b.sql})`, params: [...a.params, ...b.params] };
+}
+
 export function registerResourceRoutes(app: FastifyInstance, db: Db, basePath: string): void {
   for (const resource of RESOURCES) {
-    const { path, spec, zoneScoped, jsonFields, derive, envelope, shape } = resource;
+    const { path, spec, zoneScoped, jsonFields, derive, scopeFrom, envelope, shape } = resource;
     const dress = (row: Record<string, unknown>): Record<string, unknown> => {
       const shaped = shapeRow(row, jsonFields);
       return shape ? shape(shaped) : shaped;
     };
 
     app.get(`${basePath}/${path}`, async (request) => {
-      const scope = zoneScoped && request.auth ? zoneScope(request.auth) : undefined;
+      const roleScope = zoneScoped && request.auth ? zoneScope(request.auth) : undefined;
       const query = toListQuery(request);
       if (derive) derive(db, query.filters ?? {});
+      const own = scopeFrom ? scopeFrom(db, query.filters ?? {}) : undefined;
+      const scope = both(roleScope, own);
       const result = listRows<Record<string, unknown>>(db, spec, query, scope ? { scope } : {});
       return {
         items: result.items.map(dress),

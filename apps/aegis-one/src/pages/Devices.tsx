@@ -7,7 +7,7 @@ import { useCan } from '../app/auth';
 import { dateTime, humanise, num, pct } from '../app/format';
 import { segment } from '../app/safeNavigate';
 import { ResourceList } from './shared/ResourceList';
-import type { Device, DevicesSummary, ZoneList } from '../api/types';
+import type { Device, DeviceGroup, DevicesSummary, ZoneList } from '../api/types';
 import { api } from '../api/client';
 import styles from './Devices.module.css';
 
@@ -372,9 +372,50 @@ export default function Devices() {
     [zones],
   );
 
+  /*
+   * The group filter the reference's bar carries. `?group=` has been in the
+   * contract all along; until now no server answered it, so asking for one
+   * group quietly returned the whole estate.
+   */
+  const { data: groups } = useQuery({
+    queryKey: ['/groups', 'filter'],
+    queryFn: ({ signal }) => api.get<{ items: DeviceGroup[] }>('/groups', undefined, signal),
+  });
+
+  const groupOptions = useMemo(() => {
+    const all = groups?.items ?? [];
+    const children = new Map<string, DeviceGroup[]>();
+    for (const g of all) {
+      const key = g.parentId ?? '';
+      children.set(key, [...(children.get(key) ?? []), g]);
+    }
+    // Drawn flat with indents, as the reference draws its own tree.
+    const out: { value: string; label: string }[] = [];
+    const walk = (parent: string, depth: number): void => {
+      for (const g of children.get(parent) ?? []) {
+        out.push({ value: g.id, label: `${'   '.repeat(depth)}${g.name}` });
+        walk(g.id, depth + 1);
+      }
+    };
+    walk('', 0);
+    return out;
+  }, [groups]);
+
   const setFilter = (key: string, value: string) => controller.setFilter(key, value || undefined);
 
   const chips = [
+    ...(controller.filters['group']
+      ? [
+          {
+            id: 'group',
+            label: 'Group',
+            value:
+              groupOptions.find((g) => g.value === controller.filters['group'])?.label.trim() ??
+              (controller.filters['group'] as string),
+            onRemove: () => controller.setFilter('group', undefined),
+          },
+        ]
+      : []),
     ...(controller.filters['zoneId']
       ? [
           {
@@ -521,6 +562,14 @@ export default function Devices() {
         }
         filters={
           <>
+            <Select
+              size="sm"
+              aria-label="Device group"
+              placeholder="All Groups"
+              options={groupOptions}
+              value={controller.filters['group'] ?? ''}
+              onChange={(e) => setFilter('group', e.target.value)}
+            />
             <Select
               size="sm"
               aria-label="Location"

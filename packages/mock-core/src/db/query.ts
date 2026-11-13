@@ -109,7 +109,8 @@ function resolveFields(spec: TableSpec, requested: string | undefined): string[]
   return [...new Set([...always.filter((f) => f in spec.columns), ...asked])];
 }
 
-interface WhereClause {
+/** A constraint and its bound values, kept together so neither drifts. */
+export interface WhereClause {
   sql: string;
   params: unknown[];
 }

@@ -1729,6 +1729,32 @@ test.describe('signed in as Super Admin', () => {
     await expect(page).toHaveURL(/\/devices$/);
   });
 
+  test('the Devices group filter narrows the grid server-side', async ({ page }) => {
+    await page.goto('/devices');
+
+    const total = async (): Promise<number | null> => {
+      const found = /of ([\d,]+) devices/.exec(await page.locator('main').innerText());
+      return found === null ? null : Number(found[1].replace(/,/g, ''));
+    };
+
+    await expect.poll(total).not.toBeNull();
+    const estate = await total();
+
+    // ?group= has been in the contract all along; this is the filter that
+    // used to be accepted and ignored, so the assertion is that the figure
+    // actually moves rather than that a control exists.
+    await page.getByRole('combobox', { name: 'Device group' }).selectOption({ index: 1 });
+    await expect(page).toHaveURL(/[?&]group=/);
+    await expect.poll(total).toBeLessThan(estate ?? 0);
+  });
+
+  test('the Columns control says how many columns are showing', async ({ page }) => {
+    await page.goto('/devices');
+    // v129 labels it "Columns 20" — a count of what is visible, not of what
+    // exists.
+    await expect(page.getByRole('button', { name: /^Columns\s+\d+$/ })).toBeVisible();
+  });
+
   test('the Overview scope bar narrows the dashboard and says so in the URL', async ({ page }) => {
     await page.goto('/');
 

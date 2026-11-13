@@ -123,6 +123,11 @@ export function ResourceList<T extends RowData>({
   const [activeView, setActiveView] = useState<string | null>('default');
   const canExport = useCan(exportPermission);
 
+  const visibleColumns = useMemo(
+    () => columns.filter((c) => view.columnVisibility[c.id] !== false).length,
+    [columns, view.columnVisibility],
+  );
+
   const exportColumns = useMemo(
     () =>
       columns
@@ -208,8 +213,13 @@ export function ResourceList<T extends RowData>({
                 }}
               />
             ) : null}
+            {/*
+             * "Columns 20", as the reference labels it: the count is of what
+             * is visible, not of what exists, so the number answers the
+             * question a reader actually has before opening the chooser.
+             */}
             <Button size="sm" onClick={() => setChooserOpen(true)}>
-              Columns
+              Columns <span className={styles.columnCount}>{visibleColumns}</span>
             </Button>
             {canExport && exportColumns.length > 0 ? (
               <Menu items={exportMenu} label="Export options">

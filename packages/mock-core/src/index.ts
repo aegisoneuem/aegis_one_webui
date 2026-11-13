@@ -72,4 +72,5 @@ export type {
   PageInfo,
   FilterOp,
   ListOptions,
+  WhereClause,
 } from './db/query';

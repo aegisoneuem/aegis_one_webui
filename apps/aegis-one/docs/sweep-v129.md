@@ -37,7 +37,7 @@ having no "Loading" text left.
 | Page            | Route             | Icons | Palette | Gloss | Charts | Tiles  | Header / filters       | Table               | Load  |
 | --------------- | ----------------- | ----- | ------- | ----- | ------ | ------ | ---------------------- | ------------------- | ----- |
 | Overview        | `/`               | 24/37 | clean   | n/a   | 13 svg | 21 / 5 | scope done, 2 open ¹   | 19 rows, no pager   | 358ms |
-| Devices         | `/devices`        | 24/24 | clean   | n/a   | —      | 13 / 4 | **5 controls short**   | search, sort, pager | 301ms |
+| Devices         | `/devices`        | 24/24 | clean   | n/a   | —      | 13 / 4 | group + count done ¹   | search, sort, pager | 301ms |
 | Device groups   | `/groups`         | 24/24 | clean   | n/a   | —      | 14 / 0 | matches                | sort, pager         | 236ms |
 | Enrollment      | `/enrollment`     | 24/27 | clean   | n/a   | 3 svg  | 18 / 0 | matches                | 5 rows              | 324ms |
 | Patches         | `/patches`        | 24/44 | clean   | n/a   | 20 svg | 17 / 0 | matches                | 35 rows, sort       | 280ms |
@@ -174,18 +174,47 @@ Still different, and not done:
 - The build keeps a `⟳` refresh the reference does not have. It is useful and
   it is not in the way, so it stays unless you would rather it went.
 
-### 3.4 Devices is missing most of its filter bar
+### 3.4 Devices — two real gaps, now closed, and two claims that were wrong
 
-Missing: `Advanced Filter`, the `Saved views` select, the `Filters` button,
-and the count on `Columns` (the reference shows `Columns 20`). The build's
-four selects are labelled `Location`, `Platform`, `Status`; the reference
-labels them `Device location`, `Device platform`, `Device status`. The search
-placeholder differs — "Search hostname, IP, serial, user or model" against
-"Search name, IP, MAC, DNS, user or anything else". Two columns carry no sort
-affordance where the reference gives every column one.
+Checked control by control, with accessible names resolved properly this
+time.
 
-The build adds a `Default view` control and a `Previous`/`Next` pager with a
-rows-per-page select; the reference pages differently.
+**Closed:**
+
+- **The group filter.** The reference's bar has one and the build's did not.
+  `?group=` has been in the contract all along and _no server answered it_ —
+  the parameter was accepted and ignored, so asking for one group returned
+  the whole estate. It is implemented now, as a membership test rather than
+  an id list, because the largest group holds 32,710 devices. Measured:
+  50,000 to 32,710, and an unknown group gives 0 rather than everything.
+- **The count on `Columns`.** The reference labels it `Columns 20` — what is
+  visible, not what exists. The build now does too, everywhere the shared
+  list toolbar is used.
+
+**Wrong in the first version of this document:**
+
+- **`Saved views` is not missing.** The build has it, as a menu labelled by
+  the current view ("Default view") rather than the reference's `select`.
+  Same feature, different control.
+- **`Filters` opens nothing in the reference.** Clicking it shows no panel
+  and no dialog; it toggles a filter row that the build shows inline at all
+  times. A shape difference, not a missing control.
+
+**Still open:**
+
+- **`Advanced Filter`** really is missing. The reference opens a rule builder
+  — "All rules must match · 80 fields" — and the contract has `?filter=`, a
+  JSON array of `{field, op, value}`, for exactly it. That parameter is the
+  third one found declared and unimplemented: `?filter=` is accepted and
+  ignored like `?group=` was. The builder plus a parser with a field and
+  operator allowlist is its own piece of work.
+- Two columns carry no sort indicator where the reference gives every column
+  one.
+
+**Not a difference:** the search placeholders read differently because the
+build's is accurate. The reference promises "or any field"; this server
+searches hostname, IP, serial, user and model, and the placeholder says so.
+The build's `Default view` control and its pager are additions, not losses.
 
 ### 3.5 Vulnerabilities is a different page, not a drifted one
 

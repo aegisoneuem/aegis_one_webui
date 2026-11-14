@@ -14,6 +14,25 @@
  * grid can say `flex: 1; min-height: 0` and have that resolve. Pages that
  * simply grow are unaffected: they size to their content and this scrolls.
  */
+/*
+ * While a role is being previewed. It sits above every page, because the
+ * preview narrows every page; the gold rule is the sidebar's, so it reads as
+ * the console talking about itself rather than as an alert about the estate.
+ */
+.rolePreview {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border: 1px solid var(--ao-border);
+  border-left: 3px solid var(--ao-brand-hi);
+  margin-bottom: var(--ui-space-5);
+  background: var(--ao-track);
+  color: var(--ao-text);
+  font-size: 12.5px;
+}
+
 .content {
   display: flex;
   flex: 1;

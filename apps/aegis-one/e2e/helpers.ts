@@ -33,7 +33,7 @@ export async function signIn(page: Page, email: string = ACCOUNTS.superAdmin): P
   await page.getByRole('navigation', { name: 'Breadcrumb' }).waitFor();
 }
 
-/** The 19 pages, in sidebar order. */
+/** The 20 pages, in sidebar order. */
 export const PAGES = [
   { path: '/', heading: 'Overview' },
   { path: '/devices', heading: 'Devices' },
@@ -44,6 +44,13 @@ export const PAGES = [
   // The sidebar says Software; the approved page's own title is longer.
   { path: '/software', heading: 'Software Catalog' },
   { path: '/liveops', heading: 'Live Activity' },
+  /*
+   * The twentieth page. It was missing from this list from the day it was
+   * built, so the whole suite walked nineteen pages and never opened this
+   * one: the only thing exercising it was check:api, against the contract
+   * rather than the browser.
+   */
+  { path: '/remote-control', heading: 'Remote Control' },
   { path: '/deployments', heading: 'Deployments' },
   { path: '/vulns', heading: 'Vulnerabilities' },
   // The sidebar says Configuration; the approved page's own title is longer.

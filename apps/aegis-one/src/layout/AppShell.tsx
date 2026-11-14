@@ -1,9 +1,17 @@
 import { useEffect, useMemo } from 'react';
 import { Outlet, useMatches, useNavigate } from 'react-router-dom';
-import { Breadcrumb, Icon, NavGroup, NavItem, Sidebar, type BreadcrumbItem } from '@aegis/ui';
+import {
+  Breadcrumb,
+  Button,
+  Icon,
+  NavGroup,
+  NavItem,
+  Sidebar,
+  type BreadcrumbItem,
+} from '@aegis/ui';
 import markUrl from '../assets/brand/aegis-mark.png';
 import { NAV_GROUPS, PAGE_BY_ID, PAGE_PERMISSIONS } from '../app/nav';
-import { useAuth } from '../app/auth';
+import { useAuth, useRolePreview } from '../app/auth';
 import { TopBarActions } from './TopBarActions';
 import type { RouteHandle } from '../app/routes';
 import { useUiStore } from '../app/uiStore';
@@ -15,6 +23,7 @@ function isRouteHandle(h: unknown): h is RouteHandle {
 
 export function AppShell(): JSX.Element {
   const navigate = useNavigate();
+  const { preview: rolePreview, set: setRolePreview } = useRolePreview();
   const matches = useMatches();
   const { collapsed, expanded, toggleCollapsed, toggleGroup, expandGroup } = useUiStore();
   const { can } = useAuth();
@@ -127,6 +136,22 @@ export function AppShell(): JSX.Element {
           trailing={<TopBarActions />}
         />
         <main className={styles.content} id="content">
+          {/*
+           * A role preview narrows every page, not the one it was set from,
+           * so the notice sits above all of them. Without it the console
+           * quietly offers less and says nothing about why.
+           */}
+          {rolePreview ? (
+            <div className={styles.rolePreview} role="status">
+              <span>
+                Viewing as <b>{rolePreview.name}</b> &middot; controls only, the figures are still
+                yours
+              </span>
+              <Button size="sm" onClick={() => setRolePreview(null)}>
+                Switch back
+              </Button>
+            </div>
+          ) : null}
           <Outlet />
         </main>
       </div>

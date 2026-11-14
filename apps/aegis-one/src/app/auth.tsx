@@ -35,6 +35,13 @@ export interface CurrentUser {
 
 export type AuthStatus = 'checking' | 'signed-in' | 'signed-out';
 
+/** A role being previewed, and the permissions it carries. */
+export interface RolePreview {
+  id: string;
+  name: string;
+  permissions: string[];
+}
+
 interface AuthContextValue {
   status: AuthStatus;
   user: CurrentUser | null;
@@ -44,6 +51,12 @@ interface AuthContextValue {
   completeSignIn: (code: string, state: string) => Promise<void>;
   signOut: () => Promise<void>;
   can: (permission: string) => boolean;
+  /**
+   * The role the console is being read as, or null for the signed-in user's
+   * own. It narrows what the UI offers and changes nothing the server does.
+   */
+  rolePreview: RolePreview | null;
+  setRolePreview: (preview: RolePreview | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -75,6 +88,7 @@ async function s256(value: string): Promise<string> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('checking');
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [rolePreview, setRolePreview] = useState<RolePreview | null>(null);
 
   const apply = useCallback((data: SessionResponse) => {
     setAccessToken(data.accessToken);
@@ -159,17 +173,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const can = useCallback(
     (permission: string): boolean => {
       if (!user) return false;
-      if (user.permissions.includes('*')) return true;
-      if (user.permissions.includes(permission)) return true;
-      const area = permission.split(':', 1)[0];
-      return area ? user.permissions.includes(`${area}:*`) : false;
+      const granted = (permissions: readonly string[]): boolean => {
+        if (permissions.includes('*')) return true;
+        if (permissions.includes(permission)) return true;
+        const area = permission.split(':', 1)[0];
+        return area ? permissions.includes(`${area}:*`) : false;
+      };
+      /*
+       * Both must allow it while a role is being previewed. The preview can
+       * take controls away, which is what it is for; it cannot hand out one
+       * the signed-in user has not got, because the server would refuse it
+       * and a button that 403s previews nothing.
+       */
+      if (rolePreview && !granted(rolePreview.permissions)) return false;
+      return granted(user.permissions);
     },
-    [user],
+    [user, rolePreview],
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, signIn, completeSignIn, signOut, can }),
-    [status, user, signIn, completeSignIn, signOut, can],
+    () => ({
+      status,
+      user,
+      signIn,
+      completeSignIn,
+      signOut,
+      can,
+      rolePreview,
+      setRolePreview,
+    }),
+    [status, user, signIn, completeSignIn, signOut, can, rolePreview],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -184,4 +217,13 @@ export function useAuth(): AuthContextValue {
 /** Convenience for the common case of gating a single control. */
 export function useCan(permission: string): boolean {
   return useAuth().can(permission);
+}
+
+/** The role being previewed, for the banner and the dialog that sets it. */
+export function useRolePreview(): {
+  preview: RolePreview | null;
+  set: (preview: RolePreview | null) => void;
+} {
+  const { rolePreview, setRolePreview } = useAuth();
+  return { preview: rolePreview, set: setRolePreview };
 }

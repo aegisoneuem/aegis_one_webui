@@ -238,6 +238,38 @@ test.describe('signed in as Super Admin', () => {
     await expect(wizard).toHaveCount(0);
   });
 
+  test('previewing a role narrows every page, says so, and lets go', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Customize', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+
+    try {
+      await dialog.getByLabel('Preview as role').selectOption({ label: 'Read-only' });
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+
+      const banner = page.getByRole('status');
+      await expect(banner).toContainText('Viewing as Read-only');
+      // The promise the banner makes: controls, not figures.
+      await expect(banner).toContainText('the figures are still yours');
+
+      // It follows the reader rather than staying on the page that set it,
+      // which is the whole point — a console that quietly offers less and
+      // says nothing about why is worse than no preview at all.
+      await page.getByRole('link', { name: 'Device groups' }).click();
+      await expect(page).toHaveURL(/\/groups/);
+      await expect(page.getByRole('status')).toContainText('Viewing as Read-only');
+      await expect(page.getByRole('button', { name: 'Import groups from CSV' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Create Group' })).toBeDisabled();
+
+      await page.getByRole('button', { name: 'Switch back' }).click();
+      await expect(page.getByRole('status')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Create Group' })).toBeEnabled();
+    } finally {
+      // The preview is session state, so a reload clears it whatever happened.
+      await page.goto('/');
+    }
+  });
+
   test('Devices lists, filters, sorts and pages', async ({ page }) => {
     await page.goto('/devices');
     const grid = page.getByRole('table', { name: 'Devices' });

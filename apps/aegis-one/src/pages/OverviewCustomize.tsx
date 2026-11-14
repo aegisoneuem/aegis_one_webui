@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Button, Checkbox, Modal } from '@aegis/ui';
-import type { OverviewLayout, OverviewThresholds } from '../api/types';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Checkbox, Modal, Select } from '@aegis/ui';
+import { api } from '../api/client';
+import { useRolePreview } from '../app/auth';
+import type { OverviewLayout, OverviewThresholds, RoleDefinition } from '../api/types';
 import styles from './OverviewCustomize.module.css';
 
 /**
@@ -11,10 +14,13 @@ import styles from './OverviewCustomize.module.css';
  * saving on every keystroke: a half-typed threshold is not a layout anyone
  * meant to keep, and the reference's own dialog ends with a Done.
  *
- * Three of the reference's four sections are here. "Preview As Role" is not:
- * it asks the API to answer as somebody else, and the contract has no way to
- * say that. A select that changed only a label would claim a preview this
- * console cannot give.
+ * All four of the reference's sections are here. "Preview As Role" is the
+ * one that needed thinking about: it cannot ask the API to answer as
+ * somebody else, because there is no impersonation in the contract and there
+ * should not be one. So it reads the role's permission set from
+ * `/admin/roles` and narrows what the console offers, which is a what-if
+ * about controls rather than a change of identity — and the banner it raises
+ * says exactly that.
  */
 
 export const WIDGET_TITLES: Record<string, string> = {
@@ -114,6 +120,17 @@ export function OverviewCustomize({
     widgets: layout.widgets.map((w) => ({ ...w })),
     thresholds: { ...(layout.thresholds ?? DEFAULT_THRESHOLDS) },
   }));
+
+  const { preview, set: setPreview } = useRolePreview();
+  /*
+   * The roles as the server defines them. A preview built from a list typed
+   * in here would drift from the matrix the server actually enforces, which
+   * is the one thing a preview must not do.
+   */
+  const roles = useQuery({
+    queryKey: ['/admin/roles', 'preview'],
+    queryFn: ({ signal }) => api.get<RoleDefinition[]>('/admin/roles', undefined, signal),
+  });
 
   const thresholds = draft.thresholds ?? DEFAULT_THRESHOLDS;
   const set = (changes: Partial<OverviewLayout>) => setDraft({ ...draft, ...changes });
@@ -227,6 +244,33 @@ export function OverviewCustomize({
             );
           })}
         </ul>
+      </section>
+
+      <section className={styles.section}>
+        <h3 className={styles.heading}>Preview As Role</h3>
+        <div className={styles.roleRow}>
+          <Select
+            aria-label="Preview as role"
+            value={preview?.id ?? ''}
+            placeholder="Your own role"
+            options={(roles.data ?? []).map((r) => ({ value: r.id, label: r.name }))}
+            onChange={(e) => {
+              const role = (roles.data ?? []).find((r) => r.id === e.target.value);
+              setPreview(
+                role ? { id: role.id, name: role.name, permissions: role.permissions } : null,
+              );
+            }}
+          />
+          {preview ? (
+            <Button size="sm" onClick={() => setPreview(null)}>
+              Switch back
+            </Button>
+          ) : null}
+        </div>
+        <p className={styles.roleNote}>
+          Changes which controls the console offers, not the figures it shows — those stay your own.
+          It can only take controls away, never add one your own role has not got.
+        </p>
       </section>
 
       <section className={styles.section}>

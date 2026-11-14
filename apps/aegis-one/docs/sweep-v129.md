@@ -537,16 +537,38 @@ Three decisions the data made rather than the design:
 - Changing the subject clears the measure, the group-by and the filter,
   because they name columns belonging to the old one.
 
-### 3.6h Still open: Preview As Role
+### 3.6h Preview As Role — a what-if about controls, not an impersonation
 
-The one part of Customize that is not built, and the reason has not changed:
-it asks the API to answer as somebody else, and the contract has no
-impersonation, no preview parameter and nothing on `/admin/roles` that would
-serve. The honest version is a **client-side what-if** — read the role's
-permission set from `/admin/roles` and override `useCan` for the page, so a
-reader sees which controls that role would and would not have. That touches
-the auth layer rather than this dialog, which is why it is still written
-here rather than done.
+The last of Customize's four sections. The reference's select asks the
+console to be read as another role; the obvious reading, asking the API to
+answer as somebody else, is not available and should not be. There is no
+impersonation in the contract, and adding one so a dialog could look
+complete would be the worst trade in this repository.
+
+So the role's permission set comes from `/admin/roles`, which already
+publishes it, and `can()` evaluates against it alongside the signed-in
+user's own. The request does not change: same token, same scope, same
+figures.
+
+**It can only narrow.** The previewed permissions are intersected with the
+real ones, so a preview takes controls away and never hands one out. A
+button the server would refuse previews nothing — it is a 403 waiting to
+happen, and on a console where the server is the real check, offering one
+teaches the reader the opposite of the truth. The case this is for, an
+administrator checking what a read-only viewer sees, only ever removes.
+
+**The banner is in the shell**, and that came from looking rather than
+reasoning: with it on the Overview alone, walking to Device Groups while
+previewing Read-only left three buttons disabled and nothing saying why. It
+reads "Viewing as Read-only · controls only, the figures are still yours",
+and carries its own way out.
+
+It is session state, not part of the layout. The contract has no field for
+it, it should not survive a reload, and a reader who ends up somewhere
+confusing gets out by reloading.
+
+With this, all four sections of Customize are built and nothing from the
+Overview's four controls is outstanding.
 
 ### 3.7 Open: two palette tokens are a shade off, console-wide
 

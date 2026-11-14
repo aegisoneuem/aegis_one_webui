@@ -158,6 +158,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/overview/widget-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The subjects a custom widget may be built on, and what may be grouped and measured. */
+        get: operations["getWidgetFields"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/widget-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The series behind one custom widget, for its live preview and for the Overview.
+         * @description A read, not a write: POST only because a widget definition does not belong in a query string. The same endpoint serves the wizard's preview and the widget on the page, so the preview cannot show something the Overview would then draw differently.
+         */
+        post: operations["getWidgetData"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/setup/checklist": {
         parameters: {
             query?: never;
@@ -2216,7 +2253,74 @@ export interface components {
                 chartType?: "donut" | "pie" | "column" | "bar" | "rings";
                 view?: string;
                 title?: string;
+                definition?: components["schemas"]["CustomWidgetDefinition"];
             }[];
+        };
+        CustomWidgetDefinition: {
+            /** @enum {string} */
+            source: "devices" | "patches" | "deployments" | "software" | "checks" | "software-installs";
+            measure: {
+                /** @enum {string} */
+                agg: "count" | "pct" | "avg" | "sum" | "min" | "max";
+                /** @description Required for avg, sum, min and max; the id of one of the source's numbers. */
+                field?: string;
+            };
+            views: {
+                /** @description Absent means a single number rather than a series. */
+                groupBy?: string;
+                /** @enum {string} */
+                chart: "donut" | "pie" | "column" | "bar" | "rings";
+                /** @enum {string} */
+                sort?: "value" | "name";
+                /**
+                 * @description 0 means every group.
+                 * @enum {integer}
+                 */
+                limit?: 0 | 5 | 10 | 15;
+            }[];
+            hideNotSet?: boolean;
+            filter?: {
+                /** @enum {string} */
+                match: "all" | "any";
+                rules: {
+                    field: string;
+                    /** @enum {string} */
+                    op: "eq" | "ne" | "in" | "like" | "nlike" | "gt" | "lt" | "empty" | "notEmpty";
+                    value?: string;
+                }[];
+            };
+            /** @enum {string} */
+            size?: "third" | "half" | "full";
+            /** @description The widget this one sits after; absent means the end of the Overview. */
+            placeAfter?: string;
+            targetPct?: number;
+        };
+        WidgetData: {
+            /** @description Rows in the source before the widget's own filter. */
+            total: number;
+            /** @description Rows the widget's filter kept. */
+            matched: number;
+            /** @description What one row is, for the centre of a donut — "devices", "patches". */
+            unit: string;
+            series: {
+                key: string;
+                label: string;
+                value: number;
+                pct?: number;
+            }[];
+        };
+        WidgetFields: {
+            sources: {
+                id: string;
+                label: string;
+                unit: string;
+                dimensions: components["schemas"]["WidgetField"][];
+                numbers: components["schemas"]["WidgetField"][];
+            }[];
+        };
+        WidgetField: {
+            id: string;
+            label: string;
         };
         SetupChecklist: {
             steps: {
@@ -4206,6 +4310,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OverviewLayout"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getWidgetFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fields */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetFields"];
+                };
+            };
+        };
+    };
+    getWidgetData: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    definition: components["schemas"]["CustomWidgetDefinition"];
+                    zone?: string;
+                    platform?: string;
+                    department?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The series */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetData"];
                 };
             };
             400: components["responses"]["BadRequest"];

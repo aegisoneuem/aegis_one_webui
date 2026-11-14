@@ -177,6 +177,67 @@ test.describe('signed in as Super Admin', () => {
     }
   });
 
+  test('the wizard builds a widget from a template and the Overview draws it', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: '+ Custom Widget' }).click();
+    const wizard = page.getByRole('dialog', { name: 'Create Custom Widget' });
+    await expect(wizard).toBeVisible();
+
+    try {
+      // A template fills every step, so Continue walks straight to Display.
+      await wizard.getByRole('button', { name: /^Unencrypted Devices by Department/ }).click();
+      await expect(wizard).toContainText('Step 2 of 6');
+
+      // The preview is the same endpoint and the same chart the page will
+      // use, so it has to have drawn before the widget is added.
+      await expect(
+        wizard.getByRole('table', { name: /Unencrypted Devices by Department/ }),
+      ).toBeAttached();
+
+      for (let step = 2; step <= 5; step += 1) {
+        await wizard.getByRole('button', { name: 'Continue', exact: true }).click();
+      }
+      await expect(wizard).toContainText('Step 6 of 6');
+
+      await wizard.getByLabel('Place After').selectOption('health');
+      await wizard.getByRole('button', { name: 'Add to Overview', exact: true }).click();
+
+      const widget = page
+        .getByRole('article')
+        .filter({ has: page.getByRole('heading', { name: 'Unencrypted Devices by Department' }) });
+      await expect(widget).toBeVisible();
+
+      // Saved, not only drawn: a cold load reads it back from the layout.
+      await page.reload();
+      await expect(
+        page.getByRole('heading', { name: 'Unencrypted Devices by Department' }),
+      ).toBeVisible();
+    } finally {
+      await resetOverview(page);
+      await expect(
+        page.getByRole('heading', { name: 'Unencrypted Devices by Department' }),
+      ).toHaveCount(0);
+    }
+  });
+
+  test('a measure the subject cannot answer is reported, not drawn empty', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: '+ Custom Widget' }).click();
+    const wizard = page.getByRole('dialog', { name: 'Create Custom Widget' });
+
+    await wizard.getByRole('button', { name: /^Start From Blank/ }).click();
+    // Software Installs is a join and carries no numbers, so an average has
+    // nothing to average; the wizard says so rather than drawing nothing.
+    await wizard.getByRole('button', { name: 'Software Installs' }).click();
+    await wizard.getByRole('button', { name: 'Continue', exact: true }).click();
+    await wizard.getByRole('button', { name: 'Average', exact: true }).click();
+
+    await expect(wizard).toContainText('carries no numbers');
+
+    await wizard.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(wizard).toHaveCount(0);
+  });
+
   test('Devices lists, filters, sorts and pages', async ({ page }) => {
     await page.goto('/devices');
     const grid = page.getByRole('table', { name: 'Devices' });

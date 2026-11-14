@@ -1,0 +1,251 @@
+/* Create Custom Widget. Square, like the rest of the console. */
+
+.steps {
+  display: flex;
+  gap: var(--ui-space-2);
+  margin-bottom: var(--ui-space-5);
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.step,
+.stepOn {
+  padding: 7px 11px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stepOn {
+  border-bottom-color: var(--ao-brand-hi);
+  color: var(--ao-navy-ink);
+}
+
+.step:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.step:focus-visible,
+.stepOn:focus-visible,
+.template:focus-visible,
+.sourceOn:focus-visible,
+.chip:focus-visible,
+.chipOn:focus-visible,
+.remove:focus-visible,
+.value:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--ui-space-6);
+  align-items: start;
+}
+
+.pane {
+  min-width: 0;
+}
+
+.heading {
+  margin: 0 0 var(--ui-space-4);
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.template,
+.sourceOn {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.template b,
+.sourceOn b {
+  color: var(--ao-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.template small,
+.sourceOn small {
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+.template:hover {
+  background: var(--ui-surface-hover);
+}
+
+.sourceOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+}
+
+.sourceOn b,
+.sourceOn small {
+  color: var(--ao-surface);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-5);
+}
+
+.chip,
+.chipOn {
+  padding: 7px 12px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.chipOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: var(--ui-space-4);
+  align-items: center;
+  margin-bottom: var(--ui-space-4);
+  color: var(--ao-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.value {
+  width: 100%;
+  height: var(--ui-control-height);
+  padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.check {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  color: var(--ao-text);
+  font-size: 12.5px;
+}
+
+.rules {
+  margin: 0 0 var(--ui-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.rule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 26px;
+  gap: var(--ui-space-3);
+  align-items: center;
+  margin-bottom: var(--ui-space-3);
+}
+
+.noValue {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.remove {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.note {
+  margin: var(--ui-space-4) 0 0;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.preview {
+  min-width: 0;
+  padding: var(--ui-space-5);
+  border: 1px solid var(--ao-border);
+  background: var(--ao-track);
+}
+
+.previewHeading {
+  margin: 0 0 var(--ui-space-2);
+  color: var(--ao-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.previewTitle {
+  margin: 0 0 var(--ui-space-4);
+  color: var(--ao-navy-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.paneSkeleton,
+.previewSkeleton {
+  height: 180px;
+}
+
+.error {
+  margin: 0;
+  color: var(--ao-danger);
+  font-size: 12.5px;
+}
+
+@media (width <= 1100px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

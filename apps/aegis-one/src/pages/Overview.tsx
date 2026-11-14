@@ -12,9 +12,14 @@ import type {
   AttentionItem,
   Overview as OverviewData,
   OverviewLayout,
+  OverviewLayoutWidget,
+  WidgetData,
+  WidgetDefinition,
   ZoneList,
 } from '../api/types';
 import { DEFAULT_THRESHOLDS, OverviewCustomize, applyPreset } from './OverviewCustomize';
+import { CustomWidgetWizard } from './CustomWidgetWizard';
+import { WidgetChart } from './shared/WidgetChart';
 import styles from './Overview.module.css';
 
 /**
@@ -158,6 +163,7 @@ export default function Overview() {
   });
   const [applied, setApplied] = useState<OverviewLayout | null>(null);
   const [customizing, setCustomizing] = useState(false);
+  const [building, setBuilding] = useState(false);
   const toast = useToast();
 
   const saveLayout = useMutation({
@@ -544,12 +550,8 @@ export default function Overview() {
         </div>
 
         <div className={styles.headingActions}>
-          {/*
-           * The reference puts both of these before Export. "+ Custom
-           * Widget" opens the same dialog at its Widgets section, which is
-           * where the reference's own widget builder is reached from.
-           */}
-          <Button onClick={() => setCustomizing(true)}>+ Custom Widget</Button>
+          {/* The reference puts both of these before Export. */}
+          <Button onClick={() => setBuilding(true)}>+ Custom Widget</Button>
           <Button onClick={() => setCustomizing(true)}>Customize</Button>
           <Button onClick={go('/reports')}>Export</Button>
           <Button variant="primary" onClick={go('/deployments/new')}>
@@ -1111,6 +1113,26 @@ export default function Overview() {
             </div>
           </Panel>
         </Cell>
+
+        {/*
+         * The widgets the wizard built. They sit in the same grid and obey
+         * the same layout, so "place after" and the arrows in Customize work
+         * on them exactly as they do on the eight above.
+         */}
+        {layout.widgets
+          .filter((w) => w.type === 'custom' && w.visible)
+          .map((w) => (
+            <Cell key={w.id} id={w.id} layout={layout} span={w.definition?.size ?? 'third'}>
+              <CustomWidget
+                widget={w}
+                scope={{
+                  ...(zone ? { zone } : {}),
+                  ...(platform ? { platform } : {}),
+                  ...(department ? { department } : {}),
+                }}
+              />
+            </Cell>
+          ))}
       </div>
 
       {/*
@@ -1127,6 +1149,24 @@ export default function Overview() {
           onApply={(next) => {
             setApplied(next);
             setCustomizing(false);
+            saveLayout.mutate(next);
+          }}
+        />
+      ) : null}
+
+      {building ? (
+        <CustomWidgetWizard
+          open
+          scope={{
+            ...(zone ? { zone } : {}),
+            ...(platform ? { platform } : {}),
+            ...(department ? { department } : {}),
+          }}
+          onClose={() => setBuilding(false)}
+          onAdd={(title, definition) => {
+            setBuilding(false);
+            const next = addCustomWidget(layout, title, definition);
+            setApplied(next);
             saveLayout.mutate(next);
           }}
         />
@@ -1156,6 +1196,75 @@ const badgeTone = (status: string): Tone =>
 /* ------------------------------------------------------------------ */
 
 /**
+ * Puts a new custom widget where the wizard's Display step said.
+ *
+ * "Place after" names a widget rather than an index, because an index would
+ * mean something different the moment anything else moved.
+ */
+function addCustomWidget(
+  layout: OverviewLayout,
+  title: string,
+  definition: WidgetDefinition,
+): OverviewLayout {
+  const id = `custom-${Date.now().toString(36)}`;
+  const widget: OverviewLayoutWidget = {
+    id,
+    type: 'custom',
+    visible: true,
+    title,
+    definition,
+  };
+  const widgets = [...layout.widgets];
+  const after = definition.placeAfter
+    ? widgets.findIndex((w) => w.id === definition.placeAfter)
+    : -1;
+  if (after >= 0) widgets.splice(after + 1, 0, widget);
+  else widgets.push(widget);
+  return { ...layout, widgets };
+}
+
+/**
+ * A custom widget on the page: its own panel, reading its own series from
+ * the same endpoint the wizard's preview read, drawn by the same component.
+ */
+function CustomWidget({
+  widget,
+  scope,
+}: {
+  widget: OverviewLayoutWidget;
+  scope: { zone?: string; platform?: string; department?: string };
+}) {
+  const definition = widget.definition;
+  const data = useQuery({
+    queryKey: ['/overview/widget-data', definition, scope],
+    queryFn: () => api.post<WidgetData>('/overview/widget-data', { definition, ...scope }),
+    enabled: Boolean(definition),
+    retry: false,
+  });
+
+  if (!definition) return null;
+  const title = widget.title ?? 'Custom widget';
+
+  return (
+    <Panel title={title} subtitle="Custom widget">
+      {data.isLoading ? <Skeleton className={styles.panelSkeleton} /> : null}
+      {data.isError ? (
+        <ErrorState
+          description="This widget could not be measured."
+          {...(data.error instanceof ApiError ? { detail: `Request ${data.error.requestId}` } : {})}
+          onRetry={() => void data.refetch()}
+        />
+      ) : null}
+      {data.data ? (
+        <div className={styles.body}>
+          <WidgetChart title={title} definition={definition} data={data.data} />
+        </div>
+      ) : null}
+    </Panel>
+  );
+}
+
+/**
  * One widget's place on the page.
  *
  * A widget the layout hides is not rendered at all rather than hidden with
@@ -1178,7 +1287,8 @@ function Cell({
   const index = layout.widgets.findIndex((w) => w.id === id);
   const widget = index >= 0 ? layout.widgets[index] : undefined;
   if (widget && !widget.visible) return null;
-  const order = index >= 0 ? index : layout.widgets.length;
+  // Clamped to the last order class there is; see Overview.module.css.
+  const order = Math.min(index >= 0 ? index : layout.widgets.length, 23);
   return (
     <div
       className={[styles.cell, styles[`span-${span}`], styles[`order-${order}`]]

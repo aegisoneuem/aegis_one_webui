@@ -365,6 +365,62 @@ paths:
                 $ref: '#/components/schemas/OverviewLayout'
         '400':
           $ref: '#/components/responses/BadRequest'
+  /overview/widget-fields:
+    get:
+      tags:
+      - overview
+      operationId: getWidgetFields
+      summary: The subjects a custom widget may be built on, and what may be grouped and measured.
+      x-required-permission: overview:read
+      responses:
+        '200':
+          description: Fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetFields'
+  /overview/widget-data:
+    post:
+      tags:
+      - overview
+      operationId: getWidgetData
+      summary: The series behind one custom widget, for its live preview and for the Overview.
+      description: >-
+        A read, not a write: POST only because a widget definition does not
+        belong in a query string. The same endpoint serves the wizard's
+        preview and the widget on the page, so the preview cannot show
+        something the Overview would then draw differently.
+      x-required-permission: overview:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - definition
+              properties:
+                definition:
+                  $ref: '#/components/schemas/CustomWidgetDefinition'
+                zone:
+                  type: string
+                  maxLength: 64
+                platform:
+                  type: string
+                  maxLength: 32
+                department:
+                  type: string
+                  maxLength: 64
+      responses:
+        '200':
+          description: The series
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /setup/checklist:
     get:
       tags:
@@ -4197,6 +4253,223 @@ components:
               title:
                 type: string
                 maxLength: 80
+              definition:
+                $ref: '#/components/schemas/CustomWidgetDefinition'
+    CustomWidgetDefinition:
+      type: object
+      additionalProperties: false
+      required:
+      - source
+      - measure
+      - views
+      properties:
+        source:
+          type: string
+          enum:
+          - devices
+          - patches
+          - deployments
+          - software
+          - checks
+          - software-installs
+        measure:
+          type: object
+          additionalProperties: false
+          required:
+          - agg
+          properties:
+            agg:
+              type: string
+              enum:
+              - count
+              - pct
+              - avg
+              - sum
+              - min
+              - max
+            field:
+              type: string
+              maxLength: 64
+              description: Required for avg, sum, min and max; the id of one of the source's numbers.
+        views:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - chart
+            properties:
+              groupBy:
+                type: string
+                maxLength: 64
+                description: Absent means a single number rather than a series.
+              chart:
+                type: string
+                enum:
+                - donut
+                - pie
+                - column
+                - bar
+                - rings
+              sort:
+                type: string
+                enum:
+                - value
+                - name
+              limit:
+                type: integer
+                enum:
+                - 0
+                - 5
+                - 10
+                - 15
+                description: 0 means every group.
+        hideNotSet:
+          type: boolean
+        filter:
+          type: object
+          additionalProperties: false
+          required:
+          - match
+          - rules
+          properties:
+            match:
+              type: string
+              enum:
+              - all
+              - any
+            rules:
+              type: array
+              maxItems: 20
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - field
+                - op
+                properties:
+                  field:
+                    type: string
+                    maxLength: 64
+                  op:
+                    type: string
+                    enum:
+                    - eq
+                    - ne
+                    - in
+                    - like
+                    - nlike
+                    - gt
+                    - lt
+                    - empty
+                    - notEmpty
+                  value:
+                    type: string
+                    maxLength: 200
+        size:
+          type: string
+          enum:
+          - third
+          - half
+          - full
+        placeAfter:
+          type: string
+          maxLength: 64
+          description: The widget this one sits after; absent means the end of the Overview.
+        targetPct:
+          type: integer
+          minimum: 1
+          maximum: 100
+    WidgetData:
+      type: object
+      additionalProperties: false
+      required:
+      - total
+      - matched
+      - unit
+      - series
+      properties:
+        total:
+          type: integer
+          description: Rows in the source before the widget's own filter.
+        matched:
+          type: integer
+          description: Rows the widget's filter kept.
+        unit:
+          type: string
+          maxLength: 32
+          description: What one row is, for the centre of a donut — "devices", "patches".
+        series:
+          type: array
+          maxItems: 200
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - key
+            - label
+            - value
+            properties:
+              key:
+                type: string
+                maxLength: 120
+              label:
+                type: string
+                maxLength: 120
+              value:
+                type: number
+              pct:
+                type: number
+    WidgetFields:
+      type: object
+      additionalProperties: false
+      required:
+      - sources
+      properties:
+        sources:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - label
+            - unit
+            - dimensions
+            - numbers
+            properties:
+              id:
+                type: string
+                maxLength: 64
+              label:
+                type: string
+                maxLength: 80
+              unit:
+                type: string
+                maxLength: 32
+              dimensions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WidgetField'
+              numbers:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WidgetField'
+    WidgetField:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - label
+      properties:
+        id:
+          type: string
+          maxLength: 64
+        label:
+          type: string
+          maxLength: 80
     SetupChecklist:
       type: object
       additionalProperties: false

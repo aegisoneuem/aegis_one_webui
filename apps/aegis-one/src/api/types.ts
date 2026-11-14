@@ -1110,6 +1110,46 @@ export type OverviewThresholds = {
   complianceTarget: number;
 };
 
+/** The contract's CustomWidgetDefinition: everything the wizard collects. */
+export type WidgetFilterRule = { field: string; op: string; value?: string };
+
+export type WidgetView = {
+  groupBy?: string;
+  chart: 'donut' | 'pie' | 'column' | 'bar' | 'rings';
+  sort?: 'value' | 'name';
+  limit?: 0 | 5 | 10 | 15;
+};
+
+export type WidgetDefinition = {
+  source: string;
+  measure: { agg: 'count' | 'pct' | 'avg' | 'sum' | 'min' | 'max'; field?: string };
+  views: WidgetView[];
+  hideNotSet?: boolean;
+  filter?: { match: 'all' | 'any'; rules: WidgetFilterRule[] };
+  size?: 'third' | 'half' | 'full';
+  placeAfter?: string;
+  targetPct?: number;
+};
+
+export type WidgetData = {
+  total: number;
+  matched: number;
+  unit: string;
+  series: { key: string; label: string; value: number; pct?: number }[];
+};
+
+export type WidgetField = { id: string; label: string };
+
+export type WidgetFields = {
+  sources: {
+    id: string;
+    label: string;
+    unit: string;
+    dimensions: WidgetField[];
+    numbers: WidgetField[];
+  }[];
+};
+
 export type OverviewLayoutWidget = {
   id: string;
   type: string;
@@ -1117,6 +1157,8 @@ export type OverviewLayoutWidget = {
   chartType?: string;
   view?: string;
   title?: string;
+  /** Present only on a widget the wizard built. */
+  definition?: WidgetDefinition;
 };
 
 export type OverviewLayout = {

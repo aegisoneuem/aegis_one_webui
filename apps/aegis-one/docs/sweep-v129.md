@@ -489,27 +489,64 @@ its reorder buttons inconsistently — "Move Key metrics up" but "Move Overall
 Health Score up" — lower-casing some widget names and not others. Every
 button here is named after the widget's own title.
 
-### 3.6g Open: the custom widget wizard needs two things first
+### 3.6g The custom widget wizard — built, and what it cost
 
-"+ Custom Widget" opens a six-step wizard in the reference: **Start** (ten
-templates or blank), **Data** (six subjects), **Measure** (count, % of total,
-average, total, lowest, highest, with an "of field" picker for the four that
-need a number), **Views** (group by, chart, sort, show top N, more than one
-view per widget, and a "hide Not set values" toggle), **Filters** (AND/OR
-over field / operator / value, with a live match count), and **Display**
-(name, size, place after, optional target %). A live preview runs throughout.
+"+ Custom Widget" opens six steps in the reference: **Start** (ten templates
+or blank), **Data** (six subjects), **Measure** (count, % of total, average,
+total, lowest, highest, with an "of field" picker for the four that need a
+number), **Views** (group by, chart, sort, show top N, and a "hide Not set
+values" toggle), **Filters** (AND/OR over field / operator / value with a
+live match count) and **Display** (name, size, place after, optional target
+%). A live preview runs throughout. All six are now here.
 
-Two things are missing before it can be built honestly:
+**Two contract additions, proposed in docs/custom-widget-proposal.md before
+anything was built.**
 
-1. **Nowhere to keep the definition.** `OverviewLayout.widgets[]` carries id,
-   type, visible, chartType, view and title. It cannot express a subject, a
-   measure, a group-by, a filter or a size.
-2. **No endpoint can answer it.** `CustomReportInput` is columns, filter and
-   sort — row-oriented. Nothing in the contract returns "count of devices
-   grouped by department where encryption is off", which is the whole of what
-   a custom widget is.
+A widget whose `type` is `custom` carries a `definition`: subject, measure,
+views, filter, size and what it sits after. `OverviewLayout.widgets[]`
+carried id, type, visible, chartType, view and title, and none of those can
+express a custom widget.
 
-Both are contract additions to propose, not behaviour to invent.
+`POST /overview/widget-data` returns the series, because nothing in the
+contract could: the list endpoints are row-oriented and `CustomReportInput`
+is columns, filter and sort. It is a read — POST only because a definition
+does not belong in a query string — so no CSRF and a read permission, the
+shape `/reports/{id}/run` already has. `GET /overview/widget-fields` beside
+it says which subjects exist and what each can be grouped and measured by,
+so the wizard's selects come from the server rather than from a list typed
+into the console that could drift from it.
+
+**Nothing a caller types reaches SQL.** Dimensions, numbers and filter
+fields are looked up in the server's catalogue and contribute only the
+column text that file holds; operators come from a fixed map; values are
+always bound; the row limit is one of four values the contract allows. A
+field the catalogue has not got is a 400 that names it — not a clause that
+quietly disappears, which is the failure `?filter=` had.
+
+**The preview is the widget.** Both post the same definition to the same
+endpoint and render through the same component, which is what makes the
+reference's "LIVE PREVIEW · SAME AS ON OVERVIEW" a fact rather than a label.
+
+Three decisions the data made rather than the design:
+
+- A share is emitted only for counts and totals. An average does not add up
+  to a whole, and five groups each reading "20%" is a figure that means
+  nothing.
+- A numeric measure drops donut and pie, and moves the view with it, rather
+  than leaving a definition the server would refuse.
+- Changing the subject clears the measure, the group-by and the filter,
+  because they name columns belonging to the old one.
+
+### 3.6h Still open: Preview As Role
+
+The one part of Customize that is not built, and the reason has not changed:
+it asks the API to answer as somebody else, and the contract has no
+impersonation, no preview parameter and nothing on `/admin/roles` that would
+serve. The honest version is a **client-side what-if** — read the role's
+permission set from `/admin/roles` and override `useCan` for the page, so a
+reader sees which controls that role would and would not have. That touches
+the auth layer rather than this dialog, which is why it is still written
+here rather than done.
 
 ### 3.7 Open: two palette tokens are a shade off, console-wide
 

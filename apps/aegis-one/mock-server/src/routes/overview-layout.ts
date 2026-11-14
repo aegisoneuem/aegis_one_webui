@@ -40,6 +40,8 @@ export interface LayoutWidget {
   chartType?: string;
   view?: string;
   title?: string;
+  /** Present only on a widget the wizard built. */
+  definition?: unknown;
 }
 
 export interface Layout {
@@ -82,8 +84,18 @@ function validate(body: unknown): Layout {
     const w = entry as Record<string, unknown>;
     const id = typeof w['id'] === 'string' ? w['id'] : '';
     if (!id) throw badRequest('Each widget needs an id.');
-    if (!WIDGET_IDS.includes(id as WidgetId)) {
+
+    /*
+     * A custom widget is one the wizard built, so its id is whatever the
+     * console minted for it. Everything else has to be one of the eight this
+     * Overview draws, or the layout names a panel that does not exist.
+     */
+    const custom = w['type'] === 'custom';
+    if (!custom && !WIDGET_IDS.includes(id as WidgetId)) {
       throw badRequest(`This Overview has no widget called "${id}".`);
+    }
+    if (custom && (!w['definition'] || typeof w['definition'] !== 'object')) {
+      throw badRequest(`Custom widget "${id}" carries no definition.`);
     }
     if (seen.has(id)) throw badRequest(`Widget "${id}" is listed twice.`);
     seen.add(id);
@@ -100,6 +112,7 @@ function validate(body: unknown): Layout {
       ...(chartType ? { chartType } : {}),
       ...(typeof w['view'] === 'string' ? { view: w['view'] } : {}),
       ...(typeof w['title'] === 'string' ? { title: w['title'] } : {}),
+      ...(custom ? { definition: w['definition'] } : {}),
     });
   }
 

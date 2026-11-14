@@ -358,33 +358,106 @@
   grid-column: span 2;
 }
 
-/* The order the saved layout puts them in; eight widgets, eight places. */
+/*
+ * The order the saved layout puts them in. Eight built in and room for
+ * sixteen more from the wizard; past that the cell clamps to the last
+ * place, so a widget nobody can position sits at the end rather than
+ * jumping to the front.
+ */
 .order-0 {
   order: 0;
 }
+
 .order-1 {
   order: 1;
 }
+
 .order-2 {
   order: 2;
 }
+
 .order-3 {
   order: 3;
 }
+
 .order-4 {
   order: 4;
 }
+
 .order-5 {
   order: 5;
 }
+
 .order-6 {
   order: 6;
 }
+
 .order-7 {
   order: 7;
 }
+
 .order-8 {
   order: 8;
+}
+
+.order-9 {
+  order: 9;
+}
+
+.order-10 {
+  order: 10;
+}
+
+.order-11 {
+  order: 11;
+}
+
+.order-12 {
+  order: 12;
+}
+
+.order-13 {
+  order: 13;
+}
+
+.order-14 {
+  order: 14;
+}
+
+.order-15 {
+  order: 15;
+}
+
+.order-16 {
+  order: 16;
+}
+
+.order-17 {
+  order: 17;
+}
+
+.order-18 {
+  order: 18;
+}
+
+.order-19 {
+  order: 19;
+}
+
+.order-20 {
+  order: 20;
+}
+
+.order-21 {
+  order: 21;
+}
+
+.order-22 {
+  order: 22;
+}
+
+.order-23 {
+  order: 23;
 }
 
 /* A cell holds one panel, which should fill it however tall its neighbour is. */

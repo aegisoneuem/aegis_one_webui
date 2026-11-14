@@ -1,0 +1,10 @@
+extends:
+  - recommended
+rules:
+  tag-description: off
+  # Static segments such as /devices/columns sit beside /devices/{deviceId}; routers match static first.
+  no-ambiguous-paths: off
+  # OIDC authorize/callback are redirects by design.
+  operation-2xx-response: off
+  no-server-example.com: off
+  operation-4xx-response: off

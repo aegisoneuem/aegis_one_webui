@@ -1,0 +1,160 @@
+import { useEffect, useMemo } from 'react';
+import { Outlet, useMatches, useNavigate } from 'react-router-dom';
+import {
+  Breadcrumb,
+  Button,
+  Icon,
+  NavGroup,
+  NavItem,
+  Sidebar,
+  type BreadcrumbItem,
+} from '@aegis/ui';
+import markUrl from '../assets/brand/aegis-mark.png';
+import { NAV_GROUPS, PAGE_BY_ID, PAGE_PERMISSIONS } from '../app/nav';
+import { useAuth, useRolePreview } from '../app/auth';
+import { TopBarActions } from './TopBarActions';
+import type { RouteHandle } from '../app/routes';
+import { useUiStore } from '../app/uiStore';
+import styles from './AppShell.module.css';
+
+function isRouteHandle(h: unknown): h is RouteHandle {
+  return typeof h === 'object' && h !== null && 'pageId' in h;
+}
+
+export function AppShell(): JSX.Element {
+  const navigate = useNavigate();
+  const { preview: rolePreview, set: setRolePreview } = useRolePreview();
+  const matches = useMatches();
+  const { collapsed, expanded, toggleCollapsed, toggleGroup, expandGroup } = useUiStore();
+  const { can } = useAuth();
+
+  const handle = useMemo(() => {
+    const last = [...matches].reverse().find((m) => isRouteHandle(m.handle));
+    return last && isRouteHandle(last.handle) ? last.handle : undefined;
+  }, [matches]);
+
+  const activeId = handle?.pageId ?? 'home';
+  const activePage = PAGE_BY_ID[activeId];
+  const activeGroup = NAV_GROUPS.find((g) => g.pages.some((p) => p.id === activeId));
+
+  // Navigating into a collapsed group (deep link, Back) opens it.
+  useEffect(() => {
+    if (activeGroup) expandGroup(activeGroup.id);
+  }, [activeGroup, expandGroup]);
+
+  // Alt+Left walks browser history, same as the Back button.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigate(-1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [navigate]);
+
+  const crumbs: BreadcrumbItem[] = [{ label: 'Overview', onSelect: () => navigate('/') }];
+  if (activeId !== 'home') {
+    const sub = handle?.crumbs ?? [];
+    crumbs.push({
+      label: activePage.label,
+      onSelect: sub.length ? () => navigate(activePage.path) : undefined,
+    });
+    sub.forEach((label) => crumbs.push({ label }));
+  }
+
+  return (
+    <div className={styles.shell}>
+      <Sidebar
+        collapsed={collapsed}
+        header={
+          <button
+            type="button"
+            className={styles.brand}
+            onClick={() => navigate('/')}
+            aria-label="AEGIS ONE overview"
+          >
+            <img className={styles.mark} src={markUrl} alt="" width={26} height={20} />
+            {collapsed ? null : (
+              <span className={styles.wordmark}>
+                AEGIS <span className={styles.wordmarkSub}>ONE</span>
+              </span>
+            )}
+          </button>
+        }
+        footer={
+          <button
+            type="button"
+            className={styles.collapse}
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {/* One glyph either way, as v129 has it: the sidebar mark, not a
+                pair of carets pointing opposite ways. */}
+            <Icon name="sidebar" size={16} />
+            {collapsed ? null : <span>Collapse</span>}
+          </button>
+        }
+      >
+        {NAV_GROUPS.map((group) => {
+          const pages = group.pages.filter((p) => {
+            const permission = PAGE_PERMISSIONS[p.id];
+            return !permission || can(permission);
+          });
+          if (pages.length === 0) return null;
+          return (
+            <NavGroup
+              key={group.id}
+              label={group.label}
+              expanded={expanded[group.id] ?? true}
+              onToggle={() => toggleGroup(group.id)}
+            >
+              {pages.map((p) => (
+                <NavItem
+                  key={p.id}
+                  href={p.path}
+                  icon={<Icon name={p.icon} />}
+                  label={p.label}
+                  tag={p.tag}
+                  active={activeId === p.id}
+                  onNavigate={() => navigate(p.path)}
+                />
+              ))}
+            </NavGroup>
+          );
+        })}
+      </Sidebar>
+      <div className={styles.main}>
+        <Breadcrumb
+          items={crumbs}
+          onBack={() => navigate(-1)}
+          onHome={() => navigate('/')}
+          backIcon={<Icon name="back" size={15} />}
+          homeIcon={<Icon name="home" size={15} />}
+          trailing={<TopBarActions />}
+        />
+        <main className={styles.content} id="content">
+          {/*
+           * A role preview narrows every page, not the one it was set from,
+           * so the notice sits above all of them. Without it the console
+           * quietly offers less and says nothing about why.
+           */}
+          {rolePreview ? (
+            <div className={styles.rolePreview} role="status">
+              <span>
+                Viewing as <b>{rolePreview.name}</b> &middot; controls only, the figures are still
+                yours
+              </span>
+              <Button size="sm" onClick={() => setRolePreview(null)}>
+                Switch back
+              </Button>
+            </div>
+          ) : null}
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

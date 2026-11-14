@@ -1,0 +1,43 @@
+packages:
+  - 'apps/*'
+  # Each console keeps its own mock server beside it, since the seed, the
+  # routes and the contract belong to that console rather than to the library.
+  - 'apps/*/mock-server'
+  - 'packages/*'
+
+# Build scripts are blocked by default. Only these are allowed to run, and each
+# is a compiled native/binary dependency that cannot work without it.
+allowBuilds:
+  esbuild: true
+
+# Supply-chain settings, from Semgrep's pnpm rules.
+#
+# A dependency is code that runs with our privileges at install time and in
+# production, so the defaults are not safe enough on their own.
+
+# Transitive dependencies must come from the registry, never from a git URL or
+# a tarball someone can point somewhere else.
+blockExoticSubdeps: true
+
+# minimumReleaseAge is deliberately NOT set yet. See docs/vapt-checklist.md,
+# accepted risk AR-1.
+#
+# It is the right control — it skips the window in which a compromised release
+# is live but not yet pulled — but it cannot be retrofitted onto this lockfile.
+# Ten days blocks 78 legitimate entries and three days still blocks ten, so
+# turning it on today means `pnpm install` fails. A policy that blocks a
+# working install is a policy the next person deletes.
+#
+# Enable it on the next dependency refresh, when the tree is quiet:
+#   minimumReleaseAge: 14400   # 10 days
+
+# trustPolicy is deliberately NOT set yet. See docs/vapt-checklist.md, AR-1.
+#
+# `no-downgrade` rejects two entries in the current tree — semver@6.3.1 and
+# undici-types@6.21.0 — as possible takeovers. Both are old majors pulled in
+# transitively beside newer ones, which is ordinary, but the policy cannot
+# tell that from the real thing. Adopting it needs a lockfile rebuilt from a
+# fresh resolution, which is a planned dependency refresh with its own test
+# pass, not something to switch on at the end of a build.
+#
+#   trustPolicy: no-downgrade

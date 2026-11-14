@@ -1,0 +1,125 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-4);
+  align-items: center;
+  padding: var(--ui-space-4) var(--ui-space-5);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface);
+  font-family: var(--ui-font-sans);
+}
+
+.search {
+  flex: 0 1 300px;
+  min-width: 200px;
+}
+
+/*
+ * Takes the space left over, so the controls sit on one line beside the
+ * search box and wrap together rather than one per row.
+ */
+.filters {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: var(--ui-space-4);
+  align-items: center;
+  min-width: 0;
+}
+
+.filters > * {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  margin-left: auto;
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: var(--ui-border);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  align-items: center;
+  width: 100%;
+  padding-top: var(--ui-space-4);
+  border-top: 1px dashed var(--ui-border);
+}
+
+.chip {
+  display: inline-flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  height: 21px;
+  padding: 0 var(--ui-space-2) 0 var(--ui-space-4);
+  border: 1px solid var(--ui-border);
+  border-radius: 9999px;
+  background: var(--ui-surface-sunken);
+  color: var(--ui-text);
+  font-size: var(--ui-text-xs);
+}
+
+.chipLabel {
+  color: var(--ui-text-muted);
+}
+
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ui-text-muted);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chipRemove:hover {
+  background: var(--ui-border);
+  color: var(--ui-text);
+}
+
+.chipRemove:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.clearAll {
+  border: 0;
+  background: none;
+  color: var(--ui-accent-strong);
+  font: inherit;
+  font-size: var(--ui-text-xs);
+  cursor: pointer;
+}
+
+.clearAll:hover {
+  text-decoration: underline;
+}
+
+.count {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

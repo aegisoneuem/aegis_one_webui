@@ -1,0 +1,116 @@
+.stepper {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  margin: 0;
+  overflow-x: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface);
+  list-style: none;
+  font-family: var(--ui-font-sans);
+}
+
+.step {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.step + .step {
+  border-left: 1px solid var(--ui-border);
+}
+
+.button {
+  display: flex;
+  flex: 1;
+  gap: var(--ui-space-4);
+  align-items: center;
+  min-width: 0;
+  padding: var(--ui-space-5) var(--ui-space-6);
+  border: 0;
+  background: none;
+  color: var(--ui-text-muted);
+  font: inherit;
+  font-size: var(--ui-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: default;
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.marker {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ui-border);
+  border-radius: 50%;
+  background: var(--ui-surface);
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.label {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  overflow: hidden;
+  font-size: var(--ui-text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Done */
+.complete .marker {
+  border-color: var(--ui-success);
+  background: var(--ui-success);
+  color: var(--ui-surface);
+}
+
+.complete .button {
+  color: var(--ui-text);
+}
+
+/* Where the user is now */
+.current .button {
+  background: var(--ui-accent-soft);
+  color: var(--ui-text);
+}
+
+.current .marker {
+  border-color: var(--ui-accent-strong);
+  background: var(--ui-accent-strong);
+  color: var(--ui-surface);
+}
+
+.current .label {
+  font-weight: 600;
+}
+
+.invalid .marker {
+  border-color: var(--ui-danger);
+  background: var(--ui-danger);
+  color: var(--ui-surface);
+}

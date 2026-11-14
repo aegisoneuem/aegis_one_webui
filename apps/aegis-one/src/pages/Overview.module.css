@@ -1,0 +1,1221 @@
+/*
+ * Overview — geometry read from design-reference/Aegis-One-Console-v129.html.
+ *
+ * Spacing, type sizes and grid tracks are the reference's own computed values.
+ * Colours are the approved tokens: where v129's cascade uses a near-miss of an
+ * approved value (#dfe5ec for the panel border against the approved #e5e9ed,
+ * #20272d for the dark KPI against #202329), the approved one is used.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.heading {
+  display: flex;
+  gap: var(--ui-space-7);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.headingMain {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--ao-brand-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.9px;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 17px;
+  height: 1px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  align-items: center;
+  margin: var(--ui-space-3) 0 0;
+}
+
+/* Each count opens the page it counts, which is why they are buttons rather
+   than text — the reference makes them clickable too. */
+.metaItem {
+  padding: 2px var(--ui-space-3);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--ao-muted);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.metaItem + .metaItem::before {
+  margin-right: var(--ui-space-4);
+  color: var(--ao-neutral);
+  content: '·';
+}
+
+.metaItem b {
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaItem:hover {
+  background: var(--ui-surface-sunken);
+}
+
+.metaItem:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.headingActions {
+  display: flex;
+  flex: none;
+  gap: 9px;
+  align-items: center;
+}
+
+/* Scope bar -------------------------------------------------------------- */
+
+/* A strip, not a card: v129 gives this row no border and 8px/12px of
+   padding, and it reads as part of the page rather than a panel on it. */
+.scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--ao-surface);
+  margin-bottom: var(--ui-space-6);
+}
+
+/* Shown only while something is narrowed. */
+.reset {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.reset:hover {
+  background: var(--ui-surface-hover);
+}
+
+.scopeField {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+}
+
+.scopeField > span {
+  color: var(--ao-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.updated {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  margin-left: auto;
+  color: var(--ao-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.refresh {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ao-surface);
+  color: var(--ao-navy-mid);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.refresh:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.refresh:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* KPI strip -------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 13px;
+  margin-bottom: var(--ui-space-5);
+}
+
+.kpi,
+.kpiActive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 84px;
+  padding: 14px 18px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The first tile is the estate total, and the reference inverts it so the
+   figure everything else is a fraction of reads first. */
+.kpiActive {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+}
+
+.kpi:hover {
+  border-color: var(--ao-brand);
+}
+
+.kpi:focus-visible,
+.kpiActive:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.kpiLabel {
+  color: var(--ao-navy);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.kpiActive .kpiLabel {
+  color: var(--ao-brand-hi);
+}
+
+.kpiValue {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: baseline;
+}
+
+.kpiValue strong {
+  color: var(--ao-navy-ink);
+  font-family: var(--ui-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.kpiActive .kpiValue strong {
+  color: var(--ao-surface);
+}
+
+.kpiValue em {
+  color: var(--ao-navy-mid);
+  font-size: 15px;
+  font-style: normal;
+}
+
+.kpiActive .kpiValue em {
+  color: var(--ao-sidebar-text);
+}
+
+.kpiSub {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.kpiActive .kpiSub {
+  color: var(--ao-sidebar-text);
+}
+
+.dot-good,
+.dot-warn,
+.dot-bad,
+.dot-info,
+.dot-neutral {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dot-good {
+  background: var(--chart-compliance-1);
+}
+
+.dot-warn {
+  background: var(--chart-compliance-2);
+}
+
+.dot-bad {
+  background: var(--chart-compliance-3);
+}
+
+.dot-info {
+  background: var(--chart-navy-2);
+}
+
+.dot-neutral {
+  background: var(--ao-neutral);
+}
+
+.kpiSkeleton {
+  height: 84px;
+}
+
+.panelSkeleton {
+  height: 420px;
+}
+
+/* Rows ------------------------------------------------------------------- */
+
+/*
+ * The widget grid. Six columns so a third and a half both divide it, which
+ * is what the reference offers as widget sizes; each cell carries its own
+ * width and its own place, and both are classes because a widget's position
+ * is geometry and geometry lives here rather than in a style attribute.
+ */
+.widgets {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--ui-space-5);
+  align-items: stretch;
+  margin-bottom: var(--ui-space-5);
+}
+
+.cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.span-full {
+  grid-column: span 6;
+}
+
+.span-half {
+  grid-column: span 3;
+}
+
+.span-third {
+  grid-column: span 2;
+}
+
+/*
+ * The order the saved layout puts them in. Eight built in and room for
+ * sixteen more from the wizard; past that the cell clamps to the last
+ * place, so a widget nobody can position sits at the end rather than
+ * jumping to the front.
+ */
+.order-0 {
+  order: 0;
+}
+
+.order-1 {
+  order: 1;
+}
+
+.order-2 {
+  order: 2;
+}
+
+.order-3 {
+  order: 3;
+}
+
+.order-4 {
+  order: 4;
+}
+
+.order-5 {
+  order: 5;
+}
+
+.order-6 {
+  order: 6;
+}
+
+.order-7 {
+  order: 7;
+}
+
+.order-8 {
+  order: 8;
+}
+
+.order-9 {
+  order: 9;
+}
+
+.order-10 {
+  order: 10;
+}
+
+.order-11 {
+  order: 11;
+}
+
+.order-12 {
+  order: 12;
+}
+
+.order-13 {
+  order: 13;
+}
+
+.order-14 {
+  order: 14;
+}
+
+.order-15 {
+  order: 15;
+}
+
+.order-16 {
+  order: 16;
+}
+
+.order-17 {
+  order: 17;
+}
+
+.order-18 {
+  order: 18;
+}
+
+.order-19 {
+  order: 19;
+}
+
+.order-20 {
+  order: 20;
+}
+
+.order-21 {
+  order: 21;
+}
+
+.order-22 {
+  order: 22;
+}
+
+.order-23 {
+  order: 23;
+}
+
+/* A cell holds one panel, which should fill it however tall its neighbour is. */
+.cell > * {
+  flex: 1;
+}
+
+/* The key-metrics cell holds the five tiles, which keep their own row. */
+.cell > .kpis {
+  margin-bottom: 0;
+}
+
+@media (width <= 1200px) {
+  .widgets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .span-full,
+  .span-half,
+  .span-third {
+    grid-column: span 1;
+  }
+}
+
+.row2,
+.row3 {
+  display: grid;
+  gap: var(--ui-space-5);
+  align-items: stretch;
+  margin-bottom: var(--ui-space-5);
+}
+
+.row2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (width <= 1200px) {
+  .row2,
+  .row3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kpis {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* Panel ------------------------------------------------------------------ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+}
+
+.panelHead {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 22px 6px;
+  border-bottom: 1px solid var(--ao-track);
+  margin-bottom: 12px;
+}
+
+.panelTitle {
+  min-width: 0;
+}
+
+.panelTitle h2 {
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 20px;
+}
+
+.panelTitle p {
+  margin: 2px 0 0 13px;
+  color: var(--ao-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.panelLink {
+  flex: none;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.panelLink:hover {
+  color: var(--ao-navy);
+  text-decoration: underline;
+}
+
+.panelLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Two dropdowns at opposite ends of the panel, each the width of its own
+   content rather than half the card. */
+.tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 22px 0;
+}
+
+.tools > * {
+  flex: 0 1 auto;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+.unit {
+  padding: 0 22px;
+  margin: var(--ui-space-3) 0 0;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 220px;
+  padding: 18px 22px 10px;
+}
+
+.panelFoot {
+  padding: 10px 22px;
+  border-top: 1px solid var(--ao-track);
+  border-radius: 0 0 var(--ui-radius-lg) var(--ui-radius-lg);
+  background: var(--ui-surface-sunken);
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.empty {
+  margin: 0;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+/* Health score block ----------------------------------------------------- */
+
+.hs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-6);
+  padding: var(--ui-space-3) 22px var(--ui-space-5);
+}
+
+.hsHead {
+  display: flex;
+  gap: var(--ui-space-7);
+  align-items: baseline;
+}
+
+.hsNum {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: baseline;
+  padding-right: var(--ui-space-7);
+  border-right: 1px solid var(--ao-border);
+}
+
+.hsNum strong {
+  color: var(--ao-navy-ink);
+  font-family: var(--ui-font-display);
+  font-size: 40px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.hsNum em {
+  color: var(--ao-muted);
+  font-size: 14px;
+  font-style: normal;
+}
+
+.hsState {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hsState b {
+  color: var(--ao-navy);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hsState small {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.hsScale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+}
+
+/* The reference's own 0 / 70 / 85 / 100 scale. */
+.hsBar {
+  display: block;
+  width: 100%;
+  height: 12px;
+}
+
+.hsPoor {
+  fill: var(--chart-compliance-3);
+}
+
+.hsFair {
+  fill: var(--chart-compliance-2);
+}
+
+.hsGood {
+  fill: var(--chart-compliance-1);
+}
+
+.hsMarker {
+  fill: var(--ao-navy-ink);
+}
+
+/* The ticks sit at the band boundaries, so they are laid out by the same
+   70 / 15 / 15 proportions the bands use rather than positioned by value. */
+.hsTicks {
+  display: flex;
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hsTickStart {
+  flex: 0 0 0;
+}
+
+.hsTickPoor {
+  flex: 0 0 70%;
+  text-align: right;
+}
+
+.hsTickFair {
+  flex: 0 0 15%;
+  text-align: right;
+}
+
+.hsTickGood {
+  flex: 0 0 15%;
+  text-align: right;
+}
+
+/* The explainer link, beside the score as the reference places it. */
+.hsExplain {
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.methodLead {
+  margin: 0 0 var(--ui-space-5);
+  color: var(--ao-text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.methodTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.methodTable th,
+.methodTable td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--ao-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.methodTable thead th {
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.methodTable tbody th {
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.methodTable td:last-child,
+.methodTable th:last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.methodBands {
+  margin: var(--ui-space-5) 0 0;
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
+/* The way out to the bands, at the end of the gains row. */
+.hsThresholds {
+  margin-left: auto;
+}
+
+.hsGains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-4);
+  align-items: center;
+}
+
+.hsGainsLabel {
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.hsNoGains {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.hsGain {
+  padding: 2px var(--ui-space-3);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--ao-navy-mid);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hsGain b {
+  color: var(--chart-compliance-1);
+  font-weight: 600;
+}
+
+.hsGain:hover {
+  background: var(--ui-surface-sunken);
+}
+
+.hsGain:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Patch compliance summary rows ------------------------------------------ */
+
+.mini {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--ui-space-6) var(--ui-space-7);
+  padding: var(--ui-space-5) 22px 0;
+  border-top: 1px solid var(--ao-track);
+  margin: 0 0 var(--ui-space-5);
+}
+
+.miniLabel {
+  display: block;
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.miniRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3) var(--ui-space-5);
+  align-items: baseline;
+  margin: var(--ui-space-4) 0 0;
+}
+
+/* Figure and word stay one unit, so a wrap never leaves a number stranded
+   from the thing it counts. */
+.miniPair {
+  display: inline-flex;
+  gap: var(--ui-space-3);
+  align-items: baseline;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.miniPair b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.good {
+  color: var(--chart-compliance-1);
+}
+
+.warn {
+  color: var(--chart-compliance-2);
+}
+
+.bad {
+  color: var(--chart-compliance-3);
+}
+
+.info {
+  color: var(--chart-navy-2);
+}
+
+.alt {
+  color: var(--chart-navy-4);
+}
+
+.neutral {
+  color: var(--ao-neutral);
+}
+
+/* Expiring list ---------------------------------------------------------- */
+
+.expList {
+  display: flex;
+  flex-direction: column;
+  padding: 0 22px var(--ui-space-5);
+}
+
+.expRow {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+  padding: var(--ui-space-2);
+  border: 0;
+  border-bottom: 1px solid var(--ao-track);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.expRow:last-child {
+  border-bottom: 0;
+}
+
+.expRow:hover {
+  background: var(--ui-surface-sunken);
+}
+
+.expRow:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.expStBad,
+.expStWarn {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.expStBad {
+  color: var(--st-bad);
+}
+
+.expStWarn {
+  color: var(--st-warn);
+}
+
+.expName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.expName b {
+  overflow: hidden;
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expName small {
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+.expRow time {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* Needs Attention -------------------------------------------------------- */
+
+.attn {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 22px var(--ui-space-5);
+}
+
+.attnRow {
+  display: grid;
+  grid-template-columns: 64px minmax(56px, auto) minmax(0, 1fr) auto;
+  gap: var(--ui-space-5);
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ao-track);
+}
+
+.attnRow:last-of-type {
+  border-bottom: 0;
+}
+
+.sev-bad,
+.sev-warn,
+.sev-neutral,
+.sev-good,
+.sev-info {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.sev-bad {
+  color: var(--st-bad);
+}
+
+.sev-warn {
+  color: var(--st-warn);
+}
+
+.sev-neutral,
+.sev-info,
+.sev-good {
+  color: var(--ao-muted);
+}
+
+.attnN {
+  color: var(--ao-navy);
+  font-family: var(--ui-font-display);
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.attnMain {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attnMain b {
+  overflow: hidden;
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attnMain small {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.attnMain:hover b {
+  text-decoration: underline;
+}
+
+.attnMain:focus-visible,
+.attnAct:focus-visible,
+.more:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.attnAct {
+  padding: var(--ui-space-2);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--st-info);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.attnAct:hover {
+  text-decoration: underline;
+}
+
+.more {
+  align-self: flex-start;
+  padding: var(--ui-space-4) 0 0;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Recent activity -------------------------------------------------------- */
+
+.events {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 22px var(--ui-space-5);
+}
+
+.event {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 150px;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--ui-space-3) var(--ui-space-2);
+  border: 0;
+  border-bottom: 1px solid var(--ao-track);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event:last-child {
+  border-bottom: 0;
+}
+
+.event:hover {
+  background: var(--ui-surface-sunken);
+}
+
+.event:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.eventMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.eventMain b {
+  overflow: hidden;
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventMain small {
+  overflow: hidden;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-good,
+.badge-warn,
+.badge-bad,
+.badge-info,
+.badge-neutral {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: capitalize;
+}
+
+.badge-good {
+  color: var(--st-good);
+}
+
+.badge-warn {
+  color: var(--st-warn);
+}
+
+.badge-bad {
+  color: var(--st-bad);
+}
+
+.badge-info {
+  color: var(--st-info);
+}
+
+.badge-neutral {
+  color: var(--ao-muted);
+}
+
+.event time {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Footnote --------------------------------------------------------------- */
+
+.footnote {
+  display: flex;
+  gap: var(--ui-space-5);
+  justify-content: space-between;
+  padding-top: 15px;
+  border-top: 1px solid var(--ao-border);
+  margin-top: 25px;
+  color: var(--ao-neutral);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.footnote i {
+  font-style: normal;
+}

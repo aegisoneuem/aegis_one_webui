@@ -1,0 +1,49 @@
+.skeleton {
+  display: block;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-hover);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.text {
+  height: 10px;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+
+.tableRow {
+  display: flex;
+  gap: var(--ui-space-6);
+  align-items: center;
+  height: var(--ui-row-height);
+  padding: 0 var(--ui-space-5);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.cell {
+  flex: 1;
+  height: 9px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-hover);
+  animation: pulse 1.4s ease-in-out infinite;
+}

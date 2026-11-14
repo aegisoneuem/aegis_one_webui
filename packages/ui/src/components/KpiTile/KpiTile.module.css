@@ -1,0 +1,121 @@
+.tile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  padding: var(--ui-space-5) var(--ui-space-6);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface);
+  font-family: var(--ui-font-sans);
+  color: var(--ui-text);
+  text-align: left;
+}
+
+/* Interactive tiles filter the list below; make that affordance visible. */
+.clickable {
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.clickable:hover {
+  border-color: var(--ui-accent);
+  background: var(--ui-surface-sunken);
+}
+
+.clickable:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.clickable[aria-pressed='true'] {
+  border-color: var(--ui-accent-strong);
+  background: var(--ui-accent-soft);
+}
+
+.head {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.icon {
+  flex: none;
+  color: var(--ui-text-muted);
+  font-size: 15px;
+}
+
+.valueRow {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: baseline;
+}
+
+.value {
+  /* The reference sets its KPI figures in the condensed face. */
+  font-family: var(--ui-font-display, var(--ui-font-sans));
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.unit {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
+}
+
+.delta {
+  display: inline-flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.up {
+  color: var(--ui-pill-good-fg);
+}
+
+.down {
+  color: var(--ui-pill-bad-fg);
+}
+
+.flat {
+  color: var(--ui-text-muted);
+}
+
+.caption {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+  line-height: 1.4;
+}
+
+.tone-bad .value {
+  color: var(--ui-pill-bad-fg);
+}
+
+.tone-warn .value {
+  color: var(--ui-pill-warn-fg);
+}
+
+.tone-good .value {
+  color: var(--ui-pill-good-fg);
+}

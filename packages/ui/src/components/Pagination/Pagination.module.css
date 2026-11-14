@@ -1,0 +1,45 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-5);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ui-space-4) var(--ui-space-5);
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-muted);
+}
+
+.range {
+  font-variant-numeric: tabular-nums;
+}
+
+.strong {
+  color: var(--ui-text);
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: center;
+}
+
+.sizeGroup {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+}
+
+.sizeSelect {
+  width: auto;
+  min-width: 64px;
+}
+
+.buttons {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+}

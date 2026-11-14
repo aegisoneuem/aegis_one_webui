@@ -1,0 +1,52 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  max-width: 100%;
+  height: 19px;
+  padding: 0 var(--ui-space-4);
+  border-radius: 9999px;
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-xs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.good {
+  background: var(--ui-pill-good-bg);
+  color: var(--ui-pill-good-fg);
+}
+
+.bad {
+  background: var(--ui-pill-bad-bg);
+  color: var(--ui-pill-bad-fg);
+}
+
+.warn {
+  background: var(--ui-pill-warn-bg);
+  color: var(--ui-pill-warn-fg);
+}
+
+.info {
+  background: var(--ui-pill-info-bg);
+  color: var(--ui-pill-info-fg);
+}
+
+.neutral {
+  background: var(--ui-pill-neutral-bg);
+  color: var(--ui-pill-neutral-fg);
+}

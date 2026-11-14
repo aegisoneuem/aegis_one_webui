@@ -1,0 +1,440 @@
+/*
+ * Patches → Patch Policies → Global Settings, on the reference's own seven
+ * panels: the health policy across the top, then two pairs either side of the
+ * OS table and the rings, and a save bar at the foot.
+ */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.panelHead {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.panelTitle {
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 15.5px;
+  font-weight: 650;
+}
+
+.aside {
+  flex: 1;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+  text-align: right;
+}
+
+.grow {
+  flex: 1;
+}
+
+.panelFoot {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.row2,
+.row2tight {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.row2tight {
+  gap: 12px;
+}
+
+.row3 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Fields ------------------------------------------------------------------ */
+
+.field,
+.thresholds label,
+.holdBox label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field > span,
+.thresholds label > span,
+.holdBox label > span {
+  color: var(--ao-navy-mid);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.field > small {
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+input[type='text'],
+input[type='number'],
+input[type='time'],
+select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--ao-brand);
+  box-shadow: var(--ui-focus-ring);
+}
+
+input:disabled,
+select:disabled {
+  background: var(--ao-bg);
+  color: var(--ao-muted);
+}
+
+.thresholds {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* The four bands the thresholds produce. */
+.bands {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.band,
+.bandLead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.bandLead {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+}
+
+.bandLead > span {
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.bandLead > strong {
+  color: var(--ao-surface);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.band > span {
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.band > strong {
+  color: var(--ao-navy-ink);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Checkboxes -------------------------------------------------------------- */
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.check input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--ao-brand-deep);
+}
+
+.check span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.check b {
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.check small {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+/* Tables ------------------------------------------------------------------ */
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.grid thead th {
+  padding: 9px 12px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--ao-track);
+  color: var(--ao-navy-mid);
+}
+
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grid b {
+  color: var(--ao-navy-ink);
+  font-weight: 650;
+}
+
+.numeric {
+  text-align: right;
+}
+
+.empty {
+  padding: 18px 12px;
+  color: var(--ao-muted);
+}
+
+.bad {
+  color: var(--st-bad);
+}
+
+.holdBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-bg);
+}
+
+.holdBox h3 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+/* Rings ------------------------------------------------------------------- */
+
+.rings {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ring {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  border-top: 3px solid var(--ao-brand-deep);
+  background: var(--ao-surface);
+}
+
+.ring header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ring header input {
+  min-width: 0;
+  flex: 1;
+}
+
+.ringNumber {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 700;
+  place-items: center;
+}
+
+.ringDays {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.excluded,
+.vendors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.excluded li,
+.vendors li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-bg);
+  font-size: 11.5px;
+}
+
+.excluded button,
+.vendors button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.excluded button:disabled,
+.vendors button:disabled {
+  cursor: default;
+}
+
+.ringEffect {
+  padding-top: 10px;
+  border-top: 1px dashed var(--ao-track);
+  margin: 0;
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+/* Maintenance ------------------------------------------------------------- */
+
+.days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.day,
+.dayOn {
+  min-width: 42px;
+  padding: 7px 8px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.dayOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.day:disabled,
+.dayOn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.vendorAdd {
+  display: flex;
+  gap: 8px;
+}
+
+.vendorAdd input {
+  min-width: 0;
+  flex: 1;
+}
+
+/* The save bar, which the reference repeats under the rings. */
+.saveBar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.saveBar > span {
+  flex: 1;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.skeleton {
+  display: block;
+  height: 420px;
+}
+
+@media (width <= 1200px) {
+  .rings,
+  .row3,
+  .thresholds,
+  .bands {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .row2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

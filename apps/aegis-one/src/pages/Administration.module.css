@@ -1,0 +1,418 @@
+/*
+ * Administration, on the reference's own four tabs: a two-column card grid
+ * for the identity providers and the roles, and a plain table for the users
+ * and the enrolled endpoints.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+/* Tabs — the same segmented control the rest of the console uses ---------- */
+
+.tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 1px solid var(--ao-border);
+  margin-bottom: 16px;
+  background: var(--ao-surface);
+}
+
+.tab,
+.tabOn {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.tabOn {
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+  color: var(--ao-surface);
+}
+
+.tab:hover {
+  background: var(--ui-surface-hover);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+/* Cards — identity providers and roles ------------------------------------ */
+
+.cards {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.cardHead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cardName {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.cardName b {
+  color: var(--ao-navy-ink);
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.cardName small {
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+}
+
+/* The protocol tile, in place of a vendor logo — see the restoration note. */
+.mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  place-items: center;
+}
+
+/* STATUS and CONNECTION, which the reference prints as two labelled fields. */
+.facts {
+  display: grid;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ao-track);
+  margin: 14px 0 0;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.facts dt {
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.cardFoot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+/* Role cards -------------------------------------------------------------- */
+
+.roleHead {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.roleHead b {
+  flex: 1;
+  color: var(--ao-navy-ink);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.roleHead span {
+  font-size: 12px;
+}
+
+.fullAccess {
+  margin: 10px 0 0;
+  color: var(--ao-navy-mid);
+  font-size: 13px;
+}
+
+/* One chip per resource, with its verbs beside the name. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 12px 0 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 4px 9px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-bg);
+  font-size: 11.5px;
+}
+
+.chips b {
+  color: var(--ao-navy-ink);
+  font-weight: 650;
+}
+
+.chips span {
+  color: var(--ao-muted);
+}
+
+.scopes {
+  display: flex;
+  flex-direction: column;
+  margin: 14px 0 0;
+}
+
+.scopes div {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ao-track);
+}
+
+.scopes dt {
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+}
+
+.scopes dd {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 650;
+  text-align: right;
+}
+
+/* Tables ------------------------------------------------------------------ */
+
+.panel {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grid thead th {
+  padding: 10px 14px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--ao-track);
+  color: var(--ao-navy-mid);
+  vertical-align: middle;
+}
+
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grid tbody tr:hover td {
+  background: var(--ui-surface-hover);
+}
+
+.grid b {
+  display: block;
+  color: var(--ao-navy-ink);
+  font-weight: 650;
+}
+
+.grid small {
+  display: block;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+/*
+ * A flex container on the cell itself top-aligns its buttons against a
+ * two-line user cell, so the buttons sit in their own row inside the cell.
+ */
+.actions > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.menuWrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 170px;
+  padding: 4px;
+  border: 1px solid var(--ao-border);
+  margin: 0;
+  background: var(--ao-surface);
+  box-shadow: var(--ui-shadow-menu, 0 6px 16px rgb(16 24 40 / 12%));
+  list-style: none;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  color: var(--ao-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.menu button:hover:not(:disabled) {
+  background: var(--ui-surface-hover);
+}
+
+.menu button:disabled {
+  color: var(--ao-muted);
+  cursor: default;
+}
+
+/* The token prefix and the one-time secret are both read, not prose. */
+.prefix,
+.secret {
+  color: var(--ao-navy-mid);
+  font-family: var(--ui-font-mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+.secret {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--ao-border);
+  margin: 0;
+  background: var(--ao-bg);
+  color: var(--ao-navy-ink);
+  font-size: 13px;
+}
+
+.empty {
+  padding: 28px 14px;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.footnote {
+  padding: 12px 14px;
+  border-top: 1px solid var(--ao-track);
+  margin: 0;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.gridSkeleton {
+  display: block;
+  height: 200px;
+}
+
+/* Tones ------------------------------------------------------------------- */
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.muted {
+  color: var(--ao-muted);
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (width <= 1100px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

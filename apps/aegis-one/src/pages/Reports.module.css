@@ -1,0 +1,519 @@
+/*
+ * The report library, restored to v129's own geometry: five category counters
+ * as a banded strip with the active one inverted, a toolbar of search,
+ * favourites, sort and a layout toggle, then a three-across card grid.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Head -------------------------------------------------------------------- */
+
+.head {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.head > :last-child {
+  margin-left: auto;
+}
+
+/* Category counters ------------------------------------------------------- */
+
+.categories {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.category,
+.categoryOn {
+  display: flex;
+  min-height: 76px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.categoryOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+}
+
+.category span,
+.categoryOn span {
+  color: var(--ao-navy-mid);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.categoryOn span {
+  color: var(--ao-brand-hi);
+}
+
+.category strong,
+.categoryOn strong {
+  color: var(--ao-navy);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.categoryOn strong {
+  color: var(--ao-surface);
+}
+
+.category:hover {
+  border-color: var(--ao-brand);
+}
+
+.category:focus-visible,
+.categoryOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Toolbar ----------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--ao-border);
+  margin-bottom: 20px;
+  background: var(--ao-surface);
+}
+
+.search {
+  display: flex;
+  flex: 1 1 320px;
+  min-width: 260px;
+  max-width: 560px;
+  height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+}
+
+.search input {
+  min-width: 0;
+  flex: 1;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.searchCount {
+  padding: 2px 8px;
+  background: var(--ao-bg);
+  color: var(--ao-muted);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fav,
+.favOn {
+  display: flex;
+  height: 38px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.favOn {
+  border-color: var(--ao-brand);
+  background: var(--ao-bg);
+  color: var(--ao-navy);
+}
+
+.fav strong,
+.favOn strong {
+  padding: 1px 6px;
+  background: var(--ao-bg);
+  font-size: 11px;
+}
+
+.favOn strong {
+  background: var(--ao-brand-hi);
+  color: var(--ao-sidebar);
+}
+
+.grow {
+  flex: 1;
+}
+
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.sort select {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.viewToggle {
+  display: flex;
+  border: 1px solid var(--ui-border);
+}
+
+.viewOn,
+.viewOff {
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  background: var(--ao-surface);
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.viewOn {
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+/* Cards ------------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.cardHead {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 16px 18px 12px;
+}
+
+.cardHead h2 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cardHead p {
+  margin: 4px 0 0;
+  color: var(--ao-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cardHead > :last-child {
+  margin-left: auto;
+}
+
+.star,
+.starOn {
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--ao-neutral);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.starOn {
+  color: var(--ao-brand);
+}
+
+.star:focus-visible,
+.starOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* The preview strip, on the reference's own tinted panel: the figures on the
+   left, the report's first breakdown drawn small on the right. */
+.preview {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-top: 1px solid var(--ao-track);
+  border-bottom: 1px solid var(--ao-track);
+  margin: 0 18px;
+  background: var(--ao-bg);
+}
+
+.previewFigures {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/*
+ * The ring only has to read as a proportion at this size, so its legend is
+ * hidden and the figures beside it carry the words.
+ */
+.previewChart {
+  display: flex;
+  overflow: hidden;
+  width: 74px;
+  flex: 0 0 74px;
+  justify-content: center;
+}
+
+/* The shared donut sizes itself from its container; without this it draws
+   wider than the tile and clips against the card edge. */
+.previewChart > * {
+  max-width: 74px;
+}
+
+.previewChart ul,
+.previewChart ol {
+  display: none;
+}
+
+.previewTotal {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0;
+}
+
+.previewTotal strong {
+  color: var(--ao-navy);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.previewTotal span {
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
+.previewTop {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin: 0;
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+}
+
+.previewTop span {
+  overflow: hidden;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewTop b {
+  color: var(--ao-navy);
+  font-weight: 700;
+}
+
+.cardFoot {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 18px;
+}
+
+.cardMeta {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.cardFoot > :last-child {
+  margin-left: auto;
+}
+
+.openLink {
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: 2px solid var(--ao-brand-hi);
+  background: none;
+  color: var(--ao-navy);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.openLink:hover {
+  border-bottom-color: var(--ao-brand);
+  color: var(--ao-navy-ink);
+}
+
+.openLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* List view --------------------------------------------------------------- */
+
+.panel {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grid thead th {
+  padding: 12px 16px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--ao-track);
+  color: var(--ao-text);
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.grid tbody tr:hover td {
+  background: var(--ui-surface-hover);
+}
+
+.grid tbody td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.numeric {
+  text-align: right;
+}
+
+.grid thead th.numeric {
+  text-align: right;
+}
+
+.rowLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--st-info);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.rowLink:hover {
+  text-decoration: none;
+}
+
+.rowLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.empty {
+  padding: 40px 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.gridSkeleton {
+  display: block;
+  height: 520px;
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (width <= 1280px) {
+  .categories {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "takenAt": "2026-11-01T20:30:25.585Z",
+  "concurrency": 5,
+  "seconds": 20.5,
+  "requests": 1445,
+  "errors": 0,
+  "deniedByRbac": 0,
+  "errorRate": 0,
+  "requestsPerSecond": 70.3,
+  "journeys": [
+    {
+      "name": "global search",
+      "n": 85,
+      "p50": 419,
+      "p95": 795,
+      "p99": 1200,
+      "max": 1200
+    },
+    {
+      "name": "overview aggregates",
+      "n": 85,
+      "p50": 255,
+      "p95": 626,
+      "p99": 955,
+      "max": 955
+    },
+    {
+      "name": "device diagnostics tab",
+      "n": 85,
+      "p50": 22,
+      "p95": 424,
+      "p99": 722,
+      "max": 722
+    },
+    {
+      "name": "device vulnerabilities tab",
+      "n": 85,
+      "p50": 20,
+      "p95": 387,
+      "p99": 720,
+      "max": 720
+    },
+    {
+      "name": "device software tab",
+      "n": 85,
+      "p50": 17,
+      "p95": 386,
+      "p99": 719,
+      "max": 719
+    },
+    {
+      "name": "device patches tab",
+      "n": 85,
+      "p50": 19,
+      "p95": 386,
+      "p99": 720,
+      "max": 720
+    },
+    {
+      "name": "vulnerability aggregation",
+      "n": 85,
+      "p50": 55,
+      "p95": 341,
+      "p99": 536,
+      "max": 536
+    },
+    {
+      "name": "devices list (filter + sort + 100 rows)",
+      "n": 85,
+      "p50": 40,
+      "p95": 101,
+      "p99": 114,
+      "max": 114
+    },
+    {
+      "name": "devices facets",
+      "n": 85,
+      "p50": 7,
+      "p95": 92,
+      "p99": 96,
+      "max": 96
+    },
+    {
+      "name": "script job submit (zone target)",
+      "n": 85,
+      "p50": 43,
+      "p95": 90,
+      "p99": 126,
+      "max": 126
+    },
+    {
+      "name": "devices list (page 2 by cursor)",
+      "n": 85,
+      "p50": 30,
+      "p95": 88,
+      "p99": 102,
+      "max": 102
+    },
+    {
+      "name": "device detail",
+      "n": 85,
+      "p50": 16,
+      "p95": 74,
+      "p99": 101,
+      "max": 101
+    },
+    {
+      "name": "token refresh",
+      "n": 85,
+      "p50": 8,
+      "p95": 69,
+      "p99": 102,
+      "max": 102
+    },
+    {
+      "name": "script job results poll",
+      "n": 85,
+      "p50": 25,
+      "p95": 67,
+      "p99": 108,
+      "max": 108
+    },
+    {
+      "name": "deployment submit (group target)",
+      "n": 85,
+      "p50": 28,
+      "p95": 66,
+      "p99": 108,
+      "max": 108
+    },
+    {
+      "name": "reports list",
+      "n": 85,
+      "p50": 11,
+      "p95": 53,
+      "p99": 80,
+      "max": 80
+    },
+    {
+      "name": "groups list",
+      "n": 85,
+      "p50": 9,
+      "p95": 27,
+      "p99": 41,
+      "max": 41
+    }
+  ]
+}

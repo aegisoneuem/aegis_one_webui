@@ -1,0 +1,365 @@
+{
+    "setup_data": {
+        "ok": true
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "setup": {
+                "name": "setup",
+                "path": "::setup",
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                "groups": {},
+                "checks": {
+                        "signed in": {
+                            "name": "signed in",
+                            "path": "::setup::signed in",
+                            "id": "6aef39487543274d3e68cc237364418c",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "server is up": {
+                            "name": "server is up",
+                            "path": "::setup::server is up",
+                            "id": "218048604d2ab5c8bd952db646799293",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            },
+            "1. devices list with filters, sort and paging": {
+                "path": "::1. devices list with filters, sort and paging",
+                "id": "a3e3997f115d547fd88361032cc8bf0b",
+                "groups": {},
+                "checks": {
+                        "devices returned": {
+                            "fails": 0,
+                            "name": "devices returned",
+                            "path": "::1. devices list with filters, sort and paging::devices returned",
+                            "id": "bb1039c14d716bc449708ab31006ba75",
+                            "passes": 102
+                        },
+                        "second page returned": {
+                            "name": "second page returned",
+                            "path": "::1. devices list with filters, sort and paging::second page returned",
+                            "id": "14d1dc83ec14e133e1576b73204f6619",
+                            "passes": 102,
+                            "fails": 0
+                        }
+                    },
+                "name": "1. devices list with filters, sort and paging"
+            },
+            "2. device detail and its tabs": {
+                "name": "2. device detail and its tabs",
+                "path": "::2. device detail and its tabs",
+                "id": "5b8a2b2389376d3ec3064fd02d2019fc",
+                "groups": {},
+                "checks": {
+                        "device detail": {
+                            "passes": 102,
+                            "fails": 0,
+                            "name": "device detail",
+                            "path": "::2. device detail and its tabs::device detail",
+                            "id": "78bea1d30b21093dfc78aa9c7852e69e"
+                        }
+                    }
+            },
+            "3. global search": {
+                "checks": {
+                    "search returned": {
+                        "name": "search returned",
+                        "path": "::3. global search::search returned",
+                        "id": "062ccb018867aeb84c89c13ca062f6e3",
+                        "passes": 102,
+                        "fails": 0
+                    }
+                },
+                "name": "3. global search",
+                "path": "::3. global search",
+                "id": "36d16d6cfcfe29dd8d7557e79cdb051b",
+                "groups": {}
+            },
+            "4. overview aggregates": {
+                "name": "4. overview aggregates",
+                "path": "::4. overview aggregates",
+                "id": "ea794d4ad7a08b6498cf3f4fc6d5bde2",
+                "groups": {},
+                "checks": {
+                        "overview computed": {
+                            "passes": 102,
+                            "fails": 0,
+                            "name": "overview computed",
+                            "path": "::4. overview aggregates::overview computed",
+                            "id": "c24bddec98e5aaa51ac17660594b63a1"
+                        }
+                    }
+            },
+            "5. vulnerability aggregation": {
+                "id": "d7135d627f5e9339754a009b1e6662de",
+                "groups": {},
+                "checks": {
+                        "vulnerabilities returned": {
+                            "name": "vulnerabilities returned",
+                            "path": "::5. vulnerability aggregation::vulnerabilities returned",
+                            "id": "eb7780b2cd3551f5dd0031ad3d1545fc",
+                            "passes": 102,
+                            "fails": 0
+                        }
+                    },
+                "name": "5. vulnerability aggregation",
+                "path": "::5. vulnerability aggregation"
+            },
+            "6. deployment wizard submit against 500 devices": {
+                "name": "6. deployment wizard submit against 500 devices",
+                "path": "::6. deployment wizard submit against 500 devices",
+                "id": "c0da78f019940455b1e1713b4ab95844",
+                "groups": {},
+                "checks": {
+                        "deployment created": {
+                            "name": "deployment created",
+                            "path": "::6. deployment wizard submit against 500 devices::deployment created",
+                            "id": "8f33d5e233b49374c52aa62a1da67d8a",
+                            "passes": 82,
+                            "fails": 0
+                        }
+                    }
+            },
+            "7. script execution job on a zone": {
+                "name": "7. script execution job on a zone",
+                "path": "::7. script execution job on a zone",
+                "id": "411f474da04c342aea9ddc9f5ea0695b",
+                "groups": {},
+                "checks": {
+                        "job queued": {
+                            "name": "job queued",
+                            "path": "::7. script execution job on a zone::job queued",
+                            "id": "be0e3be972177d2a5fe398e6ebfbbf51",
+                            "passes": 82,
+                            "fails": 0
+                        },
+                        "results readable": {
+                            "name": "results readable",
+                            "path": "::7. script execution job on a zone::results readable",
+                            "id": "a6a47eddbd80da415d09edbab3a01e1a",
+                            "passes": 82,
+                            "fails": 0
+                        }
+                    }
+            },
+            "8. report export page": {
+                "checks": {
+                    "reports returned": {
+                        "fails": 0,
+                        "name": "reports returned",
+                        "path": "::8. report export page::reports returned",
+                        "id": "03435f473b5ee0c56cc74abf0f993f8a",
+                        "passes": 102
+                    }
+                },
+                "name": "8. report export page",
+                "path": "::8. report export page",
+                "id": "f22e857524c27a83bb512d0f1335cc13",
+                "groups": {}
+            },
+            "9. token refresh mid-session": {
+                "checks": {
+                    "refreshed": {
+                        "path": "::9. token refresh mid-session::refreshed",
+                        "id": "5a6a68b87419bb385b631e9f89cafafc",
+                        "passes": 102,
+                        "fails": 0,
+                        "name": "refreshed"
+                    }
+                },
+                "name": "9. token refresh mid-session",
+                "path": "::9. token refresh mid-session",
+                "id": "8d4e83024643b9adf49c8c78e3035bc6",
+                "groups": {}
+            }
+        },
+        "checks": {
+            "signed in": {
+                "name": "signed in",
+                "path": "::signed in",
+                "id": "cb1bcc2ba51c775b461667c4d4728b47",
+                "passes": 102,
+                "fails": 0
+            }
+        }
+    },
+    "metrics": {
+        "http_req_blocked": {
+            "avg": 0.07080314465408805,
+            "min": 0,
+            "med": 0,
+            "max": 92.9101,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "iterations": {
+            "count": 102,
+            "rate": 1.6403086699405662
+        },
+        "data_sent": {
+            "rate": 31997.871098054242,
+            "count": 1989737
+        },
+        "group_duration": {
+            "max": 1096.449,
+            "p(90)": 345.37171,
+            "p(95)": 394.0953749999999,
+            "avg": 90.46415479302821,
+            "min": 0,
+            "med": 20.4107
+        },
+        "http_req_duration{kind:aggregate}": {
+            "p(95)": 486.57554999999917,
+            "avg": 105.18690294117647,
+            "min": 0,
+            "med": 5.36815,
+            "max": 885.0691,
+            "p(90)": 377.94184,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "vus_max": {
+            "min": 5,
+            "max": 5,
+            "value": 5
+        },
+        "http_req_connecting": {
+            "max": 3.8179,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.012979729075955493,
+            "min": 0,
+            "med": 0
+        },
+        "vus": {
+            "min": 1,
+            "max": 5,
+            "value": 1
+        },
+        "iteration_duration": {
+            "med": 2996.4132,
+            "max": 5013.531,
+            "p(90)": 4178.45726,
+            "p(95)": 4500.513559999999,
+            "avg": 3013.5703245098025,
+            "min": 1391.0682
+        },
+        "http_req_waiting": {
+            "p(90)": 165.03532,
+            "p(95)": 345.01141999999993,
+            "avg": 49.82828059990333,
+            "min": 0,
+            "med": 7.1211,
+            "max": 1095.9581
+        },
+        "data_received": {
+            "count": 7553057,
+            "rate": 121464.16550642435
+        },
+        "checks": {
+            "passes": 1166,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.995": false
+            },
+            "value": 1
+        },
+        "http_req_sending": {
+            "max": 5.9051,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.041502031930333826,
+            "min": 0,
+            "med": 0
+        },
+        "script_job_submit_ms": {
+            "p(90)": 70.75787000000001,
+            "p(95)": 93.00227500000004,
+            "avg": 46.678280487804855,
+            "min": 3.0919,
+            "med": 30.68945,
+            "max": 417.3545
+        },
+        "http_req_duration": {
+            "avg": 50.649452201257915,
+            "min": 0,
+            "med": 7.845,
+            "max": 1096.449,
+            "p(90)": 166.57732000000001,
+            "p(95)": 345.4718099999999
+        },
+        "http_req_duration{kind:list}": {
+            "p(95)": 361.462125,
+            "avg": 71.52977744845359,
+            "min": 0,
+            "med": 9.54165,
+            "max": 1096.449,
+            "p(90)": 331.69185,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 50.649452201257915,
+            "min": 0,
+            "med": 7.845,
+            "max": 1096.449,
+            "p(90)": 166.57732000000001,
+            "p(95)": 345.4718099999999
+        },
+        "http_req_duration{kind:detail}": {
+            "avg": 23.22184352941173,
+            "min": 0.4955,
+            "med": 7.5256,
+            "max": 492.7808,
+            "p(90)": 30.180140000000016,
+            "p(95)": 45.10192999999988,
+            "thresholds": {
+                "p(95)<200": false
+            }
+        },
+        "http_req_receiving": {
+            "p(90)": 2.1443200000000013,
+            "p(95)": 3.401149999999998,
+            "avg": 0.7796695694242863,
+            "min": 0,
+            "med": 0,
+            "max": 14.4771
+        },
+        "wizard_submit_ms": {
+            "p(90)": 78.83141,
+            "p(95)": 167.77633000000003,
+            "avg": 52.651628048780466,
+            "min": 0.5148,
+            "med": 19.944850000000002,
+            "max": 705.2319
+        },
+        "http_reqs": {
+            "count": 2067,
+            "rate": 33.24037275261912
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 2067,
+            "thresholds": {
+                "rate<0.005": false
+            },
+            "value": 0
+        }
+    }
+}

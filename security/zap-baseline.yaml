@@ -1,0 +1,94 @@
+# ZAP Automation Framework — passive baseline
+#
+# Crawls the console and its API and reports what passive analysis finds:
+# missing or weak security headers, cookie flags, information disclosure,
+# cacheable sensitive responses. It sends no attack traffic, so it is safe to
+# run against any environment.
+#
+#   zap.bat -cmd -autorun security/zap-baseline.yaml
+#
+# ZAP_TARGET defaults to the dev console; ZAP_API to the mock server.
+
+env:
+  contexts:
+    - name: aegis-console
+      urls:
+        - ${ZAP_TARGET}
+        - ${ZAP_IDP_SEED}
+      includePaths:
+        - '${ZAP_TARGET}.*'
+        - '${ZAP_IDP}.*'
+      excludePaths:
+        # Signing out mid-crawl ends the session and the rest of the scan
+        # silently covers nothing.
+        - '.*/auth/logout.*'
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+  vars:
+    # The preview server, so the scan sees the production bundle and the
+    # security headers the real host sends — not the dev server's.
+    ZAP_TARGET: 'http://localhost:4173'
+    # The identity provider's sign-in pages. These are hand-built HTML rather
+    # than React output, which makes them the most interesting passive target
+    # in the whole console — and they are reachable without a session, which is
+    # exactly what a baseline can cover.
+    ZAP_IDP: 'http://localhost:8080/oidc'
+    # `/oidc` itself serves nothing, so seeding the context with it made the
+    # spider stop on a 404 before it had crawled anything. The discovery
+    # document is a real page and the first thing any client fetches.
+    ZAP_IDP_SEED: 'http://localhost:8080/oidc/.well-known/openid-configuration'
+    # ZAP resolves report paths relative to this plan file, not the working
+    # directory, so this one is absolute.
+    ZAP_REPORTS: 'C:/Users/sumit.jat/Aegis One/apps/aegis-one/docs/scans'
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 20
+      scanOnlyInScope: true
+
+  - type: spider
+    parameters:
+      context: aegis-console
+      url: ${ZAP_TARGET}
+      maxDuration: 3
+      maxDepth: 8
+
+  # The console is a single-page app: a traditional spider sees one HTML file
+  # and nothing else. The AJAX spider drives a real browser, which is the only
+  # way to reach the routes.
+  - type: spider
+    parameters:
+      context: aegis-console
+      url: ${ZAP_IDP}/authorize?client_id=aegis-one-console&redirect_uri=http://localhost:4173/auth/callback&state=zap&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256
+      maxDuration: 2
+      maxDepth: 5
+
+  - type: spiderAjax
+    parameters:
+      context: aegis-console
+      url: ${ZAP_TARGET}
+      maxDuration: 3
+      browserId: chrome-headless
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: 'C:/Users/sumit.jat/Aegis One/apps/aegis-one/docs/scans'
+      reportFile: zap-baseline.json
+      reportTitle: Aegis One — ZAP passive baseline
+    risks: [high, medium, low, info]
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: 'C:/Users/sumit.jat/Aegis One/apps/aegis-one/docs/scans'
+      reportFile: zap-baseline.html
+      reportTitle: Aegis One — ZAP passive baseline
+    risks: [high, medium, low, info]

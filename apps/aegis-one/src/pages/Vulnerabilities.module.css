@@ -1,0 +1,1084 @@
+/*
+ * Vulnerabilities — geometry read from design-reference/Aegis-One-Console-v129.html
+ * (the Risks workspace, page id "vulns"). Colours are the approved tokens.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.page input[type='checkbox'] {
+  accent-color: var(--ao-sidebar);
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.head {
+  display: flex;
+  gap: var(--ui-space-7);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px;
+  color: var(--ao-brand-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.9px;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 17px;
+  height: 1px;
+  background: var(--ao-brand);
+  content: '';
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+/* The summary line: every figure is a link into the grid that holds it. */
+
+.summaryLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 0;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.summaryLine > span {
+  color: var(--ao-neutral);
+}
+
+.sumLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.sumLink b {
+  color: var(--ao-navy);
+  font-weight: 700;
+}
+
+.sumLink:hover b {
+  color: var(--ao-brand-deep);
+  text-decoration: underline;
+}
+
+.sumLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.headActions {
+  display: flex;
+  gap: 10px;
+}
+
+/* KPI row — six cards across, each one a filter ------------------------- */
+
+.kpiRow {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: var(--ui-space-6);
+}
+
+.kpiSkeleton {
+  display: block;
+  height: 104px;
+  margin-bottom: var(--ui-space-6);
+}
+
+.kpi {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+/*
+ * The Exposure Score leads the row, and the reference gives it the dark card
+ * under a gold rule rather than leaving it one of six.
+ */
+.kpi:first-child {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+}
+
+.kpi:first-child .kpiLabel,
+.kpi:first-child .kpiSub {
+  color: var(--ao-brand-hi);
+}
+
+.kpi:first-child .kpiValue strong {
+  color: var(--ao-surface);
+}
+
+.kpi:first-child .kpiValue em {
+  color: var(--ao-sidebar-text);
+}
+
+.kpi:hover {
+  border-color: var(--ao-brand);
+}
+
+.kpi:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.kpiLabel {
+  color: var(--ao-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.kpiValue {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.kpiValue strong {
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
+
+.kpiValue em {
+  color: var(--ao-neutral);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.kpiSub {
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
+/* Dashboard — six widgets on a three-column grid, wide ones spanning two -- */
+
+.dashboard {
+  display: grid;
+  gap: var(--ui-space-5);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: var(--ui-space-6);
+}
+
+.widget,
+.widgetWide {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.widgetWide {
+  grid-column: span 2;
+}
+
+.widgetHead {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.widgetHead h2 {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--ao-brand);
+  color: var(--ao-navy-ink);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.widgetHead span {
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+.widgetLink {
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.widgetLink:hover {
+  color: var(--ao-brand-deep);
+  text-decoration: underline;
+}
+
+.widgetLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.widgetBody {
+  min-width: 0;
+  flex: 1;
+  padding: 16px;
+}
+
+/* Stacked trend ---------------------------------------------------------- */
+
+.trend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trendPlot {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  /* A definite row, so the columns inside it have a height to divide. */
+  grid-template-rows: 170px;
+  gap: 6px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+/*
+ * Two definite rows: the week's figure, then the bar. An SVG left to size
+ * itself takes its viewBox's aspect ratio instead — a 1:100 box drawn 70px
+ * wide becomes 7,000px tall — so the bar is given a height to fill.
+ */
+.trendCol {
+  display: grid;
+  height: 100%;
+  grid-template-rows: 16px minmax(0, 1fr);
+}
+
+.trendValue {
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.trendBar {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.seg_critical {
+  fill: var(--st-bad);
+}
+
+.seg_high {
+  fill: var(--st-warn);
+}
+
+.seg_medium {
+  fill: var(--ao-warning);
+}
+
+.seg_low {
+  fill: var(--st-neutral);
+}
+
+.trendAxis {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 6px;
+  color: var(--ao-neutral);
+  font-size: 10px;
+  text-align: center;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.legend span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.legend i {
+  width: 9px;
+  height: 9px;
+}
+
+.dot_critical {
+  background: var(--st-bad);
+}
+
+.dot_high {
+  background: var(--st-warn);
+}
+
+.dot_medium {
+  background: var(--ao-warning);
+}
+
+.dot_low {
+  background: var(--st-neutral);
+}
+
+/* Panel and tabs --------------------------------------------------------- */
+
+.panel {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.tabs {
+  display: flex;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.tab,
+.tabOn {
+  flex: 0 0 auto;
+  padding: 12px 22px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--ao-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tabOn {
+  border-bottom-color: var(--ao-sidebar);
+  color: var(--ao-navy-ink);
+}
+
+.tab:hover {
+  color: var(--ao-navy-ink);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.tabBody {
+  padding: 16px;
+}
+
+.tabBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tableSkeleton {
+  display: block;
+  height: 360px;
+}
+
+/* Filter bar ------------------------------------------------------------- */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.search {
+  min-width: 280px;
+  flex: 1 1 280px;
+  padding: 8px 10px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.select {
+  padding: 8px 10px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.search:focus-visible,
+.select:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.clear {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ao-brand-deep);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+.count {
+  margin-left: auto;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+.note {
+  margin: 0 0 12px;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+  max-width: 76ch;
+}
+
+/* Threat chips ----------------------------------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.chip,
+.chipOn {
+  padding: 5px 10px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chipOn {
+  border-color: var(--ao-brand);
+  background: var(--accent-soft);
+  color: var(--ao-brand-deep);
+}
+
+.chip b,
+.chipOn b {
+  margin-left: 5px;
+  color: var(--ao-navy);
+}
+
+.chip:focus-visible,
+.chipOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Grids ------------------------------------------------------------------ */
+
+.scroll {
+  overflow-x: auto;
+  border: 1px solid var(--ao-border);
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grid thead th,
+.miniTable thead th {
+  padding: 11px 12px;
+  border-bottom: 0;
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody th,
+.grid tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ao-border);
+  color: var(--ao-text);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.grid tbody th {
+  min-width: 220px;
+}
+
+.grid tbody th b {
+  display: block;
+  color: var(--ao-navy-ink);
+  font-weight: 650;
+}
+
+.grid tbody th small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.grid tbody tr:last-child th,
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.clickRow {
+  cursor: pointer;
+}
+
+.clickRow:hover {
+  background: var(--ao-track);
+}
+
+.numeric {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: 32px 12px !important;
+  color: var(--ao-muted);
+  text-align: center !important;
+}
+
+.mono {
+  color: var(--ao-muted);
+  font-family: var(--ui-font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--ao-muted);
+}
+
+.rowActions {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The mini tables inside the dashboard widgets. */
+
+.miniTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.miniTable tbody th,
+.miniTable tbody td {
+  padding: 8px;
+  border-bottom: 1px solid var(--ao-border);
+  color: var(--ao-text);
+  font-weight: 400;
+  text-align: left;
+}
+
+.miniTable tbody th {
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+}
+
+.miniTable tbody tr:last-child th,
+.miniTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Severity, SLA, detection and state tags -------------------------------- */
+
+.sevCritical,
+.sevHigh,
+.sevMedium,
+.sevLow {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sevCritical i,
+.sevHigh i,
+.sevMedium i,
+.sevLow i {
+  width: 7px;
+  height: 7px;
+  background: currentcolor;
+}
+
+.sevCritical {
+  color: var(--st-bad);
+}
+
+.sevHigh {
+  color: var(--st-warn);
+}
+
+.sevMedium {
+  color: var(--ao-warning);
+}
+
+.sevLow {
+  color: var(--st-neutral);
+}
+
+.slaWithin,
+.slaSoon,
+.slaOverdue {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.slaWithin {
+  background: var(--st-good-bg);
+  color: var(--st-good);
+}
+
+.slaSoon {
+  background: var(--st-warn-bg);
+  color: var(--st-warn);
+}
+
+.slaOverdue {
+  background: var(--st-bad-bg);
+  color: var(--st-bad);
+}
+
+.detection {
+  display: block;
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+}
+
+.confidence {
+  display: block;
+  color: var(--ao-muted);
+  font-size: 11px;
+}
+
+.state {
+  color: var(--ao-navy-mid);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.threats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.threat,
+.threatMore {
+  padding: 2px 6px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-track);
+  color: var(--ao-navy-mid);
+  font-size: 10.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.threatMore {
+  color: var(--ao-muted);
+}
+
+/* Tone helpers, matching the shared figures' names. */
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.bad {
+  color: var(--st-bad);
+}
+
+.alt {
+  color: var(--ao-warning);
+}
+
+.info {
+  color: var(--st-neutral);
+}
+
+.neutral {
+  color: var(--ao-neutral);
+}
+
+/* Meters: a figure beside the proportion it stands for ------------------- */
+
+.meter {
+  display: flex;
+  min-width: 110px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meter b {
+  color: var(--ao-navy-ink);
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.meterBar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  background: var(--ao-track);
+}
+
+.meterBar rect {
+  fill: var(--ao-navy);
+}
+
+/* Projects --------------------------------------------------------------- */
+
+.projects {
+  display: grid;
+  gap: var(--ui-space-5);
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--ao-border);
+  border-left: 3px solid var(--ao-brand);
+  background: var(--ao-surface);
+}
+
+.projectHead {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.projectHead h3 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.project p {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.progress span {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+/* Pager ------------------------------------------------------------------ */
+
+.pager {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+/* Drawer and modal ------------------------------------------------------- */
+
+.overlay {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--ao-navy-ink) 42%, transparent);
+  inset: 0;
+}
+
+.drawer {
+  display: flex;
+  width: min(560px, 100vw);
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--ao-surface);
+  box-shadow: var(--ui-shadow-2);
+}
+
+.drawerHead {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.drawerHead h2 {
+  margin: 6px 0 0;
+  color: var(--ao-navy-ink);
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 24px;
+}
+
+.drawerHead p {
+  margin: 4px 0 0;
+}
+
+.drawerBody {
+  padding: 18px 20px 28px;
+  font-size: 13px;
+}
+
+.drawerBody h3 {
+  margin: 22px 0 8px;
+  color: var(--ao-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.drawerBody p {
+  margin: 0;
+  color: var(--ao-text);
+}
+
+.facts {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  background: var(--ao-border);
+}
+
+.facts > div {
+  padding: 10px 12px;
+  background: var(--ao-surface);
+}
+
+.facts dt {
+  color: var(--ao-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 3px 0 0;
+  color: var(--ao-navy-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.timeline {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ao-text);
+  font-size: 12.5px;
+  line-height: 22px;
+}
+
+.timeline b {
+  color: var(--ao-navy-ink);
+}
+
+.evidence {
+  overflow-x: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-track);
+  color: var(--ao-text);
+  font-family: var(--ui-font-mono);
+  font-size: 11.5px;
+  line-height: 18px;
+}
+
+.modal {
+  display: flex;
+  width: min(520px, 100vw);
+  flex-direction: column;
+  align-self: center;
+  margin-right: 5vw;
+  background: var(--ao-surface);
+  box-shadow: var(--ui-shadow-2);
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+}
+
+.modalFoot {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid var(--ao-border);
+  background: var(--ao-track);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.field > span {
+  color: var(--ao-muted);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  padding: 9px 10px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.check {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  color: var(--ao-text);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.error {
+  margin: 0;
+  color: var(--st-bad);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 1280px) {
+  .kpiRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .widgetWide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .kpiRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .widgetWide {
+    grid-column: span 1;
+  }
+}

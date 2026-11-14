@@ -1,0 +1,159 @@
+/*
+ * Geometry read out of v129's own header: 32px icon buttons, a 36px initials
+ * tile, 8px between them, and a 5px square dot on the bell.
+ */
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.iconButton {
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 0;
+  background: none;
+  color: var(--ao-muted);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--ui-surface-hover);
+  color: var(--ao-navy);
+}
+
+.iconButton:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Square, not round, and gold: the reference's unread mark. */
+.dot {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  width: 5px;
+  height: 5px;
+  background: var(--ao-tile-gold);
+}
+
+.avatar {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: var(--ao-tile-ink);
+  color: var(--ao-tile-gold);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+}
+
+.avatar:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* Panels ------------------------------------------------------------------ */
+
+.searchPanel,
+.bellPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 340px;
+  padding: 14px 16px;
+}
+
+.bellPanel {
+  width: 380px;
+  gap: 8px;
+}
+
+.searchField {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-muted);
+}
+
+.searchField input {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.searchField input:focus {
+  outline: none;
+}
+
+.searchNote {
+  margin: 0;
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.feed {
+  display: flex;
+  max-height: 300px;
+  flex-direction: column;
+  margin: 0;
+  overflow-y: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.feed li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ao-track);
+}
+
+.feed b {
+  display: block;
+  color: var(--ao-navy);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.feed span {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.panelLink {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ao-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  text-decoration: underline;
+}

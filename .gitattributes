@@ -1,0 +1,5 @@
+# Normalise to LF in the repository; the working tree keeps the platform's own.
+* text=auto eol=lf
+*.png binary
+*.ico binary
+pnpm-lock.yaml -diff

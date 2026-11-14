@@ -1,0 +1,365 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "setup": {
+                "name": "setup",
+                "path": "::setup",
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                "groups": {},
+                "checks": {
+                        "signed in": {
+                            "path": "::setup::signed in",
+                            "id": "6aef39487543274d3e68cc237364418c",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "signed in"
+                        },
+                        "server is up": {
+                            "name": "server is up",
+                            "path": "::setup::server is up",
+                            "id": "218048604d2ab5c8bd952db646799293",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            },
+            "1. devices list with filters, sort and paging": {
+                "name": "1. devices list with filters, sort and paging",
+                "path": "::1. devices list with filters, sort and paging",
+                "id": "a3e3997f115d547fd88361032cc8bf0b",
+                "groups": {},
+                "checks": {
+                        "devices returned": {
+                            "id": "bb1039c14d716bc449708ab31006ba75",
+                            "passes": 2915,
+                            "fails": 0,
+                            "name": "devices returned",
+                            "path": "::1. devices list with filters, sort and paging::devices returned"
+                        },
+                        "second page returned": {
+                            "fails": 0,
+                            "name": "second page returned",
+                            "path": "::1. devices list with filters, sort and paging::second page returned",
+                            "id": "14d1dc83ec14e133e1576b73204f6619",
+                            "passes": 2915
+                        }
+                    }
+            },
+            "2. device detail and its tabs": {
+                "name": "2. device detail and its tabs",
+                "path": "::2. device detail and its tabs",
+                "id": "5b8a2b2389376d3ec3064fd02d2019fc",
+                "groups": {},
+                "checks": {
+                        "device detail": {
+                            "id": "78bea1d30b21093dfc78aa9c7852e69e",
+                            "passes": 2915,
+                            "fails": 0,
+                            "name": "device detail",
+                            "path": "::2. device detail and its tabs::device detail"
+                        }
+                    }
+            },
+            "3. global search": {
+                "id": "36d16d6cfcfe29dd8d7557e79cdb051b",
+                "groups": {},
+                "checks": {
+                        "search returned": {
+                            "name": "search returned",
+                            "path": "::3. global search::search returned",
+                            "id": "062ccb018867aeb84c89c13ca062f6e3",
+                            "passes": 2915,
+                            "fails": 0
+                        }
+                    },
+                "name": "3. global search",
+                "path": "::3. global search"
+            },
+            "4. overview aggregates": {
+                "name": "4. overview aggregates",
+                "path": "::4. overview aggregates",
+                "id": "ea794d4ad7a08b6498cf3f4fc6d5bde2",
+                "groups": {},
+                "checks": {
+                        "overview computed": {
+                            "passes": 2915,
+                            "fails": 0,
+                            "name": "overview computed",
+                            "path": "::4. overview aggregates::overview computed",
+                            "id": "c24bddec98e5aaa51ac17660594b63a1"
+                        }
+                    }
+            },
+            "5. vulnerability aggregation": {
+                "path": "::5. vulnerability aggregation",
+                "id": "d7135d627f5e9339754a009b1e6662de",
+                "groups": {},
+                "checks": {
+                        "vulnerabilities returned": {
+                            "name": "vulnerabilities returned",
+                            "path": "::5. vulnerability aggregation::vulnerabilities returned",
+                            "id": "eb7780b2cd3551f5dd0031ad3d1545fc",
+                            "passes": 2915,
+                            "fails": 0
+                        }
+                    },
+                "name": "5. vulnerability aggregation"
+            },
+            "6. deployment wizard submit against 500 devices": {
+                "name": "6. deployment wizard submit against 500 devices",
+                "path": "::6. deployment wizard submit against 500 devices",
+                "id": "c0da78f019940455b1e1713b4ab95844",
+                "groups": {},
+                "checks": {
+                        "deployment created": {
+                            "name": "deployment created",
+                            "path": "::6. deployment wizard submit against 500 devices::deployment created",
+                            "id": "8f33d5e233b49374c52aa62a1da67d8a",
+                            "passes": 2181,
+                            "fails": 0
+                        }
+                    }
+            },
+            "7. script execution job on a zone": {
+                "checks": {
+                    "job queued": {
+                        "fails": 0,
+                        "name": "job queued",
+                        "path": "::7. script execution job on a zone::job queued",
+                        "id": "be0e3be972177d2a5fe398e6ebfbbf51",
+                        "passes": 2181
+                    },
+                    "results readable": {
+                        "passes": 2181,
+                        "fails": 0,
+                        "name": "results readable",
+                        "path": "::7. script execution job on a zone::results readable",
+                        "id": "a6a47eddbd80da415d09edbab3a01e1a"
+                    }
+                },
+                "name": "7. script execution job on a zone",
+                "path": "::7. script execution job on a zone",
+                "id": "411f474da04c342aea9ddc9f5ea0695b",
+                "groups": {}
+            },
+            "8. report export page": {
+                "id": "f22e857524c27a83bb512d0f1335cc13",
+                "groups": {},
+                "checks": {
+                        "reports returned": {
+                            "name": "reports returned",
+                            "path": "::8. report export page::reports returned",
+                            "id": "03435f473b5ee0c56cc74abf0f993f8a",
+                            "passes": 2915,
+                            "fails": 0
+                        }
+                    },
+                "name": "8. report export page",
+                "path": "::8. report export page"
+            },
+            "9. token refresh mid-session": {
+                "name": "9. token refresh mid-session",
+                "path": "::9. token refresh mid-session",
+                "id": "8d4e83024643b9adf49c8c78e3035bc6",
+                "groups": {},
+                "checks": {
+                        "refreshed": {
+                            "name": "refreshed",
+                            "path": "::9. token refresh mid-session::refreshed",
+                            "id": "5a6a68b87419bb385b631e9f89cafafc",
+                            "passes": 2915,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {
+            "signed in": {
+                "passes": 2915,
+                "fails": 0,
+                "name": "signed in",
+                "path": "::signed in",
+                "id": "cb1bcc2ba51c775b461667c4d4728b47"
+            }
+        }
+    },
+    "metrics": {
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0
+        },
+        "vus": {
+            "max": 200,
+            "value": 10,
+            "min": 10
+        },
+        "http_req_receiving": {
+            "min": 0,
+            "med": 0,
+            "max": 56.1628,
+            "p(90)": 0.9527100000000013,
+            "p(95)": 2.6125649999999987,
+            "avg": 0.44945453812367114
+        },
+        "checks": {
+            "passes": 32780,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.995": false
+            },
+            "value": 1
+        },
+        "http_req_duration": {
+            "p(95)": 8045.418009999999,
+            "avg": 2412.7842784915324,
+            "min": 0,
+            "med": 928.2063499999999,
+            "max": 32063.8537,
+            "p(90)": 6831.358080000005
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 32063.8537,
+            "p(90)": 6844.3721000000005,
+            "p(95)": 8047.9711,
+            "avg": 2423.094611751335,
+            "min": 0,
+            "med": 931.59775
+        },
+        "http_reqs": {
+            "count": 58284,
+            "rate": 93.33542605139036
+        },
+        "http_req_waiting": {
+            "avg": 2412.294153235884,
+            "min": 0,
+            "med": 927.992,
+            "max": 32063.8537,
+            "p(90)": 6828.924930000001,
+            "p(95)": 8045.3597
+        },
+        "iteration_duration": {
+            "avg": 42234.01876682671,
+            "min": 13025.8257,
+            "med": 43198.6438,
+            "max": 54123.5563,
+            "p(90)": 46190.344059999996,
+            "p(95)": 50864.994049999994
+        },
+        "vus_max": {
+            "value": 200,
+            "min": 200,
+            "max": 200
+        },
+        "iterations": {
+            "count": 2915,
+            "rate": 4.668052414724502
+        },
+        "wizard_submit_ms": {
+            "avg": 4539.460724850987,
+            "min": 33.2915,
+            "med": 4878.9867,
+            "max": 14007.4489,
+            "p(90)": 9231.8698,
+            "p(95)": 10445.4817
+        },
+        "http_req_failed": {
+            "passes": 248,
+            "fails": 58036,
+            "thresholds": {
+                "rate<0.005": false
+            },
+            "value": 0.004255027108640451
+        },
+        "group_duration": {
+            "avg": 3818.4388365656546,
+            "min": 0,
+            "med": 2929.9667,
+            "max": 36592.892,
+            "p(90)": 8622.30226,
+            "p(95)": 10245.46438
+        },
+        "http_req_duration{kind:aggregate}": {
+            "avg": 4210.747933276161,
+            "min": 124.3576,
+            "med": 3749.0461,
+            "max": 13859.9738,
+            "p(90)": 7799.235759999999,
+            "p(95)": 9216.246119999996,
+            "thresholds": {
+                "p(95)<800": true
+            }
+        },
+        "data_sent": {
+            "rate": 87381.34841656707,
+            "count": 54565932
+        },
+        "http_req_connecting": {
+            "med": 0,
+            "max": 349.2471,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.18807203177544432,
+            "min": 0
+        },
+        "data_received": {
+            "count": 211669001,
+            "rate": 338964.6625181383
+        },
+        "script_job_submit_ms": {
+            "min": 28.589,
+            "med": 687.388,
+            "max": 14014.4193,
+            "p(90)": 2062.3317,
+            "p(95)": 3656.9655,
+            "avg": 1124.1197190738171
+        },
+        "http_req_duration{kind:detail}": {
+            "max": 32063.8537,
+            "p(90)": 6871.083680000006,
+            "p(95)": 8141.510939999999,
+            "avg": 2427.9801238970886,
+            "min": 0,
+            "med": 907.5785,
+            "thresholds": {
+                "p(95)<200": true
+            }
+        },
+        "http_req_duration{kind:list}": {
+            "avg": 2567.194820259013,
+            "min": 2.174,
+            "med": 1187.7977999999998,
+            "max": 14087.5889,
+            "p(90)": 7031.6739800000005,
+            "p(95)": 8055.5275,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "http_req_blocked": {
+            "avg": 0.20438297302861821,
+            "min": 0,
+            "med": 0,
+            "max": 349.2471,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_sending": {
+            "avg": 0.04067071752110353,
+            "min": 0,
+            "med": 0,
+            "max": 127.8651,
+            "p(90)": 0,
+            "p(95)": 0
+        }
+    },
+    "setup_data": {
+        "ok": true
+    }
+}

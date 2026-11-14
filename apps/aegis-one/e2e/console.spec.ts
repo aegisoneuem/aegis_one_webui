@@ -1,0 +1,2172 @@
+import { expect, test, type Page } from '@playwright/test';
+import { ACCOUNTS, PAGES, signIn } from './helpers';
+
+/**
+ * Walks the console the way a person would: sign in, open every page, follow
+ * the sub-routes, and check that what the server refuses the UI also refuses.
+ */
+
+test.describe('sign-in', () => {
+  test('rejects a wrong password without saying which field was wrong', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /Continue with SSO/i }).click();
+    await page.getByLabel('Work email').fill(ACCOUNTS.superAdmin);
+    await page.getByLabel('Password').fill('not-the-password');
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('alert')).toContainText('did not match');
+    // The message must not distinguish a bad password from an unknown account.
+    await expect(page.getByRole('alert')).not.toContainText(/account|user|exist/i);
+  });
+
+  test('requires the second factor', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /Continue with SSO/i }).click();
+    await page.getByLabel('Work email').fill(ACCOUNTS.superAdmin);
+    await page.getByLabel('Password').fill(process.env['MOCK_PASSWORD'] ?? 'Aegis-Demo-2026');
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Two-step verification' })).toBeVisible();
+    await page.getByLabel('Verification code').fill('000000');
+    await page.getByRole('button', { name: 'Verify' }).click();
+    await expect(page.getByRole('alert')).toContainText('not correct');
+  });
+
+  test('sends an unauthenticated visitor to sign-in and back again', async ({ page }) => {
+    await page.goto('/devices');
+    await expect(page).toHaveURL(/\/sign-in/);
+    await expect(
+      page.getByRole('heading', { name: 'Sign in to your endpoint management console.' }),
+    ).toBeVisible();
+  });
+});
+
+test.describe('signed in as Super Admin', () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page);
+  });
+
+  for (const { path, heading } of PAGES) {
+    test(`${heading} loads with data`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(message.text());
+      });
+
+      await page.goto(path);
+      await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
+
+      // Nothing on any page should render an error state on a healthy server.
+      await expect(page.getByText('Could not load this')).toHaveCount(0);
+      expect(errors, `console errors on ${path}`).toEqual([]);
+    });
+  }
+
+  test('Overview reports the whole estate', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: /Managed Endpoints/ })).toContainText('50,000');
+    // The six widgets the approved design puts on this page. Service health
+    // is not among them; it lives on Diagnostics, which is the only page that
+    // reads it.
+    for (const widget of [
+      'Overall Health Score',
+      'Patch Compliance',
+      'Security Posture',
+      'Deployment Status',
+      'Expiring Soon',
+      'Needs Attention',
+      'Recent Activity',
+    ]) {
+      await expect(page.getByRole('heading', { name: widget, exact: true })).toBeVisible();
+    }
+  });
+
+  test('Overview scope filters narrow the estate', async ({ page }) => {
+    await page.goto('/');
+    const managed = page.getByRole('button', { name: /Managed Endpoints/ });
+    await expect(managed).toContainText('50,000');
+
+    await page.getByLabel('Platform').selectOption('macos');
+    // A narrower scope must report fewer endpoints, and the figure has to come
+    // back from the server rather than being filtered in the browser.
+    await expect(managed).not.toContainText('50,000');
+    await expect(page.getByRole('heading', { name: 'Overall Health Score' })).toBeVisible();
+  });
+
+  test('Overview charts switch form without losing the figures', async ({ page }) => {
+    await page.goto('/');
+    const compliance = page
+      .getByRole('article')
+      .filter({ has: page.getByRole('heading', { name: 'Patch Compliance' }) });
+
+    await expect(compliance.getByRole('table', { name: /Device compliance/i })).toBeAttached();
+    await compliance.getByLabel('Chart type').selectOption('bar');
+    await expect(compliance.getByRole('table', { name: /Device compliance/i })).toBeAttached();
+
+    await compliance.getByLabel('View').selectOption('severity');
+    await expect(compliance.getByRole('table', { name: /severity/i })).toBeAttached();
+  });
+
+  /*
+   * The saved layout is per user and every other Overview test signs in as
+   * the same one, so each of these puts it back even when it fails. Escape
+   * first, because a test that failed with the dialog open cannot reach the
+   * button behind it.
+   */
+  const resetOverview = async (page: Page) => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Customize', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+    await dialog.getByRole('button', { name: 'Reset to Default', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toBeVisible();
+  };
+
+  test('Customize hides and reorders widgets, and the layout survives a reload', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Customize', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+    await expect(dialog).toBeVisible();
+
+    try {
+      await dialog.getByRole('button', { name: 'Security Focus', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+
+      // The preset hides three panels and puts Security Posture second.
+      await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Expiring Soon' })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Security Posture' })).toBeVisible();
+
+      // Saved, not only applied: a cold load asks the server for it.
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Security Posture' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toHaveCount(0);
+    } finally {
+      await resetOverview(page);
+    }
+  });
+
+  test('the health bands are read from Customize, not from the server', async ({ page }) => {
+    await page.goto('/');
+
+    // Thresholds opens the same dialog the header does.
+    await page.getByRole('button', { name: 'Thresholds', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+    await expect(dialog).toBeVisible();
+
+    try {
+      // A band that starts above the one above it is refused rather than saved.
+      await dialog.getByLabel('At risk (red) below').fill('99');
+      await expect(dialog).toContainText('no Fair band between them');
+      await expect(dialog.getByRole('button', { name: 'Done', exact: true })).toBeDisabled();
+
+      await dialog.getByLabel('Healthy (green) at or above').fill('30');
+      await dialog.getByLabel('At risk (red) below').fill('20');
+      await expect(dialog).toContainText('Healthy = 30 and above');
+
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+      // The estate scores well above 30, so the tile must now say Healthy
+      // even though the server computed its own band against 85.
+      await expect(page.getByText('Healthy \u00b7 30 and above')).toBeVisible();
+    } finally {
+      await resetOverview(page);
+    }
+  });
+
+  test('the wizard builds a widget from a template and the Overview draws it', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: '+ Custom Widget' }).click();
+    const wizard = page.getByRole('dialog', { name: 'Create Custom Widget' });
+    await expect(wizard).toBeVisible();
+
+    try {
+      // A template fills every step, so Continue walks straight to Display.
+      await wizard.getByRole('button', { name: /^Unencrypted Devices by Department/ }).click();
+      await expect(wizard).toContainText('Step 2 of 6');
+
+      // The preview is the same endpoint and the same chart the page will
+      // use, so it has to have drawn before the widget is added.
+      await expect(
+        wizard.getByRole('table', { name: /Unencrypted Devices by Department/ }),
+      ).toBeAttached();
+
+      for (let step = 2; step <= 5; step += 1) {
+        await wizard.getByRole('button', { name: 'Continue', exact: true }).click();
+      }
+      await expect(wizard).toContainText('Step 6 of 6');
+
+      await wizard.getByLabel('Place After').selectOption('health');
+      await wizard.getByRole('button', { name: 'Add to Overview', exact: true }).click();
+
+      const widget = page
+        .getByRole('article')
+        .filter({ has: page.getByRole('heading', { name: 'Unencrypted Devices by Department' }) });
+      await expect(widget).toBeVisible();
+
+      // Saved, not only drawn: a cold load reads it back from the layout.
+      await page.reload();
+      await expect(
+        page.getByRole('heading', { name: 'Unencrypted Devices by Department' }),
+      ).toBeVisible();
+    } finally {
+      await resetOverview(page);
+      await expect(
+        page.getByRole('heading', { name: 'Unencrypted Devices by Department' }),
+      ).toHaveCount(0);
+    }
+  });
+
+  test('a measure the subject cannot answer is reported, not drawn empty', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: '+ Custom Widget' }).click();
+    const wizard = page.getByRole('dialog', { name: 'Create Custom Widget' });
+
+    await wizard.getByRole('button', { name: /^Start From Blank/ }).click();
+    // Software Installs is a join and carries no numbers, so an average has
+    // nothing to average; the wizard says so rather than drawing nothing.
+    await wizard.getByRole('button', { name: 'Software Installs' }).click();
+    await wizard.getByRole('button', { name: 'Continue', exact: true }).click();
+    await wizard.getByRole('button', { name: 'Average', exact: true }).click();
+
+    await expect(wizard).toContainText('carries no numbers');
+
+    await wizard.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(wizard).toHaveCount(0);
+  });
+
+  test('previewing a role narrows every page, says so, and lets go', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Customize', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+
+    try {
+      await dialog.getByLabel('Preview as role').selectOption({ label: 'Read-only' });
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+
+      const banner = page.getByRole('status');
+      await expect(banner).toContainText('Viewing as Read-only');
+      // The promise the banner makes: controls, not figures.
+      await expect(banner).toContainText('the figures are still yours');
+
+      // It follows the reader rather than staying on the page that set it,
+      // which is the whole point — a console that quietly offers less and
+      // says nothing about why is worse than no preview at all.
+      await page.getByRole('link', { name: 'Device groups' }).click();
+      await expect(page).toHaveURL(/\/groups/);
+      await expect(page.getByRole('status')).toContainText('Viewing as Read-only');
+      await expect(page.getByRole('button', { name: 'Import groups from CSV' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Create Group' })).toBeDisabled();
+
+      await page.getByRole('button', { name: 'Switch back' }).click();
+      await expect(page.getByRole('status')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Create Group' })).toBeEnabled();
+    } finally {
+      // The preview is session state, so a reload clears it whatever happened.
+      await page.goto('/');
+    }
+  });
+
+  test('Devices lists, filters, sorts and pages', async ({ page }) => {
+    await page.goto('/devices');
+    const grid = page.getByRole('table', { name: 'Devices' });
+    await expect(grid).toBeVisible();
+
+    // Server-side total, not a count of what is on screen.
+    await expect(page.getByText('50,000 devices', { exact: true })).toBeVisible();
+
+    await page.getByLabel('Search devices').fill('MUM-WS-01');
+    await expect(page.getByText('50,000 devices', { exact: true })).toHaveCount(0);
+    await page.getByLabel('Clear').click();
+
+    // A column the approved grid shows by default; the posture columns are in
+    // the chooser now, which the next assertion covers.
+    await page.getByRole('button', { name: /Last Seen/ }).click();
+    await expect(page).toHaveURL(/sort=lastSeenAt/);
+
+    const first = await grid.locator('tbody tr').first().textContent();
+    await page.getByRole('button', { name: 'Next' }).click();
+    // The next page is a round trip, so the row has to be there before its
+    // text can be compared: asserting straight away raced the fetch.
+    await expect(grid.locator('tbody tr').first()).toBeVisible();
+    await expect(grid.locator('tbody tr').first()).not.toHaveText(first ?? '');
+  });
+
+  test('Devices shows the approved columns, and hides the rest behind the chooser', async ({
+    page,
+  }) => {
+    await page.goto('/devices');
+    const grid = page.getByRole('table', { name: 'Devices' });
+
+    // The approved grid's own columns, in its own order.
+    for (const header of [
+      'Computer Name',
+      'OS',
+      'IP Address',
+      'Hostname',
+      'MAC Address',
+      'DNS Name',
+      'Location',
+      'User',
+      'Status',
+      'Last Seen',
+    ]) {
+      // Exact, because "OS" is also a prefix of "OS Version".
+      await expect(grid.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
+    }
+
+    // Posture is not on the inventory by default, but it is reachable.
+    await expect(grid.getByRole('columnheader', { name: /Critical CVEs/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Columns' }).click();
+    await expect(page.getByRole('checkbox', { name: 'Critical CVEs' })).toBeVisible();
+  });
+
+  test('Devices counts the estate, and the counts follow the search', async ({ page }) => {
+    await page.goto('/devices');
+    const all = page.getByRole('button', { name: /All Endpoints/ });
+    await expect(all).toContainText('50,000');
+
+    // The strip and the grid must agree: a count that ignored the search
+    // would contradict the list under it.
+    await page.getByLabel('Search devices').fill('MUM-WS-01');
+    await expect(all).not.toContainText('50,000');
+  });
+
+  test('Patch Management opens on its dashboard, with all eight tabs', async ({ page }) => {
+    await page.goto('/patches');
+    await expect(page.getByRole('heading', { name: 'Patch Management' })).toBeVisible();
+
+    for (const label of [
+      'Overview',
+      'Patch Policies',
+      'Windows',
+      'macOS',
+      'Linux',
+      'Third-Party Apps',
+      'Drivers & BIOS',
+      'All Patches',
+    ]) {
+      await expect(page.getByRole('tab', { name: label, exact: true })).toBeVisible();
+    }
+
+    // The approved Overview tab: four counters, three charts, two tables.
+    for (const heading of [
+      'Compliance by OS Version',
+      'Missing by Severity',
+      'Missing Patch Age',
+      'Top Missing Patches',
+      'Devices Needing Attention',
+    ]) {
+      await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    }
+    await expect(page.getByText('Average Patch Age')).toBeVisible();
+  });
+
+  test('a patch tab is a link, and carries its own columns and counters', async ({ page }) => {
+    await page.goto('/patches?tab=windows');
+
+    // Restored from the URL, not from a click: the tab is deep-linkable.
+    await expect(page.getByRole('tab', { name: 'Windows', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(page.getByText('Windows Compliance')).toBeVisible();
+
+    const grid = page.getByRole('table', { name: 'Windows OS Updates' });
+    for (const header of ['Update', 'Vendor', 'Severity', 'Released', 'Applicable', 'Remediated']) {
+      await expect(grid.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
+    }
+
+    // Drivers & BIOS counts installs rather than remediations, and splits the
+    // catalogue by type instead of naming a vendor.
+    await page.getByRole('tab', { name: 'Drivers & BIOS' }).click();
+    const drivers = page.getByRole('table', { name: 'Drivers & BIOS' });
+    await expect(
+      drivers.getByRole('columnheader', { name: 'Installed', exact: true }),
+    ).toBeVisible();
+    await expect(drivers.getByRole('columnheader', { name: 'Type', exact: true })).toBeVisible();
+  });
+
+  test('the patch grid filters by severity and by OS version', async ({ page }) => {
+    await page.goto('/patches?tab=windows');
+    const grid = page.getByRole('table', { name: 'Windows OS Updates' });
+    const rows = grid.locator('tbody tr');
+    const all = await rows.count();
+
+    await page.getByRole('button', { name: 'Critical', exact: true }).click();
+    await expect(page).toHaveURL(/severity=critical/);
+    await expect(rows).not.toHaveCount(all);
+
+    // The OS-version chips narrow to the updates outstanding on that build,
+    // which is a join the server does — not a filter applied to this page.
+    await page.getByRole('button', { name: 'All Severities' }).click();
+    await page.getByRole('button', { name: /Windows Server 2016/ }).click();
+    await expect(page).toHaveURL(/osVersion=/);
+  });
+
+  test('declining an update changes its state on the server', async ({ page }) => {
+    const url = '/patches?tab=third-party&approval=review';
+    const grid = () => page.getByRole('table', { name: 'Third-Party Application Updates' });
+
+    await page.goto(url);
+    const first = grid().locator('tbody tr').first();
+    await expect(first).toBeVisible();
+    // The grid is virtualised, so counting rows counts the window rather than
+    // the result. The update's own reference is what the assertion follows.
+    const reference = (await first.locator('small').first().innerText()).split(' ·')[0] ?? '';
+    expect(reference).toMatch(/^VRF-/);
+
+    await first.getByRole('button', { name: '…' }).click();
+    await page.getByRole('menuitem', { name: 'Decline' }).click();
+
+    // Loaded again, so it has moved because the server says so — not because
+    // the page dropped it from a list it was holding.
+    await page.goto('/patches?tab=third-party&approval=declined');
+    await expect(grid().getByText(reference, { exact: false }).first()).toBeVisible();
+  });
+
+  test('the software catalogue is a card grid with its five counters', async ({ page }) => {
+    await page.goto('/software');
+    await expect(page.getByRole('heading', { name: 'Software Catalog' })).toBeVisible();
+
+    for (const label of [
+      'All Packages',
+      'Installer Added',
+      'Installer Missing',
+      'Draft Packages',
+      'Publishers',
+    ]) {
+      await expect(page.getByText(label, { exact: true })).toBeVisible();
+    }
+
+    // One card per package, each carrying the four fields the reference shows.
+    const cards = page.locator('article');
+    await expect(cards.first()).toBeVisible();
+    await expect(cards.first().getByText('Version', { exact: true })).toBeVisible();
+    await expect(cards.first().getByText('Platform', { exact: true })).toBeVisible();
+    await expect(cards.first().getByText('Package status', { exact: true })).toBeVisible();
+    await expect(cards.first().getByText('Installer', { exact: true })).toBeVisible();
+  });
+
+  test('a catalogue counter narrows the grid without moving the counters', async ({ page }) => {
+    await page.goto('/software');
+    const all = page.getByRole('button', { name: /All Packages/ });
+    const drafts = page.getByRole('button', { name: /Draft Packages/ });
+    const total = (await all.innerText()).replace(/\D/g, '');
+
+    await drafts.click();
+    await expect(drafts).toHaveAttribute('aria-pressed', 'true');
+
+    // The counters describe the catalogue, so they do not follow the filter.
+    await expect(all).toContainText(total);
+    // Every card left is a draft, and a draft has no installer to deploy.
+    const cards = page.locator('article');
+    await expect(cards.first().getByText('Draft', { exact: true })).toBeVisible();
+    await expect(cards.first().getByRole('button', { name: 'Deploy' })).toBeDisabled();
+  });
+
+  test('searching the catalogue narrows it server-side', async ({ page }) => {
+    await page.goto('/software');
+    const cards = page.locator('article');
+    await expect(cards.first()).toBeVisible();
+    const before = await cards.count();
+
+    await page.getByLabel('Search software or publisher').fill('Chrome');
+    await expect(cards).not.toHaveCount(before);
+    await expect(page.getByRole('heading', { name: 'Google Chrome' })).toBeVisible();
+  });
+
+  test('Enrollment shows its counters, methods and token grid', async ({ page }) => {
+    await page.goto('/enrollment');
+    await expect(page.getByRole('heading', { name: 'Enrollment', exact: true })).toBeVisible();
+
+    for (const label of [
+      'Enrolled Endpoints',
+      'On Latest Agent',
+      'Active Tokens',
+      'Not Checking in',
+    ]) {
+      await expect(page.getByText(label, { exact: true })).toBeVisible();
+    }
+
+    // The four ways in, each with the state the server computed.
+    for (const method of [
+      'Agent Installer',
+      'Directory Auto-Enroll',
+      'Imaging & VDI',
+      'Bulk Import',
+    ]) {
+      await expect(page.getByText(method, { exact: true })).toBeVisible();
+    }
+    // An identity integration is connected in the fixture.
+    await expect(page.getByText('Configured', { exact: true })).toBeVisible();
+
+    const rows = page.locator('table tbody tr');
+    await expect(rows.first()).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Target Group' })).toBeVisible();
+  });
+
+  test('the install command switches platform and never shows a real token', async ({ page }) => {
+    await page.goto('/enrollment');
+    const code = page.locator('pre');
+    await expect(code).toContainText('msiexec');
+    await expect(code).toContainText('<ENROLLMENT_TOKEN>');
+
+    await page.getByRole('button', { name: 'Linux', exact: true }).click();
+    await expect(code).toContainText('dpkg');
+    await expect(code).toContainText('<ENROLLMENT_TOKEN>');
+
+    // Whatever the platform, no token prefix or secret reaches the screen.
+    await expect(page.locator('body')).not.toContainText('enr_');
+  });
+
+  test('Device groups is a tree beside the selected group', async ({ page }) => {
+    await page.goto('/groups');
+    await expect(page.getByRole('heading', { name: 'Device Groups' })).toBeVisible();
+
+    for (const label of ['Groups', 'Sub-Groups', 'Endpoints Grouped', 'Not Grouped']) {
+      await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+    }
+
+    // The first group is selected, and its five figures sit over the tabs.
+    await expect(page.getByRole('heading', { name: 'Windows Workstations' })).toBeVisible();
+    // "Members 32,761", not "Membership".
+    await expect(page.getByRole('tab', { name: /^Members \d/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const rows = page.getByRole('table', { name: 'Group members' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+  });
+
+  test('selecting a group swaps the pane, and the selection is in the URL', async ({ page }) => {
+    await page.goto('/groups');
+    await page.getByRole('button', { name: /^Security Gaps/ }).click();
+
+    await expect(page).toHaveURL(/group=grp-gaps/);
+    await expect(page.getByRole('heading', { name: 'Security Gaps' })).toBeVisible();
+
+    // The selection survives a cold load, which is the point of the URL.
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Security Gaps' })).toBeVisible();
+  });
+
+  test('the group tree collapses a branch and expands it again', async ({ page }) => {
+    await page.goto('/groups');
+
+    const collapse = page.getByRole('button', { name: 'Collapse Windows Workstations' });
+    await expect(collapse).toBeVisible();
+    const child = page.getByRole('button', { name: /^Windows 11/ }).first();
+    await expect(child).toBeVisible();
+
+    await collapse.click();
+    await expect(child).toBeHidden();
+
+    const expand = page.getByRole('button', { name: 'Expand Windows Workstations' });
+    await expect(expand).toHaveAttribute('aria-expanded', 'false');
+    await expand.click();
+    await expect(child).toBeVisible();
+  });
+
+  test("a group's figures agree with its member grid", async ({ page }) => {
+    await page.goto('/groups?group=grp-macos');
+    const online = page.getByRole('group', { name: 'Member filter' }).getByRole('button', {
+      name: /^Online/,
+    });
+    await expect(online).toBeVisible();
+
+    await online.click();
+    await expect(online).toHaveAttribute('aria-pressed', 'true');
+
+    const rows = page.getByRole('table', { name: 'Group members' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    for (const row of await rows.allInnerTexts()) expect(row).toContain('Online');
+  });
+
+  test("a group's other tabs read the contract's GroupDetail", async ({ page }) => {
+    await page.goto('/groups?group=grp-win-ws');
+
+    await page.getByRole('tab', { name: 'Membership' }).click();
+    await expect(page.getByText('osFamily is Windows and kind is workstation')).toBeVisible();
+
+    await page.getByRole('tab', { name: /^Sub-Groups/ }).click();
+    await expect(page.getByRole('button', { name: /Windows 11/ }).last()).toBeVisible();
+
+    await page.getByRole('tab', { name: /^Policies/ }).click();
+    await expect(page.getByText('Windows Baseline 2026.1')).toBeVisible();
+
+    await page.getByRole('tab', { name: /^History/ }).click();
+    await expect(page.getByText('group.create')).toBeVisible();
+
+    // Declared in the contract, served by nothing — disabled, not invented.
+    await expect(page.getByRole('tab', { name: 'Patches' })).toBeDisabled();
+    await expect(page.getByRole('tab', { name: 'Software' })).toBeDisabled();
+  });
+
+  test('Deployments shows its six counters over a grid of actions', async ({ page }) => {
+    await page.goto('/deployments');
+    await expect(page.getByRole('heading', { name: 'Deployments' })).toBeVisible();
+
+    // By role, because two of these labels are also status words in the grid.
+    for (const label of [
+      'All Actions',
+      'Active / waiting',
+      'Scheduled',
+      'Completed',
+      'With Failures',
+      'Paused / cancelled',
+    ]) {
+      await expect(page.getByRole('button', { name: new RegExp(`^${label}`) })).toBeVisible();
+    }
+
+    const rows = page.getByRole('table', { name: 'Deployments' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    // Every row carries its own result breakdown and its target sample.
+    await expect(rows.first()).toContainText(/\d+ done/);
+    await expect(rows.first()).toContainText(/Results Recorded/);
+    await expect(rows.first().getByRole('button', { name: 'View Details' })).toBeVisible();
+  });
+
+  test('a Deployments counter narrows the grid without moving the counters', async ({ page }) => {
+    await page.goto('/deployments');
+    const all = page.getByRole('button', { name: /All Actions/ });
+    const scheduled = page.getByRole('button', { name: /^Scheduled/ });
+    await expect(all).toBeVisible();
+    const total = (await all.innerText()).replace(/\D/g, '');
+
+    await scheduled.click();
+    await expect(scheduled).toHaveAttribute('aria-pressed', 'true');
+
+    // The counters count every action, so they do not follow the filter.
+    await expect(all).toContainText(total);
+    // Everything left is scheduled, and a scheduled action says when it starts.
+    const rows = page.getByRole('table', { name: 'Deployments' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    for (const row of await rows.allInnerTexts()) {
+      expect(row).toContain('Scheduled');
+      expect(row).toContain('Starts');
+    }
+  });
+
+  test('an action opens its detail from the grid', async ({ page }) => {
+    await page.goto('/deployments');
+    const rows = page.getByRole('table', { name: 'Deployments' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    const name = await rows.first().locator('button').first().innerText();
+
+    await rows.first().getByRole('button', { name: 'View Details' }).click();
+    await expect(page).toHaveURL(/\/deployments\/dep-/);
+    await expect(page.getByRole('heading', { name })).toBeVisible();
+  });
+
+  test('a device opens, and its tabs are deep-linkable', async ({ page }) => {
+    await page.goto('/devices');
+    await page.getByRole('table', { name: 'Devices' }).locator('tbody tr').first().click();
+    await expect(page).toHaveURL(/\/devices\/dev-/);
+
+    await page.getByRole('tab', { name: 'Vulnerabilities' }).click();
+    await expect(page).toHaveURL(/\/vulnerabilities$/);
+
+    // The tab survives a cold load, which is the point of putting it in the URL.
+    await page.reload();
+    await expect(page.getByRole('tab', { name: 'Vulnerabilities' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    await page.getByRole('tab', { name: 'Diagnostics' }).click();
+    await expect(page.getByRole('heading', { name: 'Current posture' })).toBeVisible();
+  });
+
+  test('the deployment wizard runs through all six steps and creates an action', async ({
+    page,
+  }) => {
+    await page.goto('/deployments/new');
+
+    await expect(page.getByRole('listitem').filter({ hasText: 'Content' })).toBeVisible();
+    await page.getByLabel('Package').selectOption({ index: 1 });
+    await expect(page.getByLabel('Action name')).not.toHaveValue('');
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page).toHaveURL(/\/deployments\/new\/targets/);
+    await page.getByLabel('Device group').selectOption({ index: 1 });
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page).toHaveURL(/\/schedule/);
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page).toHaveURL(/\/network/);
+    await page.getByRole('switch', { name: /Wake offline/ }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page).toHaveURL(/\/options/);
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page).toHaveURL(/\/review/);
+    await page.getByRole('button', { name: /Queue action now/ }).click();
+
+    await expect(page).toHaveURL(/\/deployments\/created\//);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+    await page.getByRole('button', { name: 'View progress' }).click();
+    await expect(page).toHaveURL(/\/deployments\/dep-/);
+  });
+
+  test('Live Activity opens on the approved console: five tabs, three operations', async ({
+    page,
+  }) => {
+    await page.goto('/liveops');
+
+    for (const tab of ['Console', 'Log Collection', 'Task Results', 'Task History', 'Audit Trail'])
+      await expect(page.getByRole('tab', { name: new RegExp('^' + tab) })).toBeVisible();
+
+    for (const mode of ['Live Data', 'Run Script', 'Collect Logs'])
+      await expect(page.getByRole('button', { name: new RegExp('^' + mode) })).toBeVisible();
+
+    // Live Data is the operation the reference opens on, and its eight fields
+    // are the checklist.
+    await expect(page.getByRole('heading', { name: 'Configure Request' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Data to Request' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: /Hostname/ })).toBeChecked();
+    await expect(page.getByRole('heading', { name: 'Select Targets' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Review Request' })).toBeVisible();
+  });
+
+  test('Live Activity switches operation and submits, never offering a session', async ({
+    page,
+  }) => {
+    await page.goto('/liveops');
+
+    await page.getByRole('button', { name: /^Run Script/ }).click();
+    await expect(page.getByLabel('Script Runtime')).toBeVisible();
+    await expect(page.getByLabel('Custom Script')).toHaveValue(/Get-CimInstance/);
+
+    await page.getByLabel('Task Name').fill('Verify firewall profiles');
+    // A group is a target the server resolves, so the browser never sends ids.
+    await page.getByLabel('Add Device Group').selectOption({ index: 1 });
+    await page.getByRole('button', { name: 'Review Request' }).click();
+
+    await expect(page.getByRole('status').filter({ hasText: 'Request submitted' })).toBeVisible();
+
+    /*
+     * Live Activity still offers no interactive access: a job is submitted,
+     * polled and read back, with no session to attach to. The scan is of the
+     * page rather than the document, because the console does have remote
+     * control now — it is the next item in the sidebar, on its own page,
+     * with its own consent rules. Keeping this assertion on `main` is what
+     * stops the two from blurring back together.
+     */
+    const main = (await page.locator('main').innerText()).toLowerCase();
+    for (const banned of [
+      'remote desktop',
+      'remote control',
+      'screen share',
+      'screen view',
+      'remote session',
+      'terminal session',
+      'take control',
+    ]) {
+      expect(main, `"${banned}" must not appear on Live Activity itself`).not.toContain(banned);
+    }
+  });
+
+  test('Live Activity opens a task from history into the per-endpoint grid', async ({ page }) => {
+    await page.goto('/liveops?tab=history');
+    await expect(page.getByRole('heading', { name: 'Investigation History' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Endpoint Health Investigation' }).click();
+    await expect(page).toHaveURL(/tab=results/);
+    await expect(
+      page.getByRole('heading', { name: 'Endpoint Health Investigation' }),
+    ).toBeVisible();
+
+    for (const column of ['Device Name', 'Connection', 'Action Type', 'Exit Code', 'Timestamps'])
+      await expect(page.getByRole('columnheader', { name: column })).toBeVisible();
+  });
+
+  test('Log Collection counts what is stored and filters by log type', async ({ page }) => {
+    await page.goto('/liveops?tab=logs');
+
+    for (const counter of [
+      'Bundles Stored',
+      'Hosts Covered',
+      'Failed or Waiting',
+      'Storage Used',
+      'Next Scheduled',
+    ])
+      await expect(page.getByText(counter, { exact: true })).toBeVisible();
+
+    await page.getByLabel('Log Type').selectOption('security');
+    await expect(page.getByRole('cell', { name: /Security/ }).first()).toBeVisible();
+
+    // Storage & Mail keeps the root path a placeholder: a real one names a server.
+    await page.getByRole('tab', { name: 'Storage & Mail' }).click();
+    await expect(page.getByText('<ROOT_SERVER>')).toBeVisible();
+  });
+
+  test('Vulnerabilities opens on the approved dashboard: six counters, six widgets', async ({
+    page,
+  }) => {
+    await page.goto('/vulns');
+
+    for (const kpi of [
+      'Exposure Score',
+      'Open Findings',
+      'Critical & High',
+      'Known Exploited',
+      'SLA Overdue',
+      'Scan Coverage',
+    ])
+      await expect(page.getByText(kpi, { exact: true }).first()).toBeVisible();
+
+    for (const widget of [
+      'Open Findings Trend',
+      'SLA Status',
+      'Top Priorities',
+      'Vulnerability Age',
+      'Top Fixes Out of Compliance',
+      'Threat Indicators',
+    ])
+      await expect(page.getByRole('heading', { name: widget })).toBeVisible();
+
+    for (const tab of ['Findings', 'Devices', 'Remediations', 'Projects', 'Scans'])
+      await expect(page.getByRole('tab', { name: tab })).toBeVisible();
+
+    // The grid sorts on the Priority Rating, not on CVSS: both columns are
+    // there, and the reference puts Priority first. Scoped to the tab body,
+    // because the Top Priorities widget above it has columns of its own.
+    const grid = page.locator('[class*="tabBody"]');
+    for (const column of ['Severity', 'Priority', 'CVSS', 'Finding', 'Threats', 'SLA', 'State'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('a Vulnerabilities counter narrows the grid to what it counted', async ({ page }) => {
+    await page.goto('/vulns');
+
+    const exploited = await page
+      .getByRole('button', { name: /Known Exploited/ })
+      .first()
+      .innerText();
+    const expected = Number(/(\d[\d,]*)/.exec(exploited)?.[1]?.replace(/,/g, '') ?? '0');
+    expect(expected).toBeGreaterThan(0);
+
+    await page
+      .getByRole('button', { name: /Known Exploited/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/threat=known-exploited/);
+    await expect(page.getByText(`${expected} findings`)).toBeVisible();
+  });
+
+  test('a finding opens its drawer, with the solution and the scan evidence', async ({ page }) => {
+    await page.goto('/vulns');
+
+    await page.locator('[class*="tabBody"] table tbody tr').first().click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+    for (const fact of ['Priority Rating', 'CVSS v3.1 base', 'Fix type', 'Family'])
+      await expect(drawer.getByText(fact, { exact: true })).toBeVisible();
+    await expect(drawer.getByRole('heading', { name: 'Solution' })).toBeVisible();
+    await expect(drawer.getByRole('heading', { name: 'Scan evidence' })).toBeVisible();
+  });
+
+  test('every finding row offers one action, and Deploy Fix leaves the drawer shut', async ({
+    page,
+  }) => {
+    await page.goto('/vulns');
+
+    const rows = page.locator('[class*="tabBody"] table tbody tr');
+    await expect(rows.first()).toBeVisible();
+
+    // One per row, and only ever one of the two.
+    const names = await rows.locator('td:last-child button').allInnerTexts();
+    expect(names.length).toBe(await rows.count());
+    for (const name of names) expect(['Deploy Fix', 'Review']).toContain(name);
+
+    // The button names its own finding rather than sharing one name with
+    // fourteen others, which is what the naming pass was about.
+    const deploy = rows.locator('td:last-child button', { hasText: 'Deploy Fix' }).first();
+    await expect(deploy).toHaveAttribute('aria-label', /^Deploy the fix for .+/);
+
+    // The row opens the drawer; the button inside it must not do both.
+    await deploy.click();
+    await expect(page).toHaveURL(/\/patches/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
+  test('the other four Vulnerabilities tabs carry their own columns', async ({ page }) => {
+    await page.goto('/vulns');
+
+    const body = page.locator('[class*="tabBody"]');
+
+    await page.getByRole('tab', { name: 'Devices' }).click();
+    for (const column of ['Device Criticality', 'Exposure (0–1000)', 'Scan Method'])
+      await expect(body.getByRole('columnheader', { name: column })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Remediations' }).click();
+    for (const column of ['Remediation', 'Risk Reduced', 'Fix Type'])
+      await expect(body.getByRole('columnheader', { name: column })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Projects' }).click();
+    await expect(body.getByText(/devices remediated/).first()).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Scans' }).click();
+    for (const column of ['Template', 'Targets', 'New Findings'])
+      await expect(body.getByRole('columnheader', { name: column })).toBeVisible();
+  });
+
+  test('New Scan is accepted and the scan appears in the history', async ({ page }) => {
+    await page.goto('/vulns?tab=scans');
+
+    await page.getByRole('button', { name: '+ New Scan' }).first().click();
+    const dialog = page.getByRole('dialog', { name: 'New Scan' });
+    await dialog.getByLabel('Scan name').fill('E2E ad-hoc scan');
+    await dialog.getByLabel('Template').selectOption('critical-and-exploited-quick');
+    await dialog.getByLabel('Targets').selectOption('windows');
+    await dialog.getByRole('button', { name: 'Start Scan' }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('cell', { name: 'Platform: Windows' }).first()).toBeVisible();
+  });
+
+  test('Configuration opens on the approved dashboard: five counters, four widgets', async ({
+    page,
+  }) => {
+    await page.goto('/profiles');
+
+    for (const kpi of [
+      'Overall Compliance',
+      'Checks in Scope',
+      'Failing Checks',
+      'Non-Compliant Devices',
+      'Exceptions',
+    ])
+      await expect(page.getByText(kpi, { exact: true }).first()).toBeVisible();
+
+    for (const widget of [
+      'Compliance by Framework',
+      'Compliance by Platform',
+      'Device Compliance',
+      'Compliance by Category',
+      'Top Failing Checks',
+    ])
+      await expect(page.getByRole('heading', { name: widget })).toBeVisible();
+
+    for (const tab of ['Overview', 'Checks', 'Devices', 'Exceptions', 'Benchmarks', 'Profiles'])
+      await expect(page.getByRole('tab', { name: tab })).toBeVisible();
+
+    // All six filters narrow the page, and the Device Group one narrows the
+    // counters too, not only the rows.
+    for (const filter of [
+      'Framework',
+      'Platform',
+      'Device Group',
+      'Category',
+      'Severity',
+      'Result',
+    ])
+      await expect(page.getByLabel(filter, { exact: true })).toBeVisible();
+  });
+
+  test('the Checks grid carries the reference ten columns and pages through 200', async ({
+    page,
+  }) => {
+    await page.goto('/profiles?tab=checks');
+
+    // Scoped to the real grid: the dashboard figures carry visually-hidden
+    // tables of their own for screen readers.
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of [
+      'Check',
+      'Platform',
+      'Severity',
+      'Expected',
+      'Frameworks',
+      'Pass',
+      'Fail',
+      'Exc.',
+      'Compliance',
+    ])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(page.getByText('1–50 of 200 checks')).toBeVisible();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(page.getByText('51–100 of 200 checks')).toBeVisible();
+    await expect(page.getByText('Page 2 of 4')).toBeVisible();
+  });
+
+  test('a Configuration counter narrows the grid to what it counted', async ({ page }) => {
+    await page.goto('/profiles');
+
+    const scope = await page
+      .getByRole('button', { name: /Checks in Scope/ })
+      .first()
+      .innerText();
+    const expected = Number(/(\d[\d,]*)/.exec(scope)?.[1]?.replace(/,/g, '') ?? '0');
+    expect(expected).toBeGreaterThan(0);
+
+    await page
+      .getByRole('button', { name: /Failing Checks/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/result=fail/);
+    await expect(page.getByRole('tab', { name: 'Checks', selected: true })).toBeVisible();
+    await expect(page.getByText('Result: Has Failures')).toBeVisible();
+  });
+
+  test('a check opens its drawer with the devices behind the count', async ({ page }) => {
+    await page.goto('/profiles?tab=checks');
+
+    await page.locator('table[class*="grid"] tbody tr button').first().click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+    for (const fact of [
+      'Expected',
+      'Severity',
+      'Compliance',
+      'Frameworks',
+      'Pass · Fail · Exception',
+      'Remediation',
+    ])
+      await expect(drawer.getByText(fact, { exact: true })).toBeVisible();
+
+    // The per-device rows are derived from the same expression the counts
+    // were rolled up with, so the drawer always has rows behind a failure.
+    await expect(drawer.getByRole('heading', { name: 'Devices evaluated' })).toBeVisible();
+    await expect(drawer.getByRole('columnheader', { name: 'Actual Value' })).toBeVisible();
+    await expect(drawer.locator('tbody tr').first()).toBeVisible();
+  });
+
+  test('the other four Configuration tabs carry their own columns', async ({ page }) => {
+    await page.goto('/profiles');
+    const grid = page.locator('table[class*="grid"]');
+
+    await page.getByRole('tab', { name: 'Devices' }).click();
+    for (const column of ['Compliance', 'Failed', 'High Failed', 'Last Evaluated'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Exceptions' }).click();
+    for (const column of ['Scope', 'Reason', 'Expires', 'Created By'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Benchmarks' }).click();
+    for (const column of ['Benchmark', 'Checks', 'Assigned To', 'Devices'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Profiles' }).click();
+    await expect(page.getByRole('heading', { name: 'Security Posture' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Version History/ })).toBeVisible();
+    for (const column of ['Profile', 'Assigned Devices', 'Status', 'Last Modified'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('the Device Group filter narrows the counters, not only the rows', async ({ page }) => {
+    await page.goto('/profiles');
+
+    const before = await page
+      .getByRole('button', { name: /Non-Compliant Devices/ })
+      .first()
+      .innerText();
+
+    await page.getByLabel('Device Group', { exact: true }).selectOption({ label: 'Pilot Ring' });
+    await expect(page.getByText('Device Group: Pilot Ring')).toBeVisible();
+
+    await expect(async () => {
+      const after = await page
+        .getByRole('button', { name: /Non-Compliant Devices/ })
+        .first()
+        .innerText();
+      expect(after).not.toBe(before);
+    }).toPass();
+  });
+
+  test('Evaluate Now is accepted', async ({ page }) => {
+    await page.goto('/profiles');
+
+    await page.getByRole('button', { name: 'Evaluate Now' }).click();
+    await expect(page.getByText('Evaluation queued')).toBeVisible();
+  });
+
+  test('DEX opens on the approved layout: four counters, three figures', async ({ page }) => {
+    await page.goto('/dex');
+
+    await expect(page.getByRole('heading', { name: 'Digital Employee Experience' })).toBeVisible();
+    for (const kpi of ['Experience Score', 'Good', 'Warning', 'Poor'])
+      await expect(page.getByText(kpi, { exact: true }).first()).toBeVisible();
+
+    for (const panel of [
+      'Distribution',
+      'Score Breakdown',
+      'Top Experience Issues',
+      'Endpoints With the Lowest Scores',
+      'How the Score Works',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // Scoped to the real grid: the three figures carry visually-hidden tables.
+    const grid = page.locator('table[class*="grid"]').first();
+    for (const column of ['Computer', 'Score', 'Boot', 'CPU', 'Memory', 'Disk Free'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('the scoring method is published until an endpoint is picked', async ({ page }) => {
+    await page.goto('/dex');
+
+    // The thresholds are on the page, so the score can be checked by hand.
+    const method = page.locator('table[class*="grid"]').nth(1);
+    for (const column of ['Measure', 'Threshold', 'Points'])
+      await expect(method.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Select an endpoint in the table to see its score breakdown.'),
+    ).toBeVisible();
+
+    // Picking a row swaps the method out for that endpoint's own arithmetic.
+    const first = page.locator('table[class*="grid"] tbody tr').first();
+    const name = (await first.locator('button').first().innerText()).trim();
+    const score = (await first.locator('td').nth(1).innerText()).trim();
+    await first.click();
+
+    await expect(
+      page.getByRole('heading', { name: `Why is ${name} scored ${score}?` }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open Device' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Collect Logs' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'How the Score Works' })).toBeHidden();
+  });
+
+  test("a DEX penalty list accounts for the endpoint's own score", async ({ page }) => {
+    await page.goto('/dex');
+
+    const first = page.locator('table[class*="grid"] tbody tr').first();
+    const score = Number((await first.locator('td').nth(1).innerText()).replace(/\D/g, ''));
+    await first.click();
+
+    // The penalties and the band cap together have to produce the figure the
+    // grid showed: 100 minus what was lost, then capped.
+    const items = page.locator('[class*="penalties"] li');
+    const count = await items.count();
+    expect(count).toBeGreaterThan(0);
+    let lost = 0;
+    for (let i = 0; i < count; i++) {
+      lost += Number((await items.nth(i).locator('b').innerText()).replace(/\D/g, ''));
+    }
+    const cap = await page.getByText(/Capped at \d+ by the/).count();
+    if (cap === 0) expect(100 - lost).toBe(score);
+    else expect(score).toBeLessThanOrEqual(100 - lost);
+  });
+
+  test('Reports opens on the approved library: five counters, twenty cards', async ({ page }) => {
+    await page.goto('/reports');
+
+    for (const [label, count] of [
+      ['All Reports', '20'],
+      ['Computers & Software', '5'],
+      ['Daily Operations', '6'],
+      ['Security', '4'],
+      ['Leadership', '5'],
+    ]) {
+      const tab = page.getByRole('tab', { name: new RegExp(`^${label}`) });
+      await expect(tab).toBeVisible();
+      await expect(tab).toContainText(count);
+    }
+
+    await expect(page.getByText('20 reports')).toBeVisible();
+    await expect(page.locator('article')).toHaveCount(20);
+
+    // Every card names what it would return, which is the point of the page.
+    const first = page.locator('article').first();
+    await expect(first.getByRole('heading', { name: 'All Computers' })).toBeVisible();
+    await expect(first.getByText(/charts · \d+ columns/)).toBeVisible();
+    // Each card's open button names its own report, so twenty of them are
+    // twenty names rather than one repeated.
+    await expect(first.getByRole('button', { name: /^Open / })).toBeVisible();
+  });
+
+  test('a Reports category narrows the library to what it counted', async ({ page }) => {
+    await page.goto('/reports');
+
+    await expect(page.locator('article')).toHaveCount(20);
+    const tab = page.getByRole('tab', { name: /^Security/ });
+    const expected = Number((await tab.innerText()).replace(/\D/g, ''));
+    expect(expected).toBe(4);
+
+    await tab.click();
+    await expect(page).toHaveURL(/category=security/);
+    await expect(page.locator('article')).toHaveCount(expected);
+    await expect(page.getByText(`${expected} reports`)).toBeVisible();
+  });
+
+  test('a report can be starred and found again under Favorites', async ({ page }) => {
+    await page.goto('/reports');
+
+    await page.getByRole('button', { name: 'Star Offline Computers' }).click();
+    await expect(page.getByRole('button', { name: 'Unstar Offline Computers' })).toBeVisible();
+
+    await page.getByRole('button', { name: /Favorites/ }).click();
+    await expect(page.locator('article')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Offline Computers' })).toBeVisible();
+
+    // Put it back, so the fixture is as the next test expects it.
+    await page.getByRole('button', { name: 'Unstar Offline Computers' }).click();
+  });
+
+  test('opening a report shows its counters, charts and its own columns', async ({ page }) => {
+    await page.goto('/reports');
+    await page
+      .locator('article')
+      .first()
+      .getByRole('button', { name: /^Open / })
+      .click();
+
+    await expect(page).toHaveURL(/\/reports\/computers$/);
+    await expect(page.getByRole('heading', { name: 'All Computers', exact: true })).toBeVisible();
+    await expect(page.getByText('Computers in This Report')).toBeVisible();
+
+    for (const panel of [
+      'Online and Offline',
+      'Operating Systems',
+      'Computers by Location',
+      'Computer Types',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // The reference lets the reader change a panel's form.
+    await page.getByLabel('Chart type: Online and Offline').selectOption('column');
+    await expect(page.getByLabel('Chart type: Online and Offline')).toHaveValue('column');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Computer name', 'IP address', 'MAC address', 'Asset tag', 'TPM'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(page.getByText(/1–10 of .* computers/)).toBeVisible();
+    await page.getByRole('button', { name: 'All Reports' }).click();
+    await expect(page).toHaveURL(/\/reports$/);
+  });
+
+  test('a report’s counters agree with the rows the grid is paging', async ({ page }) => {
+    await page.goto('/reports/computers');
+    await expect(page.getByText('Computers in This Report')).toBeVisible();
+
+    // A counter is a tile holding its label and its figure, so read the
+    // figure out of the tile that carries the label.
+    const read = async (label: string): Promise<number> => {
+      // The innermost div holding this label is the tile; an outer one is the
+      // row of tiles, whose first figure belongs to a different counter.
+      const tile = page
+        .locator('div')
+        .filter({ has: page.getByText(label, { exact: true }) })
+        .last();
+      const value = await tile.locator('strong').first().innerText();
+      return Number(value.replace(/[^0-9]/g, ''));
+    };
+
+    const online = await read('Online Computers');
+    const offline = await read('Offline Computers');
+    const footer = await page.getByText(/of [\d,]+ computers/).innerText();
+    const total = Number((footer.match(/of ([\d,]+) computers/) ?? ['', '0'])[1].replace(/,/g, ''));
+
+    // Every computer is online, offline, or waiting for a restart, so the two
+    // named states cannot add up to more than the report lists.
+    expect(online).toBeGreaterThan(0);
+    expect(offline).toBeGreaterThan(0);
+    expect(online + offline).toBeLessThanOrEqual(total);
+  });
+
+  test('Bar draws on its side and Column stands up', async ({ page }) => {
+    await page.goto('/reports/computers');
+    await expect(page.getByText('Computers in This Report')).toBeVisible();
+
+    // v129 opens "Computers by Location" side-on and "Operating Systems" as
+    // columns, so the two must not render as the same figure.
+    const bars = page.locator('[class*="barRow"]');
+    await expect(bars.first()).toBeVisible();
+    const bar = await bars.first().boundingBox();
+    if (bar === null) throw new Error('the bar chart drew no row');
+    expect(bar.width).toBeGreaterThan(bar.height);
+
+    const column = page.locator('[class*="columnBar"]').first();
+    await expect(column).toBeVisible();
+    const col = await column.boundingBox();
+    if (col === null) throw new Error('the column chart drew no bar');
+    expect(col.height).toBeGreaterThan(col.width);
+
+    // Both carry a value axis: five ticks, drawn from the reference's own
+    // choice of step.
+    await expect(page.locator('[class*="valueAxis"] span')).toHaveCount(5);
+  });
+
+  test('the Location picker narrows the counters, the charts and the rows together', async ({
+    page,
+  }) => {
+    await page.goto('/reports/computers');
+    const wholeEstate = await page.getByText(/of ([\d,]+) computers/).innerText();
+
+    await page.getByLabel('Report location').selectOption('Delhi Branch');
+    await expect(page).toHaveURL(/location=Delhi\+Branch|location=Delhi%20Branch/);
+
+    await expect
+      .poll(async () => (await page.getByText(/of ([\d,]+) computers/).innerText()) !== wholeEstate)
+      .toBe(true);
+
+    // The chart has to agree with the picker, not just the grid. By role, so
+    // this does not also match the figure's own screen-reader table caption.
+    await expect(page.getByRole('heading', { name: 'Computers by Location' })).toBeVisible();
+    const locations = page.locator('[class*="barLabel"]');
+    await expect(locations).toHaveCount(1);
+    await expect(locations.first()).toHaveText('Delhi Branch');
+  });
+
+  test('Aegis Zones opens on the approved layout: five counters, three panels', async ({
+    page,
+  }) => {
+    await page.goto('/sites');
+
+    for (const kpi of [
+      'WAN Saved',
+      'WAN Avoided This Week',
+      'Peer Cache Hit Rate',
+      'Direct Downloads',
+      'Avg Local Delivery',
+    ])
+      await expect(page.getByText(kpi, { exact: true })).toBeVisible();
+
+    for (const panel of [
+      'Delivery Distribution',
+      'Aegis Zone Delivery Efficiency',
+      'Content Delivery Path',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // The path names every hop content takes, which is what the page is for.
+    for (const hop of ['Central repository', 'Aegis Zone peer cache', 'Local peer', 'Endpoint'])
+      await expect(page.getByText(hop, { exact: true })).toBeVisible();
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of [
+      'Aegis Zone',
+      'Devices',
+      'Connectivity',
+      'Bandwidth',
+      'Peer Cache',
+      'Last Sync',
+      'Status',
+    ])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  });
+
+  test('a zone without a peer cache says so, and shows no local delivery', async ({ page }) => {
+    await page.goto('/sites');
+
+    // Three small branches carry no cache; the grid says "Not required"
+    // rather than reporting them as a fault.
+    const grid = page.locator('table[class*="grid"]');
+    await expect(grid.getByText('Not required').first()).toBeVisible();
+    await expect(grid.getByText('Peer cache active').first()).toBeVisible();
+
+    // And the counters agree with each other: direct is the rest of local.
+    const hit = Number(
+      (await page.getByText('Peer Cache Hit Rate').locator('..').innerText()).match(
+        /(\d+)%/,
+      )?.[1] ?? '0',
+    );
+    const direct = Number(
+      (await page.getByText('Direct Downloads').locator('..').innerText()).match(/(\d+)%/)?.[1] ??
+        '0',
+    );
+    expect(hit + direct).toBe(100);
+  });
+
+  test('Refresh Discovery is accepted', async ({ page }) => {
+    await page.goto('/sites');
+    await page.getByRole('button', { name: 'Refresh Discovery' }).click();
+    await expect(page.getByText('Discovery queued')).toBeVisible();
+  });
+
+  test('AEGIS Insight opens with no diagnosis, then reports a root cause', async ({ page }) => {
+    await page.goto('/insight');
+
+    // The reference's idle state: the form on the left, nothing on the right.
+    await expect(page.getByRole('heading', { name: 'Describe the Problem' })).toBeVisible();
+    await expect(page.getByText('No Diagnosis Yet')).toBeVisible();
+    await expect(page.getByText('Endpoint:')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Run Diagnostics' }).click();
+
+    await expect(page.getByText('Likely root cause')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Diagnostic Checks' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Recommended Actions' })).toBeVisible();
+    await expect(page.getByText(/^\d+%$/)).toBeVisible();
+
+    /*
+     * The checks panel lists findings, not a checklist: every row carries a
+     * severity, and none of them says "Pass".
+     */
+    const rows = page.locator('li', { hasText: /Critical|High|Medium|Low/ });
+    expect(await rows.count()).toBeGreaterThan(0);
+    await expect(page.getByText('Pass', { exact: true })).toHaveCount(0);
+  });
+
+  test('a diagnosis runs against the endpoint named in the URL', async ({ page }) => {
+    await page.goto('/insight');
+
+    // The endpoint link is the only place the page prints the device id, so
+    // follow it to learn the id and then come back with it in the URL.
+    const endpoint = page.getByText('Endpoint:').getByRole('button');
+    const hostname = await endpoint.innerText();
+    await endpoint.click();
+    await expect(page).toHaveURL(/\/devices\/[^/]+$/);
+    const id = new URL(page.url()).pathname.split('/').pop() ?? '';
+
+    await page.goto(`/insight?device=${id}`);
+    await expect(page.getByRole('button', { name: hostname })).toBeVisible();
+  });
+
+  test('Run Remediation queues a job rather than opening a session', async ({ page }) => {
+    await page.goto('/insight');
+    await page.getByRole('button', { name: 'Run Diagnostics' }).click();
+    await expect(page.getByText('Likely root cause')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Run Remediation' }).click();
+
+    // The toast and the button both read "Remediation queued", so scope the
+    // first assertion to the notification region.
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Remediation queued'),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText('It runs as a job; the result appears under Live Activity.'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Remediation queued' })).toBeDisabled();
+  });
+
+  test('Integrations opens on the approved four tabs', async ({ page }) => {
+    await page.goto('/integrations');
+
+    for (const tab of ['Connectors', 'SIEM & Syslog', 'Notifications', 'Delivery Log'])
+      await expect(page.getByRole('tab', { name: tab, exact: true })).toBeVisible();
+
+    // The Connectors tab: its own status filter, and the reference's six cards.
+    for (const f of ['All', 'Connected', 'Attention', 'Disabled'])
+      await expect(page.getByRole('tab', { name: f, exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '+ Custom Webhook' })).toBeVisible();
+    await expect(page.locator('section').filter({ hasText: 'Last Sync' })).toHaveCount(6);
+
+    // Each card prints what it is for and what it was granted.
+    await expect(page.getByText('Incidents for Critical CVEs')).toBeVisible();
+    await expect(page.getByText('Vulnerability: Read · Devices: Read')).toBeVisible();
+  });
+
+  test('the connector filter narrows to one status', async ({ page }) => {
+    await page.goto('/integrations');
+    await expect(page.locator('section').filter({ hasText: 'Last Sync' })).toHaveCount(6);
+
+    await page.getByRole('tab', { name: 'Attention', exact: true }).click();
+    const cards = page.locator('section').filter({ hasText: 'Last Sync' });
+    await expect(cards).toHaveCount(1);
+    await expect(cards.getByText('Microsoft Teams')).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Disabled', exact: true }).click();
+    await expect(page.locator('section').filter({ hasText: 'Last Sync' })).toHaveCount(1);
+    await expect(page.getByText('Deployment Alerts')).toBeVisible();
+  });
+
+  test('SIEM & Syslog counts what was forwarded, not what was configured', async ({ page }) => {
+    await page.goto('/integrations?tab=siem');
+
+    /*
+     * "Connected" is both a counter label and a card status, so the counter
+     * assertions are scoped to the counter row.
+     */
+    const kpis = page.locator('div[class*="kpis"]');
+    for (const kpi of ['Connected', 'Events Forwarded', 'Retrying', 'Errors'])
+      await expect(kpis.getByText(kpi, { exact: true })).toBeVisible();
+
+    // Five destinations, and a target that was never set up cannot be tested.
+    await expect(page.getByRole('button', { name: 'Set Up' })).toHaveCount(5);
+    const tests = page.getByRole('button', { name: 'Test', exact: true });
+    await expect(tests).toHaveCount(5);
+    await expect(page.getByText('IBM QRadar')).toBeVisible();
+
+    // The footnote is the page's security claim, so it must be on the page.
+    await expect(page.getByText(/never stored in this browser/)).toBeVisible();
+  });
+
+  test('an alert rule can be added, switched off and removed', async ({ page }) => {
+    await page.goto('/integrations?tab=notifications');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['When', 'Send To', 'Channel Status', 'Enabled'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    // A seeded rule that fans out to two channels prints both, in order.
+    await expect(
+      grid.locator('tr').filter({ hasText: 'Deployment Failed' }).locator('td').nth(1),
+    ).toHaveText('SMTP Mail Server, Microsoft Teams');
+
+    /*
+     * The rest of this test adds its own rule rather than touching a seeded
+     * one, so it leaves the fixture exactly as it found it and can be run
+     * twice in a row.
+     */
+    await page.getByLabel('Event').selectOption('Agent offline over 7 days');
+    await page.getByRole('button', { name: 'Add Rule' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Alert rule added'),
+    ).toBeVisible();
+
+    const mine = grid.locator('tr', { hasText: 'Agent offline over 7 days' });
+    await expect(mine.getByRole('button', { name: 'On' })).toBeVisible();
+    await mine.getByRole('button', { name: 'On' }).click();
+    await expect(mine.getByRole('button', { name: 'Off' })).toBeVisible();
+
+    await mine.getByRole('button', { name: 'Remove' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Alert rule removed'),
+    ).toBeVisible();
+    await expect(grid.locator('tr', { hasText: 'Agent offline over 7 days' })).toHaveCount(0);
+  });
+
+  test('the delivery log filters by result', async ({ page }) => {
+    await page.goto('/integrations?tab=log');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Time', 'Connector', 'Event Type', 'Event', 'Result'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(grid.locator('tbody tr').first()).toBeVisible();
+    const all = await grid.locator('tbody tr').count();
+
+    await page.getByLabel('Result').selectOption('retrying');
+    await expect(grid.getByText('Delivered').first()).toHaveCount(0);
+    expect(await grid.locator('tbody tr').count()).toBeLessThanOrEqual(all);
+  });
+
+  test('Peer Cache opens on the approved seven columns', async ({ page }) => {
+    await page.goto('/peercache');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of [
+      'Aegis Zone',
+      'Current Peer Cache',
+      'Agent Health',
+      'Content Cached',
+      'Cache Size',
+      'Last Transfer',
+      'Status',
+    ])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    // Every row offers Re-elect; Disable and Activity live behind the ⋯.
+    await expect(grid.getByRole('button', { name: 'Re-elect' }).first()).toBeVisible();
+    await expect(page.getByText('None elected').first()).toBeVisible();
+  });
+
+  test('an elected peer cache is a real endpoint, and opens it', async ({ page }) => {
+    await page.goto('/peercache');
+
+    /*
+     * The page's whole claim is that a peer cache is a regular agent rather
+     * than an appliance, so the hostname has to open that device.
+     */
+    const grid = page.locator('table[class*="grid"]');
+    const peer = grid.locator('button[class*="link"]').first();
+    const hostname = await peer.innerText();
+    await peer.click();
+
+    await expect(page).toHaveURL(/\/devices\/[^/]+$/);
+    await expect(page.getByRole('heading', { name: hostname })).toBeVisible();
+  });
+
+  test('a zone with no cache offers no re-election', async ({ page }) => {
+    await page.goto('/peercache');
+
+    const grid = page.locator('table[class*="grid"]');
+    const row = grid.locator('tr').filter({ hasText: 'None elected' }).first();
+    await expect(row.getByText('Disabled')).toBeVisible();
+    await expect(row.getByRole('button', { name: 'Re-elect' })).toBeDisabled();
+
+    // Its ⋯ offers Enable rather than Disable, and Activity is unavailable.
+    await row.getByRole('button', { name: /More actions/ }).click();
+    await expect(page.getByRole('button', { name: 'Enable' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Activity' })).toBeDisabled();
+  });
+
+  test('Administration opens on the approved four tabs', async ({ page }) => {
+    await page.goto('/admin');
+
+    for (const tab of ['Identity & SSO', 'Users', 'Roles & Content Access', 'Agent Enrollment'])
+      await expect(page.getByRole('tab', { name: tab, exact: true })).toBeVisible();
+
+    // Identity & SSO opens first, with the reference's four provider cards.
+    for (const provider of [
+      'Okta',
+      'Microsoft Entra ID',
+      'Generic SAML 2.0',
+      'LDAP / Active Directory',
+    ])
+      await expect(page.getByText(provider, { exact: true })).toBeVisible();
+
+    // Each card prints STATUS and CONNECTION as two separate fields.
+    await expect(page.getByText('Status', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Setup Required').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Configure' })).toHaveCount(4);
+  });
+
+  test('a role card prints its permissions and all three content scopes', async ({ page }) => {
+    await page.goto('/admin?tab=roles');
+
+    await expect(page.getByRole('button', { name: '+ Create role' })).toBeVisible();
+
+    /*
+     * The scoped role is the one the design exists for: narrowed on zones and
+     * software, so the card shows names rather than "All" three times.
+     */
+    const scoped = page.locator('section').filter({ hasText: 'Jaipur Branch Operator' });
+    await expect(scoped.getByText('Jaipur Branch', { exact: true })).toBeVisible();
+    await expect(scoped.getByText('Browser, Utilities')).toBeVisible();
+    await expect(scoped.getByText('All Groups')).toBeVisible();
+
+    // A built-in role cannot be edited, which the contract states.
+    const system = page.locator('section').filter({ hasText: 'Super Admin' });
+    await expect(system.getByText('Full Console Access')).toBeVisible();
+    await expect(system.getByRole('button', { name: 'Edit Permissions' })).toBeDisabled();
+  });
+
+  test('a console account can be disabled and re-enabled', async ({ page }) => {
+    await page.goto('/admin?tab=users');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['User', 'Role', 'Access', 'Actions'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    /*
+     * Acts on the Auditor account rather than a Super Admin, and puts it back,
+     * so the test leaves the fixture exactly as it found it.
+     */
+    const row = grid.locator('tr').filter({ hasText: 'Kavya Chandrasekar' });
+    await expect(row.getByText('Active')).toBeVisible();
+
+    await row.getByRole('button', { name: /More actions/ }).click();
+    await page.getByRole('button', { name: 'Revoke Sessions' }).click();
+    await expect(row.getByText('Disabled')).toBeVisible();
+
+    await row.getByRole('button', { name: /More actions/ }).click();
+    await page.getByRole('button', { name: 'Enable account' }).click();
+    await expect(row.getByText('Active')).toBeVisible();
+  });
+
+  test('Agent Enrollment lists the endpoints that have checked in', async ({ page }) => {
+    await page.goto('/admin?tab=enrollment');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Endpoint', 'Zone', 'Agent Version', 'Last Seen', 'Connection'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    await expect(grid.locator('tbody tr')).toHaveCount(25);
+    await expect(page.getByText(/enrolled endpoints/)).toBeVisible();
+  });
+
+  test('an API token is created once, shown once, and can be revoked', async ({ page }) => {
+    await page.goto('/admin?tab=tokens');
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Token', 'Prefix', 'Scopes', 'State', 'Last used', 'Expires'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+
+    // An already-revoked token cannot be revoked twice.
+    const dead = grid.locator('tr').filter({ hasText: 'legacy-inventory-export' });
+    await expect(dead.getByText('Revoked')).toBeVisible();
+    await expect(dead.getByRole('button', { name: 'Revoke' })).toBeDisabled();
+
+    /*
+     * Creates its own token and revokes it, so the test never touches a
+     * seeded one and can be run twice in a row.
+     */
+    const name = `e2e-token-${Date.now()}`;
+    await page.getByRole('button', { name: '+ New token' }).click();
+    await page.getByLabel('Token name').fill(name);
+    await page.getByRole('button', { name: 'Create token' }).click();
+
+    // The secret is shown exactly once, and the dialog says so.
+    await expect(page.getByText('This is the only time it will be shown.')).toBeVisible();
+    const secret = await page.locator('pre').innerText();
+    expect(secret).toMatch(/^aeg_[0-9a-f]+$/);
+    await page.getByRole('button', { name: 'I have stored it' }).click();
+
+    const row = grid.locator('tr').filter({ hasText: name });
+    await expect(row.getByText('Active')).toBeVisible();
+    // The grid shows a prefix, never the secret itself.
+    await expect(page.getByText(secret)).toHaveCount(0);
+
+    await row.getByRole('button', { name: 'Revoke' }).click();
+    await page.getByRole('button', { name: 'Revoke token' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Token revoked'),
+    ).toBeVisible();
+    await expect(row.getByText('Revoked')).toBeVisible();
+  });
+
+  test('Licensing opens on the approved counters and panels', async ({ page }) => {
+    await page.goto('/licensing');
+
+    const kpis = page.locator('div[class*="kpis"]');
+    for (const kpi of ['Plan', 'Endpoints in Use', 'Renews in', 'Modules'])
+      await expect(kpis.getByText(kpi, { exact: true })).toBeVisible();
+
+    for (const panel of ['Seat Usage', 'Seats by Platform', 'License Term', 'Modules'])
+      await expect(page.getByRole('heading', { name: panel, exact: true })).toBeVisible();
+
+    // The three figures under each donut. These words also appear in the
+    // donut's own legend and in its visually-hidden table, so the assertion
+    // scopes to the description lists the panels print them in.
+    for (const fact of ['In Use', 'Available', 'Licensed Seats', 'Started', 'Ends', 'Term Elapsed'])
+      await expect(page.locator('dt').filter({ hasText: fact }).first()).toBeVisible();
+
+    await expect(page.getByRole('button', { name: 'Upload License' })).toBeVisible();
+  });
+
+  test('every licensed module says how it is licensed', async ({ page }) => {
+    await page.goto('/licensing');
+
+    const modules = page.locator('article');
+    await expect(modules).toHaveCount(7);
+
+    /*
+     * Several module names are also nav entries, so each assertion scopes to
+     * the module cards rather than the page.
+     */
+    for (const name of [
+      'Endpoint Management',
+      'Patch Management',
+      'Live Activity',
+      'Digital Employee Experience',
+      'Aegis Zones & Peer Cache',
+      'Vulnerability Management',
+      'AEGIS Insight',
+    ])
+      await expect(modules.filter({ hasText: name })).toHaveCount(1);
+
+    // The add-on and the preview are the two that are not simply included.
+    await expect(page.getByText('Add-on · Active')).toBeVisible();
+    await expect(page.getByText('Preview', { exact: true })).toBeVisible();
+    await expect(page.getByText('Not Counted in Licensed Seats')).toBeVisible();
+    await expect(page.getByText(/of 7 active/)).toBeVisible();
+  });
+
+  test('System Health opens on the approved counters, services and events', async ({ page }) => {
+    await page.goto('/diagnostics');
+
+    // The reference titles this page System Health; the nav says Diagnostics.
+    await expect(page.getByRole('heading', { name: 'System Health' })).toBeVisible();
+
+    const kpis = page.locator('div[class*="kpis"]');
+    for (const kpi of ['Services Healthy', 'Degraded', 'Agents Connected', 'Warnings (24 h)'])
+      await expect(kpis.getByText(kpi, { exact: true })).toBeVisible();
+
+    const grid = page.locator('table[class*="grid"]');
+    for (const column of ['Service', 'Status', 'Signal', 'Detail'])
+      await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+    await expect(grid.locator('tbody tr')).toHaveCount(7);
+
+    // The events panel: the chart, its axis, its key and its three figures.
+    await expect(page.getByRole('heading', { name: 'Events, Last 24 Hours' })).toBeVisible();
+    await expect(page.getByText('24 h ago')).toBeVisible();
+    await expect(page.getByText('Now', { exact: true })).toBeVisible();
+    for (const fact of ['Warnings', 'Errors', 'Busiest Hour'])
+      await expect(page.getByText(fact, { exact: true }).last()).toBeVisible();
+  });
+
+  test('a service signal counted from the estate matches the counter above it', async ({
+    page,
+  }) => {
+    await page.goto('/diagnostics');
+
+    /*
+     * Agent Gateway's signal is counted from the devices table, not stored,
+     * so it has to equal the Agents Connected counter. If those two ever
+     * disagree the page is reporting two different estates.
+     */
+    const counter = await page
+      .locator('div[class*="kpi"]')
+      .filter({ hasText: 'Agents Connected' })
+      .last()
+      .innerText();
+    const connected = counter.match(/([\d,]+)\s*\/([\d,]+)/);
+    expect(connected).not.toBeNull();
+
+    const row = page.locator('tr').filter({ hasText: 'Agent Gateway' });
+    await expect(row.getByText(`${connected?.[1]}/${connected?.[2]}`)).toBeVisible();
+  });
+
+  test('Run Health Check and the diagnostic bundle are both accepted', async ({ page }) => {
+    await page.goto('/diagnostics');
+
+    await page.getByRole('button', { name: 'Run Health Check' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Health check queued'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Download Diagnostic Bundle' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Notifications' }).getByText('Diagnostic bundle queued'),
+    ).toBeVisible();
+  });
+
+  test('a software package can be added and edited', async ({ page }) => {
+    await page.goto('/software');
+
+    // Import Icons has no endpoint behind it and says so rather than failing.
+    await expect(page.getByRole('button', { name: 'Import Icons' })).toBeDisabled();
+
+    /*
+     * Adds its own package and edits it, so the test never touches a seeded
+     * one. It leaves the package behind — the catalogue is additive and the
+     * seeded rows are untouched, which is what matters for a re-run.
+     */
+    const name = `E2E Tool ${Date.now()}`;
+    await page.getByRole('button', { name: '+ Add package' }).click();
+    /*
+     * The catalogue's own filter bar carries a Publisher select and a search
+     * box with "publisher" in its label, so the dialog's fields are addressed
+     * inside the dialog rather than on the page.
+     */
+    const form = page.getByRole('dialog');
+    await form.getByLabel('Name').fill(name);
+    await form.getByLabel('Publisher').fill('Aegis QA');
+    await form.getByLabel('Version').fill('1.0.0');
+    // "Add package" also names the header button, so the exact one is needed.
+    await page.getByRole('button', { name: 'Add package', exact: true }).click();
+
+    await expect(
+      page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText(`${name} added to the catalogue`),
+    ).toBeVisible();
+
+    // A new definition has no installer, so it cannot be deployed yet.
+    await page.getByLabel('Search software or publisher').fill(name);
+    const card = page.locator('li').filter({ hasText: name });
+    await expect(card.getByRole('button', { name: 'Deploy' })).toBeDisabled();
+
+    /*
+     * The shared Menu puts its label on the popover, not on the trigger, so
+     * the card's overflow button is addressed by the glyph it renders.
+     */
+    await card.getByRole('button', { name: '⋯' }).click();
+    await page.getByRole('menuitem', { name: 'Edit Package' }).click();
+    await page.getByRole('dialog').getByLabel('Version').fill('2.0.0');
+    await page.getByRole('button', { name: 'Save package' }).click();
+    await expect(
+      page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText('The version changed, so the installer has to be uploaded again.'),
+    ).toBeVisible();
+  });
+
+  test('Global Settings carries the approved seven panels', async ({ page }) => {
+    await page.goto('/patches?tab=policies');
+    await page.getByRole('tab', { name: 'Global Settings' }).click();
+
+    for (const panel of [
+      'System Health Policy',
+      'Device Controls',
+      'Group Overrides',
+      'OS Versions & Upgrades',
+      'Default Rings',
+      'Maintenance Window & Restarts',
+      'Approval & Third-Party Apps',
+    ])
+      await expect(page.getByRole('heading', { name: panel })).toBeVisible();
+
+    // Three rings, each naming a real group with a real endpoint count.
+    await expect(page.locator('article')).toHaveCount(3);
+    await expect(page.getByText(/endpoints$/).first()).toBeVisible();
+
+    // The window is Tuesday to Thursday, as the reference highlights it.
+    for (const day of ['Tue', 'Wed', 'Thu'])
+      await expect(page.getByRole('button', { name: day })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Mon' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  test('the health bands are counted from the thresholds, and agree with the counter', async ({
+    page,
+  }) => {
+    await page.goto('/patches?tab=policies');
+    await page.getByRole('tab', { name: 'Global Settings' }).click();
+
+    /*
+     * The panel defines what "highly vulnerable" means, so the counter above
+     * the table has to count the same thing. These two disagreed once —
+     * 14,107 against 1,131 — and the same words meant two different things.
+     */
+    const panel = await page
+      .locator('div[class*="band"]')
+      .filter({ hasText: 'Highly Vulnerable' })
+      .last()
+      .innerText();
+    const counter = await page
+      .locator('div[class*="kpi"]')
+      .filter({ hasText: 'Highly Vulnerable' })
+      .last()
+      .innerText();
+    const digits = (text: string) => text.replace(/[^\d]/g, '');
+    expect(digits(panel)).toBe(digits(counter));
+    expect(digits(panel).length).toBeGreaterThan(0);
+  });
+
+  test('the sidebar collapses and the state survives a reload', async ({ page }) => {
+    await page.goto('/devices');
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await expect(page.locator('aside[data-collapsed="true"]')).toBeVisible();
+
+    await page.reload();
+    await expect(page.locator('aside[data-collapsed="true"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Expand sidebar' }).click();
+  });
+
+  test('Alt+Left goes back, like the Back button', async ({ page }) => {
+    await page.goto('/devices');
+    await page.goto('/patches');
+
+    /*
+     * The shortcut is a listener the shell attaches on mount, and `goto`
+     * resolves on load rather than on mount. Waiting for the page to have
+     * drawn is what stops this racing on a loaded machine — it flaked twice
+     * in full runs and never on its own.
+     */
+    await expect(page.getByRole('heading', { name: 'Patch Management' })).toBeVisible();
+
+    await page.keyboard.press('Alt+ArrowLeft');
+    await expect(page).toHaveURL(/\/devices$/);
+  });
+
+  test('the Devices group filter narrows the grid server-side', async ({ page }) => {
+    await page.goto('/devices');
+
+    const total = async (): Promise<number | null> => {
+      const found = /of ([\d,]+) devices/.exec(await page.locator('main').innerText());
+      return found === null ? null : Number(found[1].replace(/,/g, ''));
+    };
+
+    await expect.poll(total).not.toBeNull();
+    const estate = await total();
+
+    // ?group= has been in the contract all along; this is the filter that
+    // used to be accepted and ignored, so the assertion is that the figure
+    // actually moves rather than that a control exists.
+    await page.getByRole('combobox', { name: 'Device group' }).selectOption({ index: 1 });
+    await expect(page).toHaveURL(/[?&]group=/);
+    await expect.poll(total).toBeLessThan(estate ?? 0);
+  });
+
+  test('Advanced Filter builds rules that all have to match', async ({ page }) => {
+    await page.goto('/devices');
+
+    const total = async (): Promise<number | null> => {
+      const found = /of ([\d,]+) devices/.exec(await page.locator('main').innerText());
+      return found === null ? null : Number(found[1].replace(/,/g, ''));
+    };
+    await expect.poll(total).not.toBeNull();
+    const estate = await total();
+
+    await page.getByRole('button', { name: /^Advanced Filter/ }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText(/All rules must match · \d+ fields/);
+
+    await dialog.getByRole('combobox', { name: 'Field for rule 1' }).selectOption('hostname');
+    await dialog.getByRole('combobox', { name: 'Operator for rule 1' }).selectOption('starts');
+    await dialog.getByRole('textbox', { name: 'Value for rule 1' }).fill('mum');
+
+    await dialog.getByRole('button', { name: '+ Add rule' }).click();
+    await dialog.getByRole('combobox', { name: 'Field for rule 2' }).selectOption('status');
+    await dialog.getByRole('combobox', { name: 'Operator for rule 2' }).selectOption('eq');
+    await dialog.getByRole('textbox', { name: 'Value for rule 2' }).fill('online');
+
+    await dialog.getByRole('button', { name: 'Apply' }).click();
+
+    // Both rules, not just the last one.
+    await expect(page).toHaveURL(/[?&]filter=/);
+    await expect.poll(total).toBeLessThan(estate ?? 0);
+    await expect(
+      page.locator('[class*="chip"]').filter({ hasText: 'Advanced' }).first(),
+    ).toContainText('2 rules');
+
+    // Reopening shows what is applied rather than a blank sheet.
+    await page.getByRole('button', { name: /^Advanced Filter/ }).click();
+    await expect(
+      page.getByRole('dialog').getByRole('combobox', { name: 'Field for rule 1' }),
+    ).toHaveValue('hostname');
+  });
+
+  test('an operator a field cannot take is reported, not swallowed', async ({ page }) => {
+    // The old behaviour for ?filter= was to accept it and return everything,
+    // which is the failure mode worth a test of its own.
+    const rules = encodeURIComponent(
+      JSON.stringify([{ field: 'hostname', op: 'gte', value: 'x' }]),
+    );
+    await page.goto(`/devices?filter=${rules}`);
+
+    await expect(page.getByText('Cannot filter hostname with gte.')).toBeVisible();
+  });
+
+  test('the Columns control says how many columns are showing', async ({ page }) => {
+    await page.goto('/devices');
+    // v129 labels it "Columns 20" — a count of what is visible, not of what
+    // exists.
+    await expect(page.getByRole('button', { name: /^Columns\s+\d+$/ })).toBeVisible();
+  });
+
+  test('the Overview scope bar narrows the dashboard and says so in the URL', async ({ page }) => {
+    await page.goto('/');
+
+    /*
+     * Null rather than a throw while the figure is absent: the dashboard
+     * drops back to a skeleton between scopes, and a poll that throws there
+     * fails instead of waiting.
+     */
+    const managed = async (): Promise<number | null> => {
+      const found = /Managed Endpoints\s*([\d,]+)/i.exec(await page.locator('main').innerText());
+      return found === null ? null : Number(found[1].replace(/,/g, ''));
+    };
+
+    await expect.poll(managed).not.toBeNull();
+    const estate = await managed();
+    expect(estate).toBeGreaterThan(0);
+
+    // Reset is offered only once something is narrowed, as the reference has it.
+    await expect(page.getByRole('button', { name: 'Reset', exact: true })).toHaveCount(0);
+
+    await page.getByRole('combobox', { name: 'Zone', exact: true }).selectOption({ index: 1 });
+    await expect(page).toHaveURL(/[?&]zone=/);
+    await expect.poll(managed).toBeLessThan(estate ?? 0);
+
+    await page.getByRole('button', { name: 'Reset', exact: true }).click();
+    await expect(page).not.toHaveURL(/[?&]zone=/);
+    await expect.poll(managed).toBe(estate);
+  });
+
+  test('each Overview panel names its own view and chart controls', async ({ page }) => {
+    await page.goto('/');
+
+    // Four panels offering "View" would give a screen reader four controls
+    // with one name between them; v129 names them per panel.
+    for (const panel of [
+      'Overall Health Score',
+      'Patch compliance',
+      'Security Posture',
+      'Deployment status',
+    ]) {
+      await expect(page.getByRole('combobox', { name: `${panel} view` })).toHaveCount(1);
+      await expect(page.getByRole('combobox', { name: `${panel} chart type` })).toHaveCount(1);
+    }
+  });
+
+  test('the top bar carries the reference’s four controls', async ({ page }) => {
+    await page.goto('/devices');
+
+    for (const name of ['Search endpoints', 'Open notifications', 'Help']) {
+      await expect(page.getByRole('button', { name })).toBeVisible();
+    }
+
+    // The signed-in user is an initials tile, not their name in text.
+    const tile = page.getByRole('button', { name: 'Open profile for Rohan Deshpande' });
+    await expect(tile).toHaveText('RD');
+    const box = await tile.boundingBox();
+    if (box === null) throw new Error('the profile tile has no box');
+    expect(Math.round(box.width)).toBe(36);
+    expect(Math.round(box.height)).toBe(36);
+  });
+
+  test('top-bar search hands its query to Devices', async ({ page }) => {
+    await page.goto('/reports');
+    await page.getByRole('button', { name: 'Search endpoints' }).click();
+
+    const field = page.getByRole('textbox', { name: 'Search endpoints' });
+    await expect(field).toBeFocused();
+    await field.fill('AHM-SRV-0089');
+    await field.press('Enter');
+
+    await expect(page).toHaveURL(/\/devices\?q=AHM-SRV-0089/);
+    await expect(page.getByRole('heading', { name: 'Devices' })).toBeVisible();
+  });
+
+  test('primary and destructive buttons carry the approved gloss', async ({ page }) => {
+    await page.goto('/devices');
+
+    // v129 paints a gradient on exactly two variants and nothing else, so
+    // the check is that the primary has one and an ordinary button does not.
+    const primary = page.getByRole('button', { name: 'Create Action' });
+    await expect(primary).toBeVisible();
+    const gloss = await primary.evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(gloss).toBe(
+      'linear-gradient(rgb(36, 71, 107) 0%, rgb(27, 58, 90) 55%, rgb(21, 48, 76) 100%)',
+    );
+
+    const plain = page.getByRole('button', { name: 'Export' }).first();
+    const flat = await plain.evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(flat).toBe('none');
+  });
+
+  test('signing out ends the session server-side', async ({ page }) => {
+    await page.goto('/');
+    // The top bar shows the signed-in user as an initials tile, as v129 does.
+    await page.getByRole('button', { name: 'Open profile for Rohan Deshpande' }).click();
+    await page.getByRole('menuitem', { name: 'Sign out' }).click();
+    await expect(page).toHaveURL(/\/sign-in/);
+
+    // A reload must not resurrect it from a leftover cookie.
+    await page.goto('/devices');
+    await expect(page).toHaveURL(/\/sign-in/);
+  });
+});
+
+test.describe('role restrictions', () => {
+  test('a read-only user cannot reach write actions', async ({ page }) => {
+    await signIn(page, ACCOUNTS.readOnly);
+
+    await page.goto('/deployments');
+    // The reference shows this action to everyone, so it is rendered and
+    // disabled rather than hidden — as on the software catalogue. The
+    // permission itself is enforced on the endpoint, not by the button.
+    await expect(page.getByRole('button', { name: '+ New action' })).toBeDisabled();
+
+    await page.goto('/devices');
+    // No checkbox column: selection exists to drive actions this role lacks.
+    await expect(page.getByRole('button', { name: 'Run script' })).toHaveCount(0);
+  });
+
+  test('a zone-scoped user sees only their own zone', async ({ page }) => {
+    await signIn(page, ACCOUNTS.zoneScoped);
+    await page.goto('/devices');
+
+    await expect(page.getByRole('table', { name: 'Devices' })).toBeVisible();
+    const total = await page
+      .locator('span', { hasText: /^[\d,]+ devices$/ })
+      .first()
+      .innerText();
+    expect(total).not.toContain('50,000');
+
+    const zones = await page
+      .getByRole('table', { name: 'Devices' })
+      .locator('tbody tr')
+      .allInnerTexts();
+    for (const row of zones.slice(0, 20)) {
+      expect(row).toContain('Jaipur Branch');
+    }
+  });
+
+  test('a zone-scoped user gets nothing for a device in another zone', async ({ page }) => {
+    await signIn(page, ACCOUNTS.zoneScoped);
+    // dev-100000 is the first seeded device, which is in Mumbai HQ.
+    await page.goto('/devices/dev-100000');
+    await expect(page.getByText('Device not found')).toBeVisible();
+  });
+});

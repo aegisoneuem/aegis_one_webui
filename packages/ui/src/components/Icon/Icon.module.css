@@ -1,0 +1,26 @@
+.icon {
+  flex: none;
+  display: block;
+}
+
+/*
+ * The nav glyphs sit a shade back from their label, as they do in the
+ * reference, so the word leads and the mark follows.
+ */
+.nav {
+  opacity: 0.9;
+}
+
+.line,
+.fill {
+  opacity: 1;
+}
+
+/*
+ * The one filled square each nav glyph carries. It takes the glyph's own
+ * colour by default and turns gold where a surface asks for it — which in
+ * v129 is the selected sidebar item, and nowhere else.
+ */
+.accent {
+  fill: var(--ui-icon-accent, currentcolor);
+}

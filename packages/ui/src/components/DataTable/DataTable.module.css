@@ -1,0 +1,342 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface);
+  font-family: var(--ui-font-sans);
+  color: var(--ui-text);
+}
+
+/* Bulk-action bar, shown only while rows are selected. */
+.bulkBar {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-5);
+  align-items: center;
+  padding: var(--ui-space-3) var(--ui-space-5);
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-accent-soft);
+  font-size: var(--ui-text-sm);
+}
+
+.bulkCount {
+  font-weight: 600;
+}
+
+.bulkActions {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  margin-left: auto;
+}
+
+.scroller {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.table {
+  display: grid;
+  border-collapse: collapse;
+  font-size: var(--ui-text-sm);
+}
+
+/*
+ * The header's own four tokens. A console that wants the library default
+ * (a sunken grey strip) sets none of them; one whose design calls for an
+ * inverted header sets them and nothing in here has to know the palette.
+ */
+.thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  background: var(--ui-table-head-bg, var(--ui-surface-sunken));
+}
+
+.headerRow {
+  display: flex;
+  width: fit-content;
+  min-width: 100%;
+  border-bottom: 1px solid var(--ui-table-head-border, var(--ui-border));
+}
+
+.th {
+  position: relative;
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-3);
+  align-items: center;
+  height: var(--ui-table-head-height, 32px);
+  padding: 0 var(--ui-space-5);
+  background: var(--ui-table-head-bg, var(--ui-surface-sunken));
+  color: var(--ui-table-head-fg, var(--ui-text-muted));
+  font-size: var(--ui-table-head-size, var(--ui-text-xs));
+  font-weight: var(--ui-table-head-weight, 600);
+  letter-spacing: var(--ui-table-head-tracking, 0.02em);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.th.numeric {
+  justify-content: flex-end;
+}
+
+.sortButton {
+  display: inline-flex;
+  flex: 1;
+  gap: var(--ui-space-3);
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.numeric .sortButton {
+  justify-content: flex-end;
+}
+
+.sortButton:hover {
+  color: var(--ui-table-head-fg-strong, var(--ui-text));
+}
+
+.sortButton:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.headerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The reference writes the state into the glyph: an up arrow for
+ * ascending, a down arrow for descending, and a double-headed arrow for a
+ * column that is sortable but not sorted. It never uses a filled triangle,
+ * which is why an unsorted column here used to read as sorted ascending.
+ */
+.sortIcon {
+  flex: none;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.35;
+}
+
+.sorted .sortIcon {
+  opacity: 1;
+}
+
+.sorted {
+  color: var(--ui-table-head-fg-strong, var(--ui-text));
+}
+
+/* Drag handle for reordering: the whole header cell is draggable. */
+.th[draggable='true'] {
+  cursor: grab;
+}
+
+.dragOver {
+  box-shadow: inset 2px 0 0 var(--ui-accent-strong);
+}
+
+.resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  z-index: 1;
+  width: 6px;
+  height: 100%;
+  border: 0;
+  background: none;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizer:hover::after,
+.resizing::after {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  width: 2px;
+  height: 100%;
+  background: var(--ui-accent-strong);
+  content: '';
+}
+
+.tbody {
+  position: relative;
+  display: grid;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: fit-content;
+  min-width: 100%;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.row:hover {
+  background: var(--ui-surface-hover);
+}
+
+.row.selected {
+  background: var(--ui-accent-soft);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--ui-accent-strong);
+}
+
+.td {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--ui-row-height);
+  padding: 0 var(--ui-space-5);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.td.numeric {
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.cellText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* First column stays put while the other 70 scroll horizontally. */
+.pinned {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: inherit;
+  box-shadow: 1px 0 0 var(--ui-border);
+}
+
+.thead .pinned {
+  z-index: 3;
+  background: var(--ui-table-head-bg, var(--ui-surface-sunken));
+  box-shadow: 1px 0 0 var(--ui-table-head-border, var(--ui-border));
+}
+
+.row .pinned {
+  background: var(--ui-surface);
+}
+
+.row:hover .pinned {
+  background: var(--ui-surface-hover);
+}
+
+.row.selected .pinned {
+  background: var(--ui-accent-soft);
+}
+
+.selectCell {
+  justify-content: center;
+  padding: 0;
+}
+
+.states {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.footer {
+  flex: none;
+}
+
+.chooser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+  min-width: 300px;
+}
+
+.chooserHead {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chooserList {
+  max-height: 46vh;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+}
+
+.chooserItem {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border);
+  cursor: grab;
+}
+
+.chooserItem:last-child {
+  border-bottom: 0;
+}
+
+.chooserItem:hover {
+  background: var(--ui-surface-hover);
+}
+
+.chooserGrip {
+  flex: none;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.chooserLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chooserGroup {
+  margin-left: auto;
+  padding-left: var(--ui-space-5);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+}
+
+.chooserFoot {
+  display: flex;
+  gap: var(--ui-space-4);
+  justify-content: space-between;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+}

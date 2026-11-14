@@ -1,0 +1,19 @@
+.popover {
+  position: fixed;
+
+  /* Placed off-screen until measured, so it never flashes at the wrong spot. */
+  top: -9999px;
+  left: -9999px;
+  z-index: var(--ui-z-dropdown);
+  visibility: hidden;
+  min-width: 160px;
+  max-height: min(60vh, 420px);
+  overflow: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-md);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text);
+}

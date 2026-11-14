@@ -1,0 +1,122 @@
+.wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-6);
+  max-width: 980px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-6);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--ui-space-6);
+  align-items: start;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+}
+
+.footer {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--ui-space-6);
+  border-top: 1px solid var(--ao-border);
+}
+
+.footerRight {
+  display: flex;
+  gap: var(--ui-space-4);
+}
+
+.review {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ui-space-6);
+}
+
+.reviewItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+}
+
+.reviewLabel {
+  color: var(--ao-muted);
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.reviewValue {
+  font-size: var(--ui-text-md);
+}
+
+.targetSummary {
+  display: flex;
+  gap: var(--ui-space-5);
+  align-items: baseline;
+  padding: var(--ui-space-5);
+  border-radius: var(--ui-radius-md);
+  background: var(--accent-soft);
+  color: var(--ao-brand-deep);
+}
+
+.targetCount {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.warning {
+  padding: var(--ui-space-4) var(--ui-space-5);
+  border-radius: var(--ui-radius-md);
+  background: var(--st-warn-bg);
+  color: var(--st-warn);
+  font-size: var(--ui-text-sm);
+  line-height: 1.5;
+}
+
+.created {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-6);
+  align-items: flex-start;
+  max-width: 620px;
+  padding: var(--ui-space-9);
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+}
+
+.createdTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.createdBody {
+  margin: 0;
+  color: var(--ao-muted);
+  font-size: var(--ui-text-md);
+  line-height: 1.6;
+}
+
+.createdActions {
+  display: flex;
+  gap: var(--ui-space-4);
+}

@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.env
+*.local
+storybook-static/
+playwright-report/
+test-results/
+mock-server/data/*.db
+apps/*/mock-server/data/
+storybook-static/
+test-results/
+tools/
+security/.zap-*.generated.yaml
+
+# The reference build is the specification for every colour and layout.
+# scripts/check-colors.mjs refuses to run without it.
+!design-reference/
+
+# Personal Claude Code settings; never shared.
+.claude/settings.local.json

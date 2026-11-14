@@ -1,0 +1,285 @@
+/*
+ * Deployments — geometry read from design-reference/Aegis-One-Console-v129.html
+ * (the Deployments page). Colours are the approved tokens.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+
+  /*
+   * The grid's rows carry three lines and the header is the shallow one the
+   * reference uses on every list page but the inventory.
+   */
+  --ui-row-height: 94px;
+  --ui-table-head-height: 41px;
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.heading {
+  display: flex;
+  gap: var(--ui-space-6);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.title {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 38px;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-4);
+  align-items: center;
+}
+
+/* Counters --------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 13px;
+  margin-bottom: var(--ui-space-7);
+}
+
+.kpi,
+.kpiActive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 84px;
+  padding: 14px 18px;
+  border: 1px solid var(--ao-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ao-surface);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+/* The tile the grid is showing is inverted and underlined in gold. */
+.kpiActive {
+  border-color: var(--ao-sidebar);
+  border-bottom: 3px solid var(--ao-brand);
+  background: var(--ao-sidebar);
+}
+
+.kpi:hover {
+  border-color: var(--ao-brand);
+}
+
+.kpi:focus-visible,
+.kpiActive:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.kpiLabel {
+  color: var(--ao-navy-mid);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.kpiActive .kpiLabel {
+  color: var(--ao-brand-hi);
+}
+
+.kpiValue {
+  color: var(--ao-navy);
+  font-family: var(--ui-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.kpiActive .kpiValue {
+  color: var(--ao-surface);
+}
+
+.kpiSkeleton {
+  height: 84px;
+}
+
+/* Toolbar ---------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 17px;
+}
+
+/* Each control is as wide as what it holds; left to flex they take the row. */
+.search {
+  flex: none;
+  width: 365px;
+}
+
+.inline {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-4);
+  align-items: center;
+}
+
+.typeSelect {
+  flex: none;
+  width: 189px;
+}
+
+.count {
+  color: var(--ao-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grid ------------------------------------------------------------------- */
+
+/* The reference wraps the grid in the same bordered card every list page uses. */
+.table {
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  margin-bottom: var(--ui-space-5);
+}
+
+/* The action's own name, which opens it. */
+.jobLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ao-navy);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.jobLink:hover {
+  text-decoration: underline;
+}
+
+.jobLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.jobMeta {
+  display: block;
+  overflow: hidden;
+  margin-top: 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ao-navy-mid);
+  font-size: 12.5px;
+  line-height: 20px;
+}
+
+.figure {
+  display: block;
+  color: var(--ao-navy);
+  font-size: 14px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.packageLine {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  margin-top: 9px;
+  color: var(--ao-navy-mid);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+/* The same lettered tile the software cards fall back to, at row scale. */
+.packageIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-family: var(--ui-font-display);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+/* Results ---------------------------------------------------------------- */
+
+.counts {
+  display: flex;
+  gap: 5px 8px;
+  flex-wrap: wrap;
+  color: var(--ao-navy);
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
+}
+
+.bar {
+  display: block;
+  width: 145px;
+  height: 5px;
+  margin-top: 10px;
+  background: var(--ao-track);
+}
+
+.barGood {
+  fill: var(--ao-success);
+}
+
+.barBad {
+  fill: var(--ao-danger);
+}
+
+/* Status and figure tones ------------------------------------------------ */
+
+.good {
+  color: var(--st-good);
+  font-weight: 600;
+}
+
+.bad {
+  color: var(--st-bad);
+  font-weight: 600;
+}
+
+.warn {
+  color: var(--st-warn);
+  font-weight: 600;
+}
+
+/* Queued and scheduled are states nobody has to act on, so they read in the
+   page's own navy rather than borrowing a status colour. */
+.cool {
+  color: var(--ao-navy-mid);
+  font-weight: 650;
+}
+
+/* Footnote --------------------------------------------------------------- */
+
+.notice {
+  margin: 14px 0 0;
+  color: var(--ao-muted);
+  font-size: 10px;
+  line-height: 15px;
+}

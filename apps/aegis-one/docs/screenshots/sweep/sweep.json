@@ -1,0 +1,5575 @@
+[
+ {
+  "slug": "overview",
+  "label": "Overview",
+  "route": "/",
+  "settledMs": 257,
+  "reference": {
+   "heading": "Overview",
+   "icons": {
+    "total": 76,
+    "approved": 56,
+    "square": 32,
+    "accents": 62
+   },
+   "colours": [
+    [
+     "#1D2632",
+     529
+    ],
+    [
+     "#0B1220",
+     138
+    ],
+    [
+     "#475569",
+     126
+    ],
+    [
+     "#1E293B",
+     98
+    ],
+    [
+     "#47617C",
+     86
+    ],
+    [
+     "#334155",
+     73
+    ],
+    [
+     "#64748B",
+     69
+    ],
+    [
+     "#A47423",
+     67
+    ],
+    [
+     "#18354F",
+     52
+    ],
+    [
+     "#1F55B8",
+     52
+    ],
+    [
+     "#94A3B8",
+     42
+    ],
+    [
+     "#3E526A",
+     42
+    ],
+    [
+     "#FFFFFF",
+     37
+    ],
+    [
+     "#0F172A",
+     35
+    ],
+    [
+     "#B91C1C",
+     26
+    ],
+    [
+     "#15803D",
+     19
+    ],
+    [
+     "#24384F",
+     15
+    ],
+    [
+     "#EEF1F5",
+     15
+    ],
+    [
+     "#D5DCE5",
+     13
+    ],
+    [
+     "#DFE5EC",
+     12
+    ],
+    [
+     "#B7791F",
+     12
+    ],
+    [
+     "#9A6200",
+     12
+    ],
+    [
+     "#C0262D",
+     11
+    ],
+    [
+     "#A16207",
+     8
+    ]
+   ],
+   "charts": {
+    "svgs": 50,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "16 Device Groups",
+    "200 Software Packages",
+    "487 Patch Updates",
+    "6 deployments",
+    "4 zones",
+    "+ Custom Widget",
+    "Customize",
+    "Export",
+    "New Action",
+    "Zone",
+    "Platform",
+    "Department",
+    "Refresh overview",
+    "Managed Endpoints324 locations · 5 offli",
+    "Online Now2784%Checked in and Reachable",
+    "Patch Compliance59%19 of 32 devices full",
+    "High-Risk Endpoints527 of 32 not high ri",
+    "Overall Health Score71/100Fair · 70–84 b",
+    "How it’s calculated",
+    "Patching +7.8",
+    "Agent Health +3.4",
+    "Thresholds",
+    "Overall Health Score view",
+    "Overall Health Score chart type",
+    "Patching: 59%",
+    "Security Posture: 80%",
+    "Agent health: 68%",
+    "Experience (DEX): 76%",
+    "Content delivery: 83%",
+    "Patches: Patch compliance",
+    "Patch compliance view",
+    "Patch compliance chart type",
+    "Compliant1959%",
+    "Non-compliant1341%",
+    "Critical 13",
+    "High 7",
+    "Medium 7",
+    "Successful 17",
+    "Restart Needed 5",
+    "Pending 5",
+    "Failed 5",
+    "Windows 55%",
+    "macOS 100%",
+    "Linux 57%",
+    "Security: Security Posture",
+    "Security Posture view",
+    "Security Posture chart type",
+    "Disk encryption: 75% protected",
+    "Antivirus: 75% protected",
+    "Firewall: 91% protected",
+    "Deployments: Deployment status",
+    "Deployment status view",
+    "Deployment status chart type"
+   ],
+   "tiles": {
+    "count": 26,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 3,
+    "buttons": 22,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2892
+  },
+  "build": {
+   "heading": "Overview",
+   "icons": {
+    "total": 39,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     570
+    ],
+    [
+     "#69717D",
+     205
+    ],
+    [
+     "#0B1220",
+     99
+    ],
+    [
+     "#15803D",
+     45
+    ],
+    [
+     "#18354F",
+     37
+    ],
+    [
+     "#C0262D",
+     35
+    ],
+    [
+     "#FFFFFF",
+     27
+    ],
+    [
+     "#E5E9ED",
+     25
+    ],
+    [
+     "#47617C",
+     21
+    ],
+    [
+     "#B7791F",
+     20
+    ],
+    [
+     "#E4363D",
+     15
+    ],
+    [
+     "#8A9099",
+     15
+    ],
+    [
+     "#2F5D8A",
+     14
+    ],
+    [
+     "#1D4ED8",
+     12
+    ],
+    [
+     "#0E9F6E",
+     11
+    ],
+    [
+     "#EEF0F2",
+     11
+    ],
+    [
+     "#B4790A",
+     6
+    ],
+    [
+     "#7FA0C6",
+     6
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#202329",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 13,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "16 Device Groups",
+    "40 Software Packages",
+    "198 Patch Updates",
+    "23 Deployments",
+    "9 Zones",
+    "Export",
+    "New Action",
+    "Zone",
+    "Platform",
+    "Department",
+    "Refresh the estate summary",
+    "Managed Endpoints50,0009 zones · 4,697 n",
+    "Online Now45,30391%Checked in and reacha",
+    "Patch Compliance42%21,226 of 50,000 full",
+    "High-Risk Endpoints11,590At least one op",
+    "Overall Health Score74/100Fair · 70–84 b",
+    "Agent Health +6",
+    "Experience (DEX) +6",
+    "Overall Health Score view",
+    "Overall Health Score chart type",
+    "Patching: 42%",
+    "Security Posture: 87%",
+    "Agent Health: 91%",
+    "Experience (DEX): 91%",
+    "Content Delivery: 76%",
+    "Patches →",
+    "Patch compliance view",
+    "Patch compliance chart type",
+    "Compliant21,22642%",
+    "Non-compliant28,77458%",
+    "Security →",
+    "Security Posture view",
+    "Security Posture chart type",
+    "87%Disk Encryption43,748 of 50,000 prote",
+    "83%Antivirus41,584 of 50,000 protected12",
+    "92%Firewall46,205 of 50,000 protected3 p",
+    "Deployments →",
+    "Deployment status view",
+    "Deployment status chart type",
+    "Completed732%",
+    "Queued or Scheduled29%",
+    "Running1150%",
+    "Paused15%",
+    "Failed15%",
+    "Expired111%",
+    "Within 10 days00%",
+    "Within 30 days00%",
+    "Later889%",
+    "ExpiredQ3 imaging batchEnrollment Token2",
+    "Antivirus Missing or OutdatedEndpoints w",
+    "Install Antivirus →",
+    "Disk Not Fully EncryptedEncryption off o",
+    "Review →",
+    "High-Risk EndpointsAt least one open cri",
+    "Deployment FailedSome targets did not co",
+    "Open Failures →",
+    "End-Of-Support OSPast the vendor end-of-",
+    "Firewall DisabledHost firewall not repor",
+    "Show 2 more",
+    "All Deployments →"
+   ],
+   "tiles": {
+    "count": 21,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 3,
+    "buttons": 11,
+    "star": false
+   },
+   "table": {
+    "tables": 5,
+    "rows": 19,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 4513
+  }
+ },
+ {
+  "slug": "devices",
+  "label": "Devices",
+  "route": "/devices",
+  "settledMs": 214,
+  "reference": {
+   "heading": "Devices",
+   "icons": {
+    "total": 50,
+    "approved": 35,
+    "square": 34,
+    "accents": 62
+   },
+   "colours": [
+    [
+     "#1E293B",
+     366
+    ],
+    [
+     "#ECC57C",
+     150
+    ],
+    [
+     "#FFFFFF",
+     135
+    ],
+    [
+     "#18354F",
+     125
+    ],
+    [
+     "#FAFBFD",
+     105
+    ],
+    [
+     "#859AB6",
+     90
+    ],
+    [
+     "#94A3B8",
+     88
+    ],
+    [
+     "#20272D",
+     46
+    ],
+    [
+     "#1D4ED8",
+     32
+    ],
+    [
+     "#53657A",
+     27
+    ],
+    [
+     "#0F172A",
+     25
+    ],
+    [
+     "#334155",
+     25
+    ],
+    [
+     "#1D2632",
+     22
+    ],
+    [
+     "#0B1220",
+     20
+    ],
+    [
+     "#15803D",
+     17
+    ],
+    [
+     "#DFE5EC",
+     15
+    ],
+    [
+     "#486482",
+     14
+    ],
+    [
+     "#47617C",
+     10
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#64748B",
+     8
+    ],
+    [
+     "#B91C1C",
+     5
+    ],
+    [
+     "#C5CED9",
+     4
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ]
+   ],
+   "charts": {
+    "svgs": 24,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Devices",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Export",
+    "Create Action",
+    "All Endpoints32",
+    "Online27",
+    "Offline5",
+    "Locations4",
+    "Filters",
+    "Columns 20",
+    "Search devices",
+    "Advanced Filter",
+    "Saved views",
+    "Device group",
+    "Device location",
+    "Device platform",
+    "Device status",
+    "Computer Name↑",
+    "OS↕",
+    "IP Address↕",
+    "Hostname↕",
+    "MAC Address↕",
+    "DNS Name↕",
+    "Location↕",
+    "User↕",
+    "Status↕",
+    "Last Seen↕",
+    "OS Version↕",
+    "Department↕",
+    "Computer Type↕",
+    "Manufacturer↕",
+    "Model↕",
+    "Serial Number↕",
+    "RAM (GB)↕",
+    "Last Boot↕",
+    "Agent Version↕",
+    "DNS Server↕",
+    "LNX-BLR-131",
+    "LNX-JPR-108",
+    "LNX-JPR-116",
+    "LNX-JPR-124",
+    "LNX-JPR-128",
+    "LNX-JPR-132",
+    "LNX-MUM-125",
+    "MAC-BLR-107",
+    "MAC-BLR-115",
+    "MAC-BLR-123",
+    "Devices per page",
+    "Previous device page",
+    "Next device page"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 10,
+    "search": 1,
+    "sortable": 20,
+    "pager": true
+   },
+   "words": 3446
+  },
+  "build": {
+   "heading": "Devices",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1931
+    ],
+    [
+     "#E4C795",
+     150
+    ],
+    [
+     "#FFFFFF",
+     72
+    ],
+    [
+     "#18354F",
+     49
+    ],
+    [
+     "#15803D",
+     34
+    ],
+    [
+     "#202329",
+     24
+    ],
+    [
+     "#E5E9ED",
+     20
+    ],
+    [
+     "#69717D",
+     13
+    ],
+    [
+     "#0B1220",
+     8
+    ],
+    [
+     "#B7791F",
+     8
+    ],
+    [
+     "#8A9099",
+     7
+    ],
+    [
+     "#47617C",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Export",
+    "Create Action",
+    "All Endpoints50,000",
+    "Online45,303",
+    "Offline1,854",
+    "Locations9",
+    "Search devices",
+    "Advanced Filter",
+    "Device group",
+    "Device location",
+    "Device platform",
+    "Device status",
+    "Saved views",
+    "Columns 20",
+    "Computer Name▲",
+    "OS▲",
+    "IP Address▲",
+    "Hostname▲",
+    "Location▲",
+    "User▲",
+    "Status▲",
+    "Last Seen▲",
+    "OS Version▲",
+    "Department▲",
+    "Computer Type▲",
+    "Manufacturer▲",
+    "Model▲",
+    "Serial Number▲",
+    "RAM (GB)▲",
+    "Last Boot▲",
+    "Agent Version▲",
+    "DNS Server▲",
+    "50100200",
+    "Previous devices page",
+    "Next devices page"
+   ],
+   "tiles": {
+    "count": 13,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 40,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 21,
+    "search": 1,
+    "sortable": 38,
+    "pager": true
+   },
+   "words": 6662
+  }
+ },
+ {
+  "slug": "device-groups",
+  "label": "Device groups",
+  "route": "/groups",
+  "settledMs": 215,
+  "reference": {
+   "heading": "Device Groups",
+   "icons": {
+    "total": 32,
+    "approved": 20,
+    "square": 19,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#1E293B",
+     454
+    ],
+    [
+     "#20272D",
+     179
+    ],
+    [
+     "#1D2632",
+     93
+    ],
+    [
+     "#18354F",
+     62
+    ],
+    [
+     "#47617C",
+     47
+    ],
+    [
+     "#B7791F",
+     44
+    ],
+    [
+     "#1D4ED8",
+     44
+    ],
+    [
+     "#FFFFFF",
+     42
+    ],
+    [
+     "#15803D",
+     42
+    ],
+    [
+     "#ECC57C",
+     39
+    ],
+    [
+     "#8A94A6",
+     32
+    ],
+    [
+     "#0F172A",
+     21
+    ],
+    [
+     "#334155",
+     20
+    ],
+    [
+     "#D5DEE8",
+     15
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#C0262D",
+     8
+    ],
+    [
+     "#C5CED9",
+     6
+    ],
+    [
+     "#DFE5EC",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#DFE3E8",
+     3
+    ],
+    [
+     "#E3E8EE",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Device Groups",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Import groups from CSV",
+    "Directory Sync",
+    "Create Group",
+    "Groups9",
+    "Sub-Groups7",
+    "Endpoints Grouped32/32",
+    "Not Grouped0",
+    "Search groups",
+    "Collapse Windows Workstations",
+    "Collapse Mumbai HQ",
+    "Collapse Delhi Branch",
+    "Collapse Bengaluru",
+    "Collapse Jaipur Branch",
+    "Add Sub-Group",
+    "Edit",
+    "Members22",
+    "Online19",
+    "Offline3",
+    "Missing Patches21",
+    "Sub-Groups3",
+    "Patches",
+    "Software",
+    "Membership",
+    "Policies2",
+    "History0",
+    "All 22",
+    "Online 19",
+    "Offline 3",
+    "Missing Patches 21",
+    "Search members",
+    "9 missing",
+    "Exempt",
+    "8 missing",
+    "7 missing",
+    "11 missing",
+    "3 missing",
+    "10 missing",
+    "Up to Date"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 12,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 22,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2805
+  },
+  "build": {
+   "heading": "Device Groups",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1975
+    ],
+    [
+     "#202329",
+     228
+    ],
+    [
+     "#1D4ED8",
+     200
+    ],
+    [
+     "#15803D",
+     142
+    ],
+    [
+     "#FFFFFF",
+     91
+    ],
+    [
+     "#47617C",
+     70
+    ],
+    [
+     "#E4C795",
+     66
+    ],
+    [
+     "#B7791F",
+     56
+    ],
+    [
+     "#18354F",
+     43
+    ],
+    [
+     "#E5E9ED",
+     19
+    ],
+    [
+     "#69717D",
+     13
+    ],
+    [
+     "#C0262D",
+     8
+    ],
+    [
+     "#0B1220",
+     4
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Import CSV",
+    "Directory Sync",
+    "Create Group",
+    "Search groups",
+    "Windows WorkstationsD32,710",
+    "Windows 11D23,812",
+    "Windows 10D8,898",
+    "FinanceD3,356",
+    "macOS FleetD2,503",
+    "Linux EndpointsD7,892",
+    "Mumbai HQD14,901",
+    "Subnet 10.20.0.0/24D53",
+    "Delhi BranchD8,083",
+    "Subnet 10.21.0.0/24D21",
+    "Bengaluru CampusD9,902",
+    "Subnet 10.22.0.0/24D39",
+    "Jaipur BranchD3,975",
+    "Subnet 10.23.0.0/24D9",
+    "Pilot RingS400",
+    "Security GapsD16,721",
+    "Add Sub-Group",
+    "Edit",
+    "Members32,710",
+    "Patches",
+    "Software",
+    "Sub-Groups3",
+    "Membership",
+    "Policies2",
+    "History1",
+    "All 32,710",
+    "Online 29,673",
+    "Offline 3,037",
+    "Missing Patches 19,092",
+    "Search name, IP, OS or location",
+    "Device Name▲",
+    "IP Address▲",
+    "OS▲",
+    "User▲",
+    "Location▲",
+    "Connection▲",
+    "Patch Status▲",
+    "50100200",
+    "Previous members page",
+    "Next members page"
+   ],
+   "tiles": {
+    "count": 14,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 19,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 50,
+    "search": 0,
+    "sortable": 16,
+    "pager": true
+   },
+   "words": 6754
+  }
+ },
+ {
+  "slug": "enrollment",
+  "label": "Enrollment",
+  "route": "/enrollment",
+  "settledMs": 263,
+  "reference": {
+   "heading": "Enrollment",
+   "icons": {
+    "total": 42,
+    "approved": 30,
+    "square": 28,
+    "accents": 59
+   },
+   "colours": [
+    [
+     "#1D2632",
+     99
+    ],
+    [
+     "#1E293B",
+     62
+    ],
+    [
+     "#3E526A",
+     60
+    ],
+    [
+     "#18354F",
+     40
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#475569",
+     24
+    ],
+    [
+     "#ECC57C",
+     24
+    ],
+    [
+     "#47617C",
+     24
+    ],
+    [
+     "#FFFFFF",
+     23
+    ],
+    [
+     "#0F172A",
+     19
+    ],
+    [
+     "#20272D",
+     18
+    ],
+    [
+     "#0B1220",
+     8
+    ],
+    [
+     "#DFE5EC",
+     8
+    ],
+    [
+     "#F1F4F8",
+     6
+    ],
+    [
+     "#E1E6ED",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#334155",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#127A4F",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#1D4ED8",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#976519",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 16,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Enrollment",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Create Token",
+    "Enrolled Endpoints3227 Online Now",
+    "On Latest Agent10/32Agent 3.4.2",
+    "Active Tokens03 total",
+    "Not Checking in3Not seen for 7+ days",
+    "Windows: 22",
+    "macOS: 3",
+    "Linux: 7",
+    "Windows",
+    "macOS",
+    "Linux",
+    "Copy Command"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 3,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1108
+  },
+  "build": {
+   "heading": "Enrollment",
+   "icons": {
+    "total": 29,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     156
+    ],
+    [
+     "#18354F",
+     37
+    ],
+    [
+     "#69717D",
+     26
+    ],
+    [
+     "#47617C",
+     18
+    ],
+    [
+     "#FFFFFF",
+     14
+    ],
+    [
+     "#E4C795",
+     14
+    ],
+    [
+     "#E5E9ED",
+     11
+    ],
+    [
+     "#15803D",
+     10
+    ],
+    [
+     "#202329",
+     9
+    ],
+    [
+     "#2F5D8A",
+     6
+    ],
+    [
+     "#0B1220",
+     3
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#D6A009",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#C0262D",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 3,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Create Token",
+    "Windows",
+    "macOS",
+    "Linux",
+    "Copy Command"
+   ],
+   "tiles": {
+    "count": 18,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 5,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1485
+  }
+ },
+ {
+  "slug": "patches",
+  "label": "Patches",
+  "route": "/patches",
+  "settledMs": 232,
+  "reference": {
+   "heading": "Patch Management",
+   "icons": {
+    "total": 43,
+    "approved": 30,
+    "square": 26,
+    "accents": 57
+   },
+   "colours": [
+    [
+     "#202124",
+     275
+    ],
+    [
+     "#1D2632",
+     179
+    ],
+    [
+     "#1E293B",
+     160
+    ],
+    [
+     "#0F172A",
+     75
+    ],
+    [
+     "#ECC57C",
+     59
+    ],
+    [
+     "#3E526A",
+     57
+    ],
+    [
+     "#475569",
+     52
+    ],
+    [
+     "#334155",
+     49
+    ],
+    [
+     "#FFFFFF",
+     48
+    ],
+    [
+     "#20272D",
+     42
+    ],
+    [
+     "#F0F1F3",
+     42
+    ],
+    [
+     "#1F2937",
+     36
+    ],
+    [
+     "#18354F",
+     34
+    ],
+    [
+     "#C0262D",
+     34
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#161616",
+     29
+    ],
+    [
+     "#47617C",
+     28
+    ],
+    [
+     "#3C4043",
+     24
+    ],
+    [
+     "#0B1220",
+     20
+    ],
+    [
+     "#1D4ED8",
+     12
+    ],
+    [
+     "#F1F2F4",
+     11
+    ],
+    [
+     "#B42323",
+     10
+    ],
+    [
+     "#DFE5EC",
+     9
+    ],
+    [
+     "#C5CED9",
+     8
+    ]
+   ],
+   "charts": {
+    "svgs": 17,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Patches",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Patch Policies",
+    "Patch critical (30)",
+    "Windows",
+    "macOS",
+    "Linux",
+    "Third-Party Apps",
+    "Drivers & BIOS",
+    "All Patches",
+    "Compliance by OS Version chart type",
+    "Missing by Severity chart type",
+    "Critical6127%",
+    "High8336%",
+    "Medium8437%",
+    "Low00%",
+    "Missing Patch Age chart type",
+    "All Patches →"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 11,
+    "star": false
+   },
+   "table": {
+    "tables": 4,
+    "rows": 21,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1621
+  },
+  "build": {
+   "heading": "Patch Management",
+   "icons": {
+    "total": 46,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     447
+    ],
+    [
+     "#0B1220",
+     132
+    ],
+    [
+     "#15803D",
+     84
+    ],
+    [
+     "#E5E9ED",
+     56
+    ],
+    [
+     "#C0262D",
+     55
+    ],
+    [
+     "#18354F",
+     35
+    ],
+    [
+     "#B7791F",
+     34
+    ],
+    [
+     "#FFFFFF",
+     23
+    ],
+    [
+     "#8A9099",
+     19
+    ],
+    [
+     "#69717D",
+     18
+    ],
+    [
+     "#E4C795",
+     18
+    ],
+    [
+     "#EEF0F2",
+     15
+    ],
+    [
+     "#7FA0C6",
+     13
+    ],
+    [
+     "#2F5D8A",
+     13
+    ],
+    [
+     "#202329",
+     10
+    ],
+    [
+     "#AEB2BC",
+     4
+    ],
+    [
+     "#47617C",
+     4
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 20,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 14
+   },
+   "controls": [
+    "Patch Policies",
+    "+ Patch critical (18)",
+    "Overview",
+    "Windows",
+    "macOS",
+    "Linux",
+    "Third-Party Apps",
+    "Drivers & BIOS",
+    "All Patches",
+    "Compliance by OS Version chart type",
+    "Windows 11 Enterprise 24H2: 95%",
+    "Windows 10 Enterprise 22H2: 84%",
+    "Windows 11 Enterprise 23H2: 91%",
+    "Windows Server 2022 21H2: 89%",
+    "Red Hat Enterprise Linux 9 9.4: 87%",
+    "Ubuntu 24.04 LTS: 91%",
+    "Windows Server 2019 1809: 85%",
+    "Red Hat Enterprise Linux 8 8.10: 87%",
+    "Ubuntu 22.04 LTS: 91%",
+    "Windows Server 2016 1607: 80%",
+    "macOS Sonoma 14.7: 92%",
+    "macOS Sequoia 15.1: 92%",
+    "macOS Ventura 13.7: 85%",
+    "Ubuntu 20.04 LTS: 83%",
+    "Missing by Severity chart type",
+    "Critical17,14036%",
+    "High21,50745%",
+    "Medium4,66010%",
+    "Low4,0409%",
+    "Missing Patch Age chart type",
+    "0–7 d: 39660",
+    "8–14 d: 0",
+    "15–30 d: 0",
+    "31–60 d: 3254",
+    "60+ d: 4433",
+    "All Patches →",
+    "DEL-WS-7026",
+    "HYD-WS-9838",
+    "PUN-WS-5252",
+    "MUM-WS-7976",
+    "MUM-WS-3963",
+    "BEN-WS-6567"
+   ],
+   "tiles": {
+    "count": 17,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 3,
+    "buttons": 3,
+    "star": false
+   },
+   "table": {
+    "tables": 5,
+    "rows": 35,
+    "search": 0,
+    "sortable": 6,
+    "pager": false
+   },
+   "words": 2677
+  }
+ },
+ {
+  "slug": "software",
+  "label": "Software",
+  "route": "/software",
+  "settledMs": 223,
+  "reference": {
+   "heading": "Software Catalog",
+   "icons": {
+    "total": 32,
+    "approved": 19,
+    "square": 20,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#253F59",
+     2000
+    ],
+    [
+     "#FFFFFF",
+     1816
+    ],
+    [
+     "#536C85",
+     1600
+    ],
+    [
+     "#24384F",
+     1216
+    ],
+    [
+     "#0F172A",
+     824
+    ],
+    [
+     "#47617C",
+     410
+    ],
+    [
+     "#C5CED9",
+     403
+    ],
+    [
+     "#4C637B",
+     402
+    ],
+    [
+     "gradient",
+     401
+    ],
+    [
+     "#1D2632",
+     400
+    ],
+    [
+     "#A16207",
+     400
+    ],
+    [
+     "#18354F",
+     366
+    ],
+    [
+     "#DFE5EC",
+     204
+    ],
+    [
+     "#0F2740",
+     201
+    ],
+    [
+     "#DCE5EC",
+     200
+    ],
+    [
+     "#8B1A1F",
+     200
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#ECC57C",
+     5
+    ],
+    [
+     "#29455F",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#20272D",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Software",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Export",
+    "Import Icons",
+    "+ Add package",
+    "All Packages200",
+    "Installer Added0",
+    "Installer Missing200",
+    "Draft Packages200",
+    "Publishers150",
+    "Search software",
+    "Software category",
+    "Publisher",
+    "Deploy",
+    "More actions: Edit Package, Uninstall (6",
+    "More actions: Edit Package, Uninstall (8",
+    "More actions: Edit Package, Uninstall (0"
+   ],
+   "tiles": {
+    "count": 6,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 26584
+  },
+  "build": {
+   "heading": "Software Catalog",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     866
+    ],
+    [
+     "#0B1220",
+     410
+    ],
+    [
+     "#8A9099",
+     327
+    ],
+    [
+     "#FFFFFF",
+     132
+    ],
+    [
+     "#E5E9ED",
+     130
+    ],
+    [
+     "#69717D",
+     84
+    ],
+    [
+     "#E4C795",
+     82
+    ],
+    [
+     "#47617C",
+     80
+    ],
+    [
+     "#18354F",
+     49
+    ],
+    [
+     "#202329",
+     42
+    ],
+    [
+     "#0F2740",
+     41
+    ],
+    [
+     "gradient",
+     41
+    ],
+    [
+     "#7F6038",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Export",
+    "Import Icons",
+    "+ Add package",
+    "All Packages40",
+    "Installer Added25",
+    "Installer Missing15",
+    "Draft Packages15",
+    "Search software or publisher",
+    "Software category",
+    "Software publisher",
+    "Deploy",
+    "⋯"
+   ],
+   "tiles": {
+    "count": 16,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 3,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 6263
+  }
+ },
+ {
+  "slug": "live-activity",
+  "label": "Live Activity",
+  "route": "/liveops",
+  "settledMs": 228,
+  "reference": {
+   "heading": "Live Activity",
+   "icons": {
+    "total": 69,
+    "approved": 19,
+    "square": 56,
+    "accents": 87
+   },
+   "colours": [
+    [
+     "#8492A4",
+     288
+    ],
+    [
+     "#344D66",
+     224
+    ],
+    [
+     "#334155",
+     144
+    ],
+    [
+     "#FFFFFF",
+     101
+    ],
+    [
+     "#183650",
+     82
+    ],
+    [
+     "#3C4D64",
+     64
+    ],
+    [
+     "#15803D",
+     54
+    ],
+    [
+     "#20272D",
+     42
+    ],
+    [
+     "#243449",
+     42
+    ],
+    [
+     "#F0F3F7",
+     32
+    ],
+    [
+     "#E6EBF1",
+     32
+    ],
+    [
+     "#18354F",
+     26
+    ],
+    [
+     "#ECC57C",
+     23
+    ],
+    [
+     "#0B1220",
+     18
+    ],
+    [
+     "#0F172A",
+     17
+    ],
+    [
+     "#3D4E63",
+     16
+    ],
+    [
+     "#DFE5EC",
+     15
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#805617",
+     10
+    ],
+    [
+     "#47617C",
+     10
+    ],
+    [
+     "#45566A",
+     10
+    ],
+    [
+     "#B91C1C",
+     10
+    ],
+    [
+     "#8E9AA8",
+     9
+    ],
+    [
+     "#475569",
+     8
+    ]
+   ],
+   "charts": {
+    "svgs": 43,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Live Activity",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Console",
+    "Log Collection",
+    "Task Results",
+    "Task History3",
+    "Audit Trail",
+    "Live DataRequest fresh facts from select",
+    "Run ScriptPowerShell, Shell, Python or C",
+    "Collect LogsRetrieve agent, system or cu",
+    "Search target computers",
+    "Target platform",
+    "Add device group",
+    "Select all applicable (32)",
+    "Clear Selection",
+    "Review Request"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2852
+  },
+  "build": {
+   "heading": "Live Activity",
+   "icons": {
+    "total": 29,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     299
+    ],
+    [
+     "#69717D",
+     138
+    ],
+    [
+     "#18354F",
+     127
+    ],
+    [
+     "#15803D",
+     84
+    ],
+    [
+     "#47617C",
+     40
+    ],
+    [
+     "#7F6038",
+     25
+    ],
+    [
+     "#E4C795",
+     25
+    ],
+    [
+     "#FFFFFF",
+     22
+    ],
+    [
+     "#E5E9ED",
+     20
+    ],
+    [
+     "#B7791F",
+     16
+    ],
+    [
+     "#202329",
+     5
+    ],
+    [
+     "#EEF0F2",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#F4EFE6",
+     2
+    ],
+    [
+     "#8A9099",
+     1
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 3,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Console",
+    "Log Collection",
+    "Task Results",
+    "Task History20",
+    "Audit Trail",
+    "Live DataRequest fresh facts from select",
+    "Run ScriptPowerShell, Shell, Python or C",
+    "Collect LogsRetrieve agent, system or cu",
+    "Task Name",
+    "Reason / ticket (optional)",
+    "Timeout (seconds)",
+    "Output limit per target (KB)",
+    "Search target computers",
+    "Target platform",
+    "Add Device Group",
+    "Select all applicable (50)",
+    "Clear Selection",
+    "Review Request"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 4345
+  }
+ },
+ {
+  "slug": "remote-control",
+  "label": null,
+  "route": "/remote-control",
+  "settledMs": 206,
+  "reference": null,
+  "build": {
+   "heading": "Remote Control",
+   "icons": {
+    "total": 32,
+    "approved": 32,
+    "square": 26,
+    "accents": 26
+   },
+   "colours": [
+    [
+     "#69717D",
+     109
+    ],
+    [
+     "#20262E",
+     82
+    ],
+    [
+     "#18354F",
+     36
+    ],
+    [
+     "#7F6038",
+     27
+    ],
+    [
+     "#E5E9ED",
+     23
+    ],
+    [
+     "#FFFFFF",
+     20
+    ],
+    [
+     "#E8F6EF",
+     9
+    ],
+    [
+     "#F5F6F7",
+     5
+    ],
+    [
+     "#47617C",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#C6A16B",
+     1
+    ],
+    [
+     "#F1F4F8",
+     1
+    ],
+    [
+     "#EEF0F2",
+     1
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "New Session",
+    "Active Sessions",
+    "Session History",
+    "Recordings",
+    "Policy",
+    "View OnlyWatch the screen. Mouse and key",
+    "Full ControlMouse, keyboard, command lin",
+    "Chat OnlyMessage the logged-in user with",
+    "Endpoint",
+    "AHM-SRV-0089Red Hat Enterprise Linux 9On",
+    "AHM-SRV-0109UbuntuOnline",
+    "AHM-SRV-0114Windows Server 2022Online",
+    "AHM-SRV-0126Windows Server 2019Online",
+    "AHM-SRV-0128Windows Server 2019Offline",
+    "AHM-SRV-0153IBM AIXOnline",
+    "AHM-SRV-0227UbuntuOnline",
+    "AHM-SRV-0239Red Hat Enterprise Linux 8On",
+    "AHM-SRV-0251Windows Server 2019Online",
+    "AHM-SRV-0279Windows Server 2022Online",
+    "Reason or ticket — required by policy",
+    "Request session"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1224
+  }
+ },
+ {
+  "slug": "deployments",
+  "label": "Deployments",
+  "route": "/deployments",
+  "settledMs": 221,
+  "reference": {
+   "heading": "Deployments",
+   "icons": {
+    "total": 32,
+    "approved": 19,
+    "square": 20,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#18354F",
+     194
+    ],
+    [
+     "#47617C",
+     74
+    ],
+    [
+     "#24384F",
+     38
+    ],
+    [
+     "#FFFFFF",
+     34
+    ],
+    [
+     "#334155",
+     28
+    ],
+    [
+     "#0F172A",
+     24
+    ],
+    [
+     "#ECC57C",
+     21
+    ],
+    [
+     "#20272D",
+     15
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#29455F",
+     12
+    ],
+    [
+     "#137C55",
+     12
+    ],
+    [
+     "#4F6C83",
+     12
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#DFE5EC",
+     7
+    ],
+    [
+     "#E7EDF2",
+     6
+    ],
+    [
+     "#16855E",
+     6
+    ],
+    [
+     "#CA3F52",
+     6
+    ],
+    [
+     "#CDD8E2",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#4C637B",
+     4
+    ],
+    [
+     "#15803D",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Deployments",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Export",
+    "+ New action",
+    "All Actions6",
+    "Active / waiting1",
+    "Scheduled1",
+    "Completed2",
+    "With Failures1",
+    "Paused / cancelled1",
+    "Search deployments",
+    "Filter deployment action",
+    "September Windows patch pilot",
+    "View action D-1042",
+    "Chrome staged rollout",
+    "View action D-1043",
+    "Branch computer details refresh",
+    "View action D-1044",
+    "Acrobat Reader retry cohort",
+    "View action D-1045",
+    "Weekly endpoint log collection",
+    "View action D-1046",
+    "Office maintenance window",
+    "View action D-1047"
+   ],
+   "tiles": {
+    "count": 7,
+    "clickable": 6
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 6,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1809
+  },
+  "build": {
+   "heading": "Deployments",
+   "icons": {
+    "total": 49,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1041
+    ],
+    [
+     "#47617C",
+     270
+    ],
+    [
+     "#18354F",
+     235
+    ],
+    [
+     "#E4C795",
+     88
+    ],
+    [
+     "#FFFFFF",
+     58
+    ],
+    [
+     "#15803D",
+     40
+    ],
+    [
+     "#E5E9ED",
+     32
+    ],
+    [
+     "#202329",
+     32
+    ],
+    [
+     "#C0262D",
+     28
+    ],
+    [
+     "#EEF0F2",
+     23
+    ],
+    [
+     "#19845B",
+     23
+    ],
+    [
+     "#D34249",
+     23
+    ],
+    [
+     "#69717D",
+     4
+    ],
+    [
+     "#B7791F",
+     4
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 23,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Export",
+    "+ New action",
+    "All Actions23",
+    "Active / waiting11",
+    "Scheduled2",
+    "Completed7",
+    "With Failures13",
+    "Paused / cancelled2",
+    "Search action, package or hostname",
+    "Filter deployment action",
+    "Action / package▲",
+    "Computers▲",
+    "Status▲",
+    "Triggered by / time▲",
+    "Install software — CrowdStrike Falcon Se",
+    "View Details",
+    "Java 21.0.5 upgrade",
+    "BIOS 1.28.0 — Latitude 5450",
+    "October security rollup — pilot",
+    "Netskope client rollout — Bengaluru",
+    "October security rollup — broad",
+    "Disk cleanup script — low disk group",
+    "CrowdStrike sensor 7.20 upgrade",
+    "RHEL 9 kernel update",
+    "Zoom Workplace 6.2.11",
+    "Adobe Acrobat Reader 24.4",
+    "Remove TeamViewer from Finance",
+    "Google Chrome 142.0 — broad ring",
+    "macOS Sequoia 15.1",
+    "Collect firewall state — all servers",
+    "SAP GUI 8.00 PL12"
+   ],
+   "tiles": {
+    "count": 19,
+    "clickable": 6
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 12,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 23,
+    "search": 1,
+    "sortable": 10,
+    "pager": false
+   },
+   "words": 6208
+  }
+ },
+ {
+  "slug": "vulnerabilities",
+  "label": "Vulnerabilities",
+  "route": "/vulns",
+  "settledMs": 229,
+  "reference": {
+   "heading": "Vulnerabilities",
+   "icons": {
+    "total": 38,
+    "approved": 25,
+    "square": 25,
+    "accents": 56
+   },
+   "colours": [
+    [
+     "#1E293B",
+     702
+    ],
+    [
+     "#1D2632",
+     242
+    ],
+    [
+     "#0B1220",
+     74
+    ],
+    [
+     "#20272D",
+     53
+    ],
+    [
+     "#FFFFFF",
+     50
+    ],
+    [
+     "#475569",
+     48
+    ],
+    [
+     "#ECC57C",
+     42
+    ],
+    [
+     "#B42323",
+     42
+    ],
+    [
+     "#8DA0BA",
+     36
+    ],
+    [
+     "#0F2740",
+     33
+    ],
+    [
+     "gradient",
+     33
+    ],
+    [
+     "#18354F",
+     32
+    ],
+    [
+     "#9A5B00",
+     30
+    ],
+    [
+     "#1D4ED8",
+     26
+    ],
+    [
+     "#1D4FB8",
+     24
+    ],
+    [
+     "#0F172A",
+     22
+    ],
+    [
+     "#3E526A",
+     20
+    ],
+    [
+     "#15803D",
+     20
+    ],
+    [
+     "#47617C",
+     12
+    ],
+    [
+     "#334155",
+     8
+    ],
+    [
+     "#C5CED9",
+     7
+    ],
+    [
+     "#DFE5EC",
+     7
+    ],
+    [
+     "#C0262D",
+     7
+    ],
+    [
+     "#526176",
+     4
+    ]
+   ],
+   "charts": {
+    "svgs": 12,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Vulnerabilities",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Open Patch Management",
+    "Remediate critical (30)",
+    "Findings25136 distinct issues",
+    "Critical6130 endpoints",
+    "Affected Endpoints32/320 with no finding",
+    "Exposure Score100/100Lower Is Better",
+    "Critical: 61",
+    "High: 103",
+    "Medium: 87",
+    "Low: 0",
+    "OS Update5422%",
+    "Third-Party App17469%",
+    "Security Control198%",
+    "Lifecycle42%",
+    "21",
+    "Deploy Fix",
+    "18",
+    "6",
+    "3",
+    "2",
+    "1",
+    "16",
+    "15",
+    "14",
+    "13",
+    "8",
+    "Review",
+    "5",
+    "4",
+    "17",
+    "12"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 2,
+    "rows": 48,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 41
+  },
+  "build": {
+   "heading": "Vulnerabilities",
+   "icons": {
+    "total": 53,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     1024
+    ],
+    [
+     "#69717D",
+     169
+    ],
+    [
+     "#0B1220",
+     140
+    ],
+    [
+     "#B7791F",
+     82
+    ],
+    [
+     "#C0262D",
+     75
+    ],
+    [
+     "#FFFFFF",
+     70
+    ],
+    [
+     "#47617C",
+     56
+    ],
+    [
+     "#E5E9ED",
+     53
+    ],
+    [
+     "#8A9099",
+     47
+    ],
+    [
+     "#D6A009",
+     45
+    ],
+    [
+     "#EEF0F2",
+     32
+    ],
+    [
+     "#15803D",
+     30
+    ],
+    [
+     "#18354F",
+     27
+    ],
+    [
+     "#202329",
+     20
+    ],
+    [
+     "#94A3B8",
+     18
+    ],
+    [
+     "#7FA0C6",
+     14
+    ],
+    [
+     "#E4C795",
+     11
+    ],
+    [
+     "#E8F6EF",
+     8
+    ],
+    [
+     "#2F5D8A",
+     7
+    ],
+    [
+     "#FCEBEC",
+     5
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#FFF4DE",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 27,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 11
+   },
+   "controls": [
+    "15 Open Findings",
+    "5 Known Exploited",
+    "5 SLA Overdue",
+    "48,146/50,000 Devices Scanned",
+    "2 Projects",
+    "Open Patch Management",
+    "Remediate critical (9)",
+    "Scan history",
+    "+ New Scan",
+    "Exposure Score44/ 1000Grade A",
+    "Open Findings15on 27,165 devices",
+    "Critical & High960%fix first",
+    "Known Exploited5exploited in the wild",
+    "SLA Overdue533%past their due date",
+    "Scan Coverage96%48,146 / 50,000 devices",
+    "Within SLA: 8",
+    "Due soon: 2",
+    "Overdue: 5",
+    "All findings →",
+    "0–30 days: 4",
+    "31–60 days: 3",
+    "61–90 days: 4",
+    "Over 90 days: 4",
+    "Remediations →",
+    "Known exploited: 5",
+    "Public exploit: 1",
+    "Ransomware: 2",
+    "Wormable: 2",
+    "Zero-day: 2",
+    "Remote: 7",
+    "Malware: 1",
+    "No fix yet: 1",
+    "Findings",
+    "Devices",
+    "Remediations",
+    "Projects",
+    "Scans",
+    "Search findings",
+    "Severity",
+    "Platform",
+    "Detection",
+    "Threat",
+    "Status",
+    "SLA",
+    "State",
+    "Known exploited 5",
+    "Public exploit 1",
+    "Ransomware 2",
+    "Wormable 2",
+    "Zero-day 2",
+    "Remote 7",
+    "Malware 1",
+    "No fix yet 1"
+   ],
+   "tiles": {
+    "count": 25,
+    "clickable": 6
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 6,
+    "rows": 42,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 4716
+  }
+ },
+ {
+  "slug": "configuration",
+  "label": "Configuration",
+  "route": "/profiles",
+  "settledMs": 242,
+  "reference": {
+   "heading": "Configuration Compliance",
+   "icons": {
+    "total": 38,
+    "approved": 21,
+    "square": 20,
+    "accents": 53
+   },
+   "colours": [
+    [
+     "#1D2632",
+     367
+    ],
+    [
+     "#1E293B",
+     350
+    ],
+    [
+     "#20272D",
+     151
+    ],
+    [
+     "#18354F",
+     104
+    ],
+    [
+     "#47617C",
+     93
+    ],
+    [
+     "#FFFFFF",
+     62
+    ],
+    [
+     "#475569",
+     56
+    ],
+    [
+     "#ECC57C",
+     49
+    ],
+    [
+     "#C0262D",
+     46
+    ],
+    [
+     "#B7791F",
+     35
+    ],
+    [
+     "#1D4ED8",
+     29
+    ],
+    [
+     "#0F172A",
+     22
+    ],
+    [
+     "#DFE5EC",
+     18
+    ],
+    [
+     "#19845B",
+     18
+    ],
+    [
+     "#344154",
+     18
+    ],
+    [
+     "#242930",
+     16
+    ],
+    [
+     "#15803D",
+     14
+    ],
+    [
+     "#C7D5E3",
+     12
+    ],
+    [
+     "#EBD7AE",
+     10
+    ],
+    [
+     "#B8DCC4",
+     10
+    ],
+    [
+     "#BFD0F5",
+     9
+    ],
+    [
+     "#334155",
+     8
+    ],
+    [
+     "#DFE3E8",
+     7
+    ],
+    [
+     "#C5CED9",
+     5
+    ]
+   ],
+   "charts": {
+    "svgs": 11,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Configuration",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Evaluate Now",
+    "More actions: Export, + Custom Check",
+    "Checks",
+    "Devices",
+    "Exceptions",
+    "Benchmarks",
+    "Profiles",
+    "Search check ID, title or category",
+    "Framework",
+    "Platform",
+    "Device Group",
+    "Category",
+    "Severity",
+    "Result",
+    "Overall Compliance80%",
+    "Checks in Scope200",
+    "Failing Checks165",
+    "Non-Compliant Devices28/32",
+    "Exceptions0",
+    "CIS: 80%",
+    "DISA STIG: 80%",
+    "PCI DSS: 80%",
+    "HIPAA: 80%",
+    "Windows: 80%",
+    "macOS: 77%",
+    "Linux: 81%",
+    "90–100%413%",
+    "75–89%1856%",
+    "Below 75%1031%",
+    "Account Policies: 80%",
+    "Antivirus & Defender: 84%",
+    "Audit Policy: 78%",
+    "Boot & Kernel: 63%",
+    "Browser & Office: 85%",
+    "Credential Protection: 86%",
+    "Disk Encryption: 76%",
+    "Event Logs: 73%",
+    "Filesystem: 84%",
+    "Firewall: 85%",
+    "Integrity: 64%",
+    "Remote Access: 78%",
+    "Removable Media: 76%",
+    "SSH: 94%",
+    "Screen Lock: 17%",
+    "Security Options: 81%",
+    "Services: 86%",
+    "Sharing: 100%",
+    "Time Sync: 90%",
+    "Updates: 73%",
+    "User Rights: 78%",
+    "All Failing Checks"
+   ],
+   "tiles": {
+    "count": 6,
+    "clickable": 5
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 14,
+    "star": false
+   },
+   "table": {
+    "tables": 2,
+    "rows": 14,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2780
+  },
+  "build": {
+   "heading": "Configuration Compliance",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     71
+    ],
+    [
+     "#47617C",
+     22
+    ],
+    [
+     "#FFFFFF",
+     12
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#18354F",
+     1
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ],
+    [
+     "#202329",
+     1
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Evaluate Now",
+    "Overview",
+    "Checks",
+    "Devices",
+    "Exceptions",
+    "Benchmarks",
+    "Profiles",
+    "Search check ID, title or category",
+    "Framework",
+    "Platform",
+    "Device Group",
+    "Category",
+    "Severity",
+    "Result"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 312
+  }
+ },
+ {
+  "slug": "dex",
+  "label": "DEX",
+  "route": "/dex",
+  "settledMs": 224,
+  "reference": {
+   "heading": "Digital Employee Experience",
+   "icons": {
+    "total": 39,
+    "approved": 26,
+    "square": 26,
+    "accents": 57
+   },
+   "colours": [
+    [
+     "#1E293B",
+     254
+    ],
+    [
+     "#1D2632",
+     213
+    ],
+    [
+     "#475569",
+     50
+    ],
+    [
+     "#C0262D",
+     43
+    ],
+    [
+     "#8DA0BA",
+     36
+    ],
+    [
+     "#18354F",
+     34
+    ],
+    [
+     "#ECC57C",
+     32
+    ],
+    [
+     "#3E526A",
+     30
+    ],
+    [
+     "#0B1220",
+     28
+    ],
+    [
+     "#1D4ED8",
+     22
+    ],
+    [
+     "#20272D",
+     21
+    ],
+    [
+     "#0F172A",
+     18
+    ],
+    [
+     "#FFFFFF",
+     14
+    ],
+    [
+     "#47617C",
+     14
+    ],
+    [
+     "#DFE5EC",
+     8
+    ],
+    [
+     "#B7791F",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#334155",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#C7D5E3",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#F1F4F8",
+     3
+    ],
+    [
+     "#E1E6ED",
+     3
+    ]
+   ],
+   "charts": {
+    "svgs": 13,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Device Experience",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Investigate in Live Activity",
+    "Experience Score76/100Average across 32 ",
+    "Good1031% of endpoints",
+    "Warning1031% of endpoints",
+    "Poor1238% of endpoints",
+    "Good1031%",
+    "Warning1031%",
+    "Poor1238%",
+    "Boot: 51",
+    "CPU: 67",
+    "Memory: 63",
+    "Disk: 79",
+    "Slow boot: 19",
+    "High CPU: 8",
+    "Memory pressure: 10",
+    "Low disk: 5"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 2,
+    "rows": 20,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1410
+  },
+  "build": {
+   "heading": "Digital Employee Experience",
+   "icons": {
+    "total": 35,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     488
+    ],
+    [
+     "#C0262D",
+     49
+    ],
+    [
+     "#69717D",
+     48
+    ],
+    [
+     "#E4C795",
+     27
+    ],
+    [
+     "#0B1220",
+     26
+    ],
+    [
+     "#1D4ED8",
+     20
+    ],
+    [
+     "#B7791F",
+     15
+    ],
+    [
+     "#2F5D8A",
+     14
+    ],
+    [
+     "#1E3A5F",
+     14
+    ],
+    [
+     "#18354F",
+     12
+    ],
+    [
+     "#FFFFFF",
+     11
+    ],
+    [
+     "#202329",
+     11
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#0EA5A4",
+     7
+    ],
+    [
+     "#47617C",
+     6
+    ],
+    [
+     "#15803D",
+     6
+    ],
+    [
+     "#AEB2BC",
+     4
+    ],
+    [
+     "#E3E8EF",
+     2
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 9,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Investigate in Live Activity",
+    "Good37,24674%",
+    "Warning6,37913%",
+    "Poor6,37513%",
+    "Boot: 79",
+    "CPU: 73",
+    "Memory: 66",
+    "Disk: 83",
+    "Slow boot: 8004",
+    "High CPU: 9011",
+    "Memory pressure: 9996",
+    "Low disk: 3734",
+    "BEN-SRV-1007",
+    "BEN-SRV-5967",
+    "BEN-WS-3843",
+    "BEN-WS-6469",
+    "BEN-WS-8585",
+    "BEN-WS-9358",
+    "CHE-SRV-2947",
+    "CHE-SRV-7907",
+    "CHE-WS-3652",
+    "DEL-WS-2057"
+   ],
+   "tiles": {
+    "count": 11,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 5,
+    "rows": 31,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1854
+  }
+ },
+ {
+  "slug": "insight",
+  "label": "AEGIS Insight",
+  "route": "/insight",
+  "settledMs": 235,
+  "reference": {
+   "heading": "AEGIS Insight PREVIEW",
+   "icons": {
+    "total": 31,
+    "approved": 19,
+    "square": 19,
+    "accents": 54
+   },
+   "colours": [
+    [
+     "#1E293B",
+     72
+    ],
+    [
+     "#18354F",
+     50
+    ],
+    [
+     "#475569",
+     41
+    ],
+    [
+     "#FFFFFF",
+     25
+    ],
+    [
+     "#0F172A",
+     17
+    ],
+    [
+     "#15803D",
+     16
+    ],
+    [
+     "#DFE5EC",
+     11
+    ],
+    [
+     "#47617C",
+     6
+    ],
+    [
+     "#C0262D",
+     6
+    ],
+    [
+     "#ECC57C",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "gradient",
+     4
+    ],
+    [
+     "#E4C795",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#20272D",
+     3
+    ],
+    [
+     "#C5CED9",
+     2
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#0F2740",
+     2
+    ],
+    [
+     "#7F6038",
+     2
+    ],
+    [
+     "#B8BDC5",
+     2
+    ],
+    [
+     "#B7791F",
+     2
+    ],
+    [
+     "#FFF9EC",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "AEGIS Insight",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Run Diagnostics",
+    "Save Diagnostic Template"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 200
+  },
+  "build": {
+   "heading": "AEGIS Insight",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     21
+    ],
+    [
+     "#FFFFFF",
+     6
+    ],
+    [
+     "#E5E9ED",
+     5
+    ],
+    [
+     "#69717D",
+     4
+    ],
+    [
+     "#18354F",
+     3
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#47617C",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "New Diagnosis",
+    "PUN-SRV-0098",
+    "Run Diagnostics",
+    "Save Diagnostic Template"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 196
+  }
+ },
+ {
+  "slug": "zones",
+  "label": "Aegis Zones",
+  "route": "/sites",
+  "settledMs": 213,
+  "reference": {
+   "heading": "Aegis Zones",
+   "icons": {
+    "total": 36,
+    "approved": 19,
+    "square": 19,
+    "accents": 51
+   },
+   "colours": [
+    [
+     "#1E293B",
+     181
+    ],
+    [
+     "#18354F",
+     57
+    ],
+    [
+     "#19845B",
+     31
+    ],
+    [
+     "#ECC57C",
+     26
+    ],
+    [
+     "#47617C",
+     24
+    ],
+    [
+     "#475569",
+     22
+    ],
+    [
+     "#0F172A",
+     19
+    ],
+    [
+     "#20272D",
+     18
+    ],
+    [
+     "#FFFFFF",
+     16
+    ],
+    [
+     "#242930",
+     16
+    ],
+    [
+     "#334155",
+     16
+    ],
+    [
+     "#DFE5EC",
+     14
+    ],
+    [
+     "#253345",
+     12
+    ],
+    [
+     "#172334",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#D7D9DC",
+     4
+    ],
+    [
+     "#C6A16B",
+     4
+    ],
+    [
+     "#FFF5D6",
+     4
+    ],
+    [
+     "#E5E9ED",
+     4
+    ],
+    [
+     "#896400",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#D6A009",
+     3
+    ],
+    [
+     "#C5CED9",
+     2
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Aegis Zones",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Refresh Discovery",
+    "Open data summary",
+    "Mumbai HQ: 94%",
+    "Delhi Branch: 87%",
+    "Jaipur Branch: 61%",
+    "Bengaluru: 91%"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 4,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 886
+  },
+  "build": {
+   "heading": "Aegis Zones",
+   "icons": {
+    "total": 36,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     387
+    ],
+    [
+     "#69717D",
+     76
+    ],
+    [
+     "#15803D",
+     48
+    ],
+    [
+     "#B7791F",
+     39
+    ],
+    [
+     "#0B1220",
+     34
+    ],
+    [
+     "#8A9099",
+     34
+    ],
+    [
+     "#18354F",
+     22
+    ],
+    [
+     "#E4C795",
+     16
+    ],
+    [
+     "#E5E9ED",
+     13
+    ],
+    [
+     "#47617C",
+     12
+    ],
+    [
+     "#FFFFFF",
+     11
+    ],
+    [
+     "#202329",
+     9
+    ],
+    [
+     "#F5F6F7",
+     4
+    ],
+    [
+     "#EEF0F2",
+     1
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 10,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Refresh Discovery",
+    "Local cached5656%",
+    "Direct central4444%",
+    "Mumbai HQ: 79%",
+    "Bengaluru Campus: 69%",
+    "Delhi Branch: 70%",
+    "Pune Data Centre: 77%",
+    "Jaipur Branch: 0%",
+    "Hyderabad Branch: 78%",
+    "Chennai Branch: 0%",
+    "Kochi Branch: 0%",
+    "Ahmedabad Branch: 0%"
+   ],
+   "tiles": {
+    "count": 6,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 3,
+    "rows": 20,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1962
+  }
+ },
+ {
+  "slug": "peer-cache",
+  "label": "Peer cache",
+  "route": "/peercache",
+  "settledMs": 224,
+  "reference": {
+   "heading": "Peer Cache",
+   "icons": {
+    "total": 31,
+    "approved": 19,
+    "square": 19,
+    "accents": 59
+   },
+   "colours": [
+    [
+     "#1E293B",
+     66
+    ],
+    [
+     "#18354F",
+     27
+    ],
+    [
+     "#0F172A",
+     26
+    ],
+    [
+     "#ECC57C",
+     25
+    ],
+    [
+     "#20272D",
+     17
+    ],
+    [
+     "#FFFFFF",
+     16
+    ],
+    [
+     "#475569",
+     16
+    ],
+    [
+     "#DFE5EC",
+     11
+    ],
+    [
+     "#1D4ED8",
+     6
+    ],
+    [
+     "#19845B",
+     6
+    ],
+    [
+     "#C5CED9",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#896400",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#15803D",
+     2
+    ],
+    [
+     "#FFF9EC",
+     1
+    ],
+    [
+     "#B58A45",
+     1
+    ],
+    [
+     "#FAFAF8",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Peer Cache",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Re-elect",
+    "More actions: Disable, Activity"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 3,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 419
+  },
+  "build": {
+   "heading": "Peer Cache",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#47617C",
+     162
+    ],
+    [
+     "#20262E",
+     51
+    ],
+    [
+     "#69717D",
+     32
+    ],
+    [
+     "#0B1220",
+     20
+    ],
+    [
+     "#FFFFFF",
+     19
+    ],
+    [
+     "#E5E9ED",
+     19
+    ],
+    [
+     "#E4C795",
+     18
+    ],
+    [
+     "#15803D",
+     18
+    ],
+    [
+     "#1D4ED8",
+     10
+    ],
+    [
+     "#202329",
+     8
+    ],
+    [
+     "#B7791F",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "MUM-WS-1029",
+    "Re-elect",
+    "More actions for Mumbai HQ",
+    "BEN-WS-0874",
+    "More actions for Bengaluru Campus",
+    "DEL-WS-1151",
+    "More actions for Delhi Branch",
+    "PUN-SRV-1014",
+    "More actions for Pune Data Centre",
+    "More actions for Jaipur Branch",
+    "HYD-WS-0787",
+    "More actions for Hyderabad Branch",
+    "More actions for Chennai Branch",
+    "More actions for Kochi Branch",
+    "More actions for Ahmedabad Branch"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 9,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1189
+  }
+ },
+ {
+  "slug": "reports",
+  "label": "Reports",
+  "route": "/reports",
+  "settledMs": 212,
+  "reference": {
+   "heading": "Reports 20",
+   "icons": {
+    "total": 159,
+    "approved": 19,
+    "square": 74,
+    "accents": 105
+   },
+   "colours": [
+    [
+     "#24384F",
+     805
+    ],
+    [
+     "#334155",
+     500
+    ],
+    [
+     "#18354F",
+     272
+    ],
+    [
+     "#8A94A6",
+     142
+    ],
+    [
+     "#415E75",
+     120
+    ],
+    [
+     "#FFFFFF",
+     112
+    ],
+    [
+     "#29455F",
+     62
+    ],
+    [
+     "#DFE5EC",
+     52
+    ],
+    [
+     "#47617C",
+     52
+    ],
+    [
+     "#7790A4",
+     40
+    ],
+    [
+     "#526B80",
+     40
+    ],
+    [
+     "#62798D",
+     40
+    ],
+    [
+     "#213E57",
+     40
+    ],
+    [
+     "#627B8E",
+     40
+    ],
+    [
+     "#F1F5F9",
+     25
+    ],
+    [
+     "#E8EEF3",
+     23
+    ],
+    [
+     "#15803D",
+     22
+    ],
+    [
+     "#0F172A",
+     21
+    ],
+    [
+     "#EEF1F4",
+     21
+    ],
+    [
+     "#BA3043",
+     20
+    ],
+    [
+     "#956925",
+     20
+    ],
+    [
+     "#F7F9FB",
+     20
+    ],
+    [
+     "#E3EAF0",
+     20
+    ],
+    [
+     "#B7791F",
+     19
+    ]
+   ],
+   "charts": {
+    "svgs": 133,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Reports",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "+ Custom report",
+    "Grid view",
+    "List view",
+    "Search reports",
+    "Favorites0",
+    "Sort reports",
+    "All Reports20",
+    "Computers & Software5",
+    "Daily Operations6",
+    "Security4",
+    "Leadership5",
+    "All Computers",
+    "Favorite All Computers",
+    "Show Online in All Computers",
+    "Open All Computers",
+    "Offline Computers",
+    "Favorite Offline Computers",
+    "Show Over 7 days ago in Offline Computer",
+    "Open Offline Computers",
+    "Operating Systems",
+    "Favorite Operating Systems",
+    "Show Windows 11 in Operating Systems",
+    "Open Operating Systems",
+    "Installed Software",
+    "Favorite Installed Software",
+    "Show Other applications in Installed Sof",
+    "Open Installed Software",
+    "Software Licenses",
+    "Favorite Software Licenses",
+    "Show Assigned in Software Licenses",
+    "Open Software Licenses",
+    "Pending Updates",
+    "Favorite Pending Updates",
+    "Show Critical in Pending Updates",
+    "Open Pending Updates",
+    "Update Results",
+    "Favorite Update Results",
+    "Show Successful in Update Results",
+    "Open Update Results",
+    "Security Issues",
+    "Favorite Security Issues",
+    "Show High in Security Issues",
+    "Open Security Issues",
+    "Antivirus Status",
+    "Favorite Antivirus Status",
+    "Show Protected in Antivirus Status",
+    "Open Antivirus Status",
+    "Disk Encryption",
+    "Favorite Disk Encryption",
+    "Show Encrypted in Disk Encryption",
+    "Open Disk Encryption",
+    "USB Activity"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 52,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 2950
+  },
+  "build": {
+   "heading": "Reports",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     27
+    ],
+    [
+     "#47617C",
+     17
+    ],
+    [
+     "#FFFFFF",
+     13
+    ],
+    [
+     "#E5E9ED",
+     10
+    ],
+    [
+     "#18354F",
+     8
+    ],
+    [
+     "#202329",
+     3
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#F5F6F7",
+     2
+    ],
+    [
+     "#69717D",
+     2
+    ],
+    [
+     "#EEF0F2",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "+ Custom report",
+    "All Reports—",
+    "Computers & Software—",
+    "Daily Operations—",
+    "Security—",
+    "Leadership—",
+    "Search reports",
+    "☆ Favorites 0",
+    "Sort reports",
+    "Grid view",
+    "List view"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": true
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 1,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 204
+  }
+ },
+ {
+  "slug": "integrations",
+  "label": "Integrations",
+  "route": "/integrations",
+  "settledMs": 246,
+  "reference": {
+   "heading": "Integrations",
+   "icons": {
+    "total": 31,
+    "approved": 19,
+    "square": 19,
+    "accents": 69
+   },
+   "colours": [
+    [
+     "#18354F",
+     72
+    ],
+    [
+     "#1E293B",
+     65
+    ],
+    [
+     "#FFFFFF",
+     49
+    ],
+    [
+     "#475569",
+     40
+    ],
+    [
+     "#0F172A",
+     35
+    ],
+    [
+     "#47617C",
+     24
+    ],
+    [
+     "#DFE5EC",
+     20
+    ],
+    [
+     "#20272D",
+     15
+    ],
+    [
+     "#1D2632",
+     9
+    ],
+    [
+     "#C5CED9",
+     8
+    ],
+    [
+     "#15803D",
+     8
+    ],
+    [
+     "#E3E8EE",
+     6
+    ],
+    [
+     "#EEF1F5",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#0B1220",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#ECC57C",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#976519",
+     2
+    ],
+    [
+     "#758297",
+     2
+    ],
+    [
+     "#A16207",
+     2
+    ],
+    [
+     "#334155",
+     2
+    ],
+    [
+     "#FFF9EC",
+     1
+    ],
+    [
+     "#B58A45",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 5,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Integrations",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Connectors",
+    "SIEM & Syslog",
+    "Notifications",
+    "Delivery Log",
+    "+ Custom Webhook",
+    "Configure",
+    "More actions: Test, Activity"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 9,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 806
+  },
+  "build": {
+   "heading": "Integrations",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     70
+    ],
+    [
+     "#47617C",
+     48
+    ],
+    [
+     "#69717D",
+     26
+    ],
+    [
+     "#FFFFFF",
+     25
+    ],
+    [
+     "#0B1220",
+     14
+    ],
+    [
+     "#E5E9ED",
+     14
+    ],
+    [
+     "#E4C795",
+     12
+    ],
+    [
+     "#202329",
+     8
+    ],
+    [
+     "#15803D",
+     8
+    ],
+    [
+     "#18354F",
+     7
+    ],
+    [
+     "#0F2740",
+     7
+    ],
+    [
+     "gradient",
+     7
+    ],
+    [
+     "#B7791F",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Connectors",
+    "SIEM & Syslog",
+    "Notifications",
+    "Delivery Log",
+    "+ Custom Webhook",
+    "All",
+    "Connected",
+    "Attention",
+    "Disabled",
+    "Configure",
+    "More actions for ServiceNow",
+    "More actions for Splunk",
+    "More actions for Microsoft Teams",
+    "More actions for Slack",
+    "More actions for Custom Webhook",
+    "More actions for Directory Connector"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 791
+  }
+ },
+ {
+  "slug": "administration",
+  "label": "Administration",
+  "route": "/admin",
+  "settledMs": 245,
+  "reference": {
+   "heading": "Administration",
+   "icons": {
+    "total": 32,
+    "approved": 19,
+    "square": 19,
+    "accents": 50
+   },
+   "colours": [
+    [
+     "#24384F",
+     36
+    ],
+    [
+     "#253F59",
+     24
+    ],
+    [
+     "#28528A",
+     22
+    ],
+    [
+     "#0F172A",
+     21
+    ],
+    [
+     "#4C637B",
+     20
+    ],
+    [
+     "#FFFFFF",
+     18
+    ],
+    [
+     "#18354F",
+     18
+    ],
+    [
+     "#536C85",
+     16
+    ],
+    [
+     "#1E293B",
+     14
+    ],
+    [
+     "#1D2632",
+     10
+    ],
+    [
+     "#475569",
+     8
+    ],
+    [
+     "#6B7C8F",
+     8
+    ],
+    [
+     "#C5CED9",
+     6
+    ],
+    [
+     "#DFE5EC",
+     6
+    ],
+    [
+     "#47617C",
+     6
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#E2E8F0",
+     4
+    ],
+    [
+     "#DCE5EC",
+     4
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#ECC57C",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#20272D",
+     2
+    ],
+    [
+     "#0B1220",
+     2
+    ],
+    [
+     "#A16207",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Administration",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Identity & SSO",
+    "Users",
+    "Roles & Content Access",
+    "Agent Enrollment",
+    "Configure"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 526
+  },
+  "build": {
+   "heading": "Administration",
+   "icons": {
+    "total": 26,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     63
+    ],
+    [
+     "#69717D",
+     24
+    ],
+    [
+     "#47617C",
+     16
+    ],
+    [
+     "#FFFFFF",
+     11
+    ],
+    [
+     "#0B1220",
+     10
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#E4C795",
+     8
+    ],
+    [
+     "#B7791F",
+     8
+    ],
+    [
+     "#202329",
+     5
+    ]
+   ],
+   "charts": {
+    "svgs": 0,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Identity & SSO",
+    "Users",
+    "Roles & Content Access",
+    "Agent Enrollment",
+    "API access",
+    "Configure"
+   ],
+   "tiles": {
+    "count": 0,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 0,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 508
+  }
+ },
+ {
+  "slug": "licensing",
+  "label": "Licensing",
+  "route": "/licensing",
+  "settledMs": 214,
+  "reference": {
+   "heading": "Licensing",
+   "icons": {
+    "total": 44,
+    "approved": 30,
+    "square": 29,
+    "accents": 60
+   },
+   "colours": [
+    [
+     "#1D2632",
+     159
+    ],
+    [
+     "#18354F",
+     109
+    ],
+    [
+     "#1E293B",
+     52
+    ],
+    [
+     "#47617C",
+     44
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#20272D",
+     29
+    ],
+    [
+     "#334155",
+     27
+    ],
+    [
+     "#475569",
+     22
+    ],
+    [
+     "#FFFFFF",
+     21
+    ],
+    [
+     "#15803D",
+     21
+    ],
+    [
+     "#0F172A",
+     18
+    ],
+    [
+     "#E3E8EE",
+     11
+    ],
+    [
+     "#C7D5E3",
+     9
+    ],
+    [
+     "#F1F4F8",
+     7
+    ],
+    [
+     "#EDF1F5",
+     6
+    ],
+    [
+     "#ECC57C",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#DFE5EC",
+     3
+    ],
+    [
+     "#D9A845",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ],
+    [
+     "#976519",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 18,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Licensing",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Upload License",
+    "PlanPremiumActive · sample license",
+    "Endpoints in Use32/5018 seats available ",
+    "Renews in137 daysEnds Mar 31 2027",
+    "Modules6/75 included · 1 add-on · 1 prev",
+    "In Use32",
+    "Windows: 22",
+    "macOS: 3",
+    "Linux: 7"
+   ],
+   "tiles": {
+    "count": 10,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 8,
+    "star": false
+   },
+   "table": {
+    "tables": 0,
+    "rows": 0,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 787
+  },
+  "build": {
+   "heading": "Licensing",
+   "icons": {
+    "total": 32,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     238
+    ],
+    [
+     "#0B1220",
+     54
+    ],
+    [
+     "#69717D",
+     34
+    ],
+    [
+     "#1E3A5F",
+     28
+    ],
+    [
+     "#E5E9ED",
+     22
+    ],
+    [
+     "#15803D",
+     20
+    ],
+    [
+     "#47617C",
+     18
+    ],
+    [
+     "#FFFFFF",
+     17
+    ],
+    [
+     "#8A9099",
+     12
+    ],
+    [
+     "#18354F",
+     8
+    ],
+    [
+     "#B7791F",
+     8
+    ],
+    [
+     "#F5F6F7",
+     7
+    ],
+    [
+     "#202329",
+     2
+    ],
+    [
+     "#E4C795",
+     2
+    ],
+    [
+     "#EEF0F2",
+     2
+    ],
+    [
+     "#1D4ED8",
+     2
+    ],
+    [
+     "#E3E8EF",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 6,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Upload License",
+    "In Use50,00091%",
+    "Available5,0009%",
+    "Windows · 78% of used: 39150",
+    "macOS · 5% of used: 2503",
+    "Linux · 16% of used: 7892",
+    "Other · 1% of used: 455",
+    "Elapsed6262%",
+    "Remaining3838%"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 1,
+    "star": false
+   },
+   "table": {
+    "tables": 3,
+    "rows": 8,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 1199
+  }
+ },
+ {
+  "slug": "diagnostics",
+  "label": "Diagnostics",
+  "route": "/diagnostics",
+  "settledMs": 215,
+  "reference": {
+   "heading": "System Health",
+   "icons": {
+    "total": 37,
+    "approved": 25,
+    "square": 23,
+    "accents": 54
+   },
+   "colours": [
+    [
+     "#1D2632",
+     113
+    ],
+    [
+     "#1E293B",
+     70
+    ],
+    [
+     "#8DA0BA",
+     33
+    ],
+    [
+     "#18354F",
+     32
+    ],
+    [
+     "#CBD5E1",
+     24
+    ],
+    [
+     "gradient",
+     20
+    ],
+    [
+     "#0F172A",
+     18
+    ],
+    [
+     "#47617C",
+     18
+    ],
+    [
+     "#ECC57C",
+     17
+    ],
+    [
+     "#3E526A",
+     17
+    ],
+    [
+     "#0B1220",
+     16
+    ],
+    [
+     "#475569",
+     14
+    ],
+    [
+     "#334155",
+     14
+    ],
+    [
+     "#FFFFFF",
+     12
+    ],
+    [
+     "#127A4F",
+     12
+    ],
+    [
+     "#20272D",
+     11
+    ],
+    [
+     "#DFE5EC",
+     5
+    ],
+    [
+     "#526176",
+     4
+    ],
+    [
+     "#24384F",
+     4
+    ],
+    [
+     "#C7D5E3",
+     4
+    ],
+    [
+     "#C5CED9",
+     3
+    ],
+    [
+     "#89631D",
+     3
+    ],
+    [
+     "#EEF1F4",
+     3
+    ],
+    [
+     "#BBC2C9",
+     2
+    ]
+   ],
+   "charts": {
+    "svgs": 11,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Go back",
+    "Go home",
+    "Overview",
+    "Diagnostics",
+    "Search console",
+    "Open notifications",
+    "Help",
+    "Open administrator profile",
+    "Download Diagnostic Bundle",
+    "Run Health Check",
+    "Services Healthy6/7Checked 04:05 AM",
+    "Degraded1Peer Cache Controller",
+    "Agents Connected27/32Right Now",
+    "Warnings (24 h)282 errors"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 4
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 10,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 7,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 674
+  },
+  "build": {
+   "heading": "System Health",
+   "icons": {
+    "total": 27,
+    "approved": 26,
+    "square": 20,
+    "accents": 20
+   },
+   "colours": [
+    [
+     "#20262E",
+     154
+    ],
+    [
+     "#47617C",
+     72
+    ],
+    [
+     "#0B1220",
+     28
+    ],
+    [
+     "#B7791F",
+     14
+    ],
+    [
+     "#FFFFFF",
+     12
+    ],
+    [
+     "#15803D",
+     12
+    ],
+    [
+     "#EEF0F2",
+     12
+    ],
+    [
+     "#E4C795",
+     10
+    ],
+    [
+     "#E5E9ED",
+     9
+    ],
+    [
+     "#69717D",
+     8
+    ],
+    [
+     "#202329",
+     6
+    ],
+    [
+     "#18354F",
+     5
+    ],
+    [
+     "#C0262D",
+     3
+    ],
+    [
+     "#AEB2BC",
+     2
+    ],
+    [
+     "#0F2740",
+     1
+    ],
+    [
+     "gradient",
+     1
+    ]
+   ],
+   "charts": {
+    "svgs": 1,
+    "axisTicks": 0,
+    "gridlines": 0,
+    "horizontalBars": 0
+   },
+   "controls": [
+    "Download Diagnostic Bundle",
+    "Run Health Check"
+   ],
+   "tiles": {
+    "count": 5,
+    "clickable": 0
+   },
+   "header": {
+    "selects": 0,
+    "buttons": 2,
+    "star": false
+   },
+   "table": {
+    "tables": 1,
+    "rows": 7,
+    "search": 0,
+    "sortable": 0,
+    "pager": false
+   },
+   "words": 652
+  }
+ }
+]

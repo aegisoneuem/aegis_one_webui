@@ -1,0 +1,14 @@
+pnpm-lock.yaml
+dist
+node_modules
+apps/aegis-one/src/api/schema.d.ts
+apps/aegis-one/docs/screenshots
+
+# Scanner and tool output, kept verbatim as evidence of what was run.
+apps/aegis-one/docs/scans
+contracts/aegis-one.openapi.yaml
+
+# The approved reference build and the assets extracted from it. Both are
+# verbatim copies — reformatting either would stop them being the reference.
+design-reference
+apps/aegis-one/src/assets/fonts

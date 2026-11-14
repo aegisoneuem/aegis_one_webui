@@ -1,0 +1,556 @@
+/*
+ * Integrations, on the reference's own four tabs: a card grid for the
+ * connectors, a counter row over a card grid for the destinations, the same
+ * cards plus an Alert Rules table for the notifications, and a filter bar
+ * over the delivery log.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--ui-space-5);
+}
+
+.head h1 {
+  margin: 0;
+  color: var(--ao-navy-ink);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.grow {
+  flex: 1;
+}
+
+/* Tabs — the same segmented control the rest of the console uses ---------- */
+
+.tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 1px solid var(--ao-border);
+  margin-bottom: 16px;
+  background: var(--ao-surface);
+}
+
+.tab,
+.tabOn {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--ao-navy-mid);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.tabOn {
+  background: var(--ao-sidebar);
+  box-shadow: inset 0 -3px 0 var(--ao-brand-hi);
+  color: var(--ao-surface);
+}
+
+.tab:hover {
+  background: var(--ui-surface-hover);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* Counters ---------------------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.kpi > span {
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.kpi > strong {
+  color: var(--ao-navy-ink);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* The "/5" beside the connected count is the denominator, not a second figure. */
+.kpi > strong small {
+  color: var(--ao-muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Connector cards --------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.cardHead {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cardHead b {
+  flex: 1;
+  color: var(--ao-navy-ink);
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.cardHead > span:last-child,
+.targetHead > span:last-child {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The monogram tile, as the reference prints it on its target cards. */
+.mark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  place-items: center;
+}
+
+.purpose {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ao-track);
+  margin: 12px 0 0;
+  color: var(--ao-navy-mid);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.meta {
+  display: grid;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ao-track);
+  margin: 12px 0 0;
+  gap: 4px 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.meta dt {
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.meta dd {
+  margin: 0;
+  color: var(--ao-navy-mid);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cardActions > :first-child {
+  flex: 1;
+}
+
+/* The ⋯ menu, which is where the reference keeps Test and Activity. */
+.menuWrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 150px;
+  padding: 4px;
+  border: 1px solid var(--ao-border);
+  margin: 0;
+  background: var(--ao-surface);
+  box-shadow: var(--ui-shadow-menu, 0 6px 16px rgb(16 24 40 / 12%));
+  list-style: none;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  color: var(--ao-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.menu button:hover:not(:disabled) {
+  background: var(--ui-surface-hover);
+}
+
+.menu button:disabled {
+  color: var(--ao-muted);
+  cursor: default;
+}
+
+/* Target cards — shared by SIEM & Syslog and Notifications ---------------- */
+
+.targets {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.target {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.targetHead {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.targetName {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.targetName b {
+  color: var(--ao-navy-ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.targetName small {
+  color: var(--ao-navy-mid);
+  font-size: 12px;
+}
+
+.targetMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ao-track);
+  margin: 12px 0 0;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+}
+
+.targetMeta b {
+  color: var(--ao-navy-mid);
+  font-weight: 650;
+}
+
+.targetActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note {
+  margin: 16px 0 0;
+  color: var(--ao-muted);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+/* Panels, the filter bar and the grids ------------------------------------ */
+
+.panel {
+  border: 1px solid var(--ao-border);
+  margin-top: 20px;
+  background: var(--ao-surface);
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.panelTitle {
+  flex: 1;
+  padding-left: 10px;
+  border-left: 3px solid var(--ao-brand-hi);
+  margin: 0;
+  color: var(--ao-navy);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.count {
+  padding: 2px 8px;
+  background: var(--ao-bg);
+  color: var(--ao-navy-mid);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.select:focus-visible {
+  outline: none;
+  border-color: var(--ao-brand);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: flex-end;
+  padding: 14px 16px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+}
+
+.search input {
+  width: 280px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.search input:focus-visible {
+  outline: none;
+  border-color: var(--ao-brand);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter > span {
+  color: var(--ao-navy-mid);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-transform: uppercase;
+}
+
+.filter select {
+  min-width: 170px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.filter select:focus-visible {
+  outline: none;
+  border-color: var(--ao-brand);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grid thead th {
+  padding: 10px 14px;
+  background: var(--ao-sidebar);
+  color: var(--ao-brand-hi);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.66px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--ao-track);
+  color: var(--ao-navy-mid);
+  vertical-align: middle;
+}
+
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grid tbody tr:hover td {
+  background: var(--ui-surface-hover);
+}
+
+.grid b {
+  color: var(--ao-navy-ink);
+  font-weight: 650;
+}
+
+.event {
+  color: var(--ao-navy-mid);
+  font-family: var(--ui-font-mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+.remove {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--st-info);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  text-decoration: underline;
+}
+
+.remove:disabled {
+  color: var(--ao-muted);
+  cursor: default;
+}
+
+.remove:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.empty {
+  padding: 24px 14px;
+  color: var(--ao-muted);
+  font-size: 13px;
+}
+
+.gridSkeleton {
+  display: block;
+  height: 180px;
+}
+
+/* Status tones ------------------------------------------------------------ */
+
+.good {
+  color: var(--st-good);
+}
+
+.warn {
+  color: var(--st-warn);
+}
+
+.bad {
+  color: var(--st-bad);
+}
+
+.muted {
+  color: var(--ao-muted);
+}
+
+.grid small {
+  color: var(--ao-muted);
+  font-weight: 500;
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (width <= 1400px) {
+  .targets {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 1100px) {
+  .cards,
+  .targets,
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,135 @@
+.trigger {
+  composes: box from '../../styles/control.module.css';
+
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sm {
+  composes: sm from '../../styles/control.module.css';
+}
+
+.summary {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.placeholder {
+  color: var(--ui-text-muted);
+}
+
+.count {
+  flex: none;
+  padding: 0 var(--ui-space-3);
+  border-radius: 9999px;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent-strong);
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.caret {
+  flex: none;
+  color: var(--ui-text-muted);
+  font-size: 10px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(60vh, 380px);
+}
+
+.search {
+  flex: none;
+  padding: var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.searchInput {
+  width: 100%;
+  height: var(--ui-control-height-sm);
+  padding: 0 var(--ui-space-4);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-sm);
+  font: inherit;
+  font-size: var(--ui-text-sm);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--ui-accent-strong);
+}
+
+.options {
+  flex: 1;
+  overflow: auto;
+  padding: var(--ui-space-2);
+  margin: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-radius: var(--ui-radius-sm);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--ui-surface-hover);
+}
+
+.optionLabel {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.optionMeta {
+  margin-left: auto;
+  padding-left: var(--ui-space-5);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-xs);
+}
+
+.empty {
+  padding: var(--ui-space-6);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
+  text-align: center;
+}
+
+.footer {
+  display: flex;
+  flex: none;
+  gap: var(--ui-space-5);
+  justify-content: space-between;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-top: 1px solid var(--ui-border);
+}
+
+.footerButton {
+  border: 0;
+  background: none;
+  color: var(--ui-accent-strong);
+  font: inherit;
+  font-size: var(--ui-text-xs);
+  cursor: pointer;
+}
+
+.footerButton:hover {
+  text-decoration: underline;
+}
+
+.footerButton:disabled {
+  color: var(--ui-text-muted);
+  cursor: not-allowed;
+  text-decoration: none;
+}

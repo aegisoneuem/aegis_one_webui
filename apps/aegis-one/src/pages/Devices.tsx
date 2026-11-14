@@ -74,6 +74,7 @@ const COLUMNS: DataTableColumn<Device>[] = [
   {
     id: 'mac',
     header: 'MAC Address',
+    sortable: true,
     width: 160,
     group: 'Network',
     cell: (d) => d.mac,
@@ -82,6 +83,14 @@ const COLUMNS: DataTableColumn<Device>[] = [
   {
     id: 'dnsNameFull',
     header: 'DNS Name',
+    /*
+     * This column and `dnsName` above show the same field, full and short,
+     * so they sort by the same key and both read as sorted together. That is
+     * what they are; the alternative was a column the reference marks
+     * sortable and this grid silently did not.
+     */
+    sortable: true,
+    sortField: 'dnsName',
     width: 250,
     group: 'Network',
     cell: (d) => d.dnsName,

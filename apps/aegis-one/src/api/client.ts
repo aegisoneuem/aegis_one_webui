@@ -61,8 +61,13 @@ const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 export interface RequestOptions {
   method?: string;
-  /** Serialised as JSON. */
+  /** Serialised as JSON, unless `contentType` says otherwise. */
   body?: unknown;
+  /**
+   * For the one endpoint the contract declares as `text/csv`. With it set,
+   * the body is sent as it is rather than through JSON.stringify.
+   */
+  contentType?: string;
   /** Appended as a query string; undefined and empty values are dropped. */
   query?: Record<string, string | number | boolean | undefined | null | readonly string[]>;
   signal?: AbortSignal;
@@ -89,7 +94,8 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   const headers: Record<string, string> = {};
 
   if (accessToken) headers['authorization'] = `Bearer ${accessToken}`;
-  if (options.body !== undefined) headers['content-type'] = 'application/json';
+  if (options.body !== undefined)
+    headers['content-type'] = options.contentType ?? 'application/json';
   if (UNSAFE.has(method)) {
     const csrf = csrfToken();
     if (csrf) headers['x-csrf-token'] = csrf;
@@ -101,7 +107,9 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
     // Needed for the refresh cookie; the server's CORS list is explicit, so
     // this does not open the API to arbitrary origins.
     credentials: 'include',
-    ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
+    ...(options.body !== undefined
+      ? { body: options.contentType ? String(options.body) : JSON.stringify(options.body) }
+      : {}),
     ...(options.signal ? { signal: options.signal } : {}),
   });
 }
@@ -201,6 +209,9 @@ export const api = {
   get: <T>(path: string, query?: RequestOptions['query'], signal?: AbortSignal) =>
     request<T>(path, { ...(query ? { query } : {}), ...(signal ? { signal } : {}) }),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
+  /** POST with a body the server reads as text, not JSON. */
+  postText: <T>(path: string, body: string, contentType: string) =>
+    request<T>(path, { method: 'POST', body, contentType }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),

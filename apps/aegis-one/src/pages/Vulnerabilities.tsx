@@ -711,6 +711,8 @@ function FindingsTab({
    * never offered. The stack resets whenever the filters change, because a
    * cursor is only meaningful for the query that produced it.
    */
+  const navigate = useNavigate();
+  const canDeploy = useCan('patches:deploy');
   const [cursors, setCursors] = useState<string[]>([]);
   const filterKey = FILTER_KEYS.map((k) => params.get(k) ?? '').join('|') + (params.get('q') ?? '');
   const [seenKey, setSeenKey] = useState(filterKey);
@@ -882,6 +884,15 @@ function FindingsTab({
                 </th>
                 <th scope="col">SLA</th>
                 <th scope="col">State</th>
+                {/*
+                 * The reference leaves this header empty, so it looks the
+                 * same here; the name is there for a screen reader only,
+                 * because an unnamed column is what the naming pass was
+                 * about.
+                 */}
+                <th scope="col" className={styles.rowActions}>
+                  <span className={styles.srOnly}>Action</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -923,11 +934,51 @@ function FindingsTab({
                   <td>
                     <span className={styles.state}>{STATE_LABEL[f.state]}</span>
                   </td>
+                  {/*
+                   * One action per row, chosen the way the reference chooses
+                   * it: a finding with a patch behind it offers the deploy,
+                   * and one with only a workaround offers the read. The row
+                   * itself still opens the drawer, so the button stops the
+                   * click rather than doing both.
+                   */}
+                  <td className={styles.rowActions}>
+                    {f.fixType === 'patch' ? (
+                      <Button
+                        size="sm"
+                        disabled={!canDeploy}
+                        aria-label={`Deploy the fix for ${f.title}`}
+                        /*
+                         * The whole patch list, unfiltered. The contract's
+                         * Patch carries a title and a KB and no CVE, so a
+                         * finding cannot name the patch that fixes it; a
+                         * search built from the CVE would match nothing and
+                         * look like an empty estate.
+                         */
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void navigate('/patches?tab=all');
+                        }}
+                      >
+                        Deploy Fix
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        aria-label={`Review ${f.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpen(f.id);
+                        }}
+                      >
+                        Review
+                      </Button>
+                    )}
+                  </td>
                 </tr>
               ))}
               {findings.data.items.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className={styles.empty}>
+                  <td colSpan={11} className={styles.empty}>
                     No findings match these filters.
                   </td>
                 </tr>
@@ -1217,8 +1268,12 @@ function RemediationsTab() {
                 </td>
                 <td className={styles.rowActions}>
                   {canDeploy && r.fixType === 'patch' ? (
-                    <Button size="sm" onClick={() => void navigate('/patches?tab=available')}>
-                      Open in Patch Management
+                    <Button
+                      size="sm"
+                      aria-label={`Deploy the fix for ${r.fix}`}
+                      onClick={() => void navigate('/patches?tab=all')}
+                    >
+                      Deploy Fix
                     </Button>
                   ) : null}
                 </td>

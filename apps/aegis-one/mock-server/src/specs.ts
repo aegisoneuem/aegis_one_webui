@@ -31,7 +31,7 @@ export const devicesSpec: TableSpec = {
     primaryUserName: { column: 'primary_user_name', sortable: true, filters: ['like'] },
     department: { column: 'department', sortable: true, filters: ['eq', 'in'] },
     ip: { column: 'ip', sortable: true, filters: ['eq', 'like'] },
-    mac: { column: 'mac' },
+    mac: { column: 'mac', sortable: true },
     /*
      * Named as the contract's Device schema names them. The older fields
      * above still carry the mock server's own names; reconciling those means

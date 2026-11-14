@@ -391,6 +391,23 @@ test.describe('signed in as Super Admin', () => {
     await expect(page.getByRole('heading', { name: 'Security Gaps' })).toBeVisible();
   });
 
+  test('the group tree collapses a branch and expands it again', async ({ page }) => {
+    await page.goto('/groups');
+
+    const collapse = page.getByRole('button', { name: 'Collapse Windows Workstations' });
+    await expect(collapse).toBeVisible();
+    const child = page.getByRole('button', { name: /^Windows 11/ }).first();
+    await expect(child).toBeVisible();
+
+    await collapse.click();
+    await expect(child).toBeHidden();
+
+    const expand = page.getByRole('button', { name: 'Expand Windows Workstations' });
+    await expect(expand).toHaveAttribute('aria-expanded', 'false');
+    await expand.click();
+    await expect(child).toBeVisible();
+  });
+
   test("a group's figures agree with its member grid", async ({ page }) => {
     await page.goto('/groups?group=grp-macos');
     const online = page.getByRole('group', { name: 'Member filter' }).getByRole('button', {
@@ -691,6 +708,30 @@ test.describe('signed in as Super Admin', () => {
       await expect(drawer.getByText(fact, { exact: true })).toBeVisible();
     await expect(drawer.getByRole('heading', { name: 'Solution' })).toBeVisible();
     await expect(drawer.getByRole('heading', { name: 'Scan evidence' })).toBeVisible();
+  });
+
+  test('every finding row offers one action, and Deploy Fix leaves the drawer shut', async ({
+    page,
+  }) => {
+    await page.goto('/vulns');
+
+    const rows = page.locator('[class*="tabBody"] table tbody tr');
+    await expect(rows.first()).toBeVisible();
+
+    // One per row, and only ever one of the two.
+    const names = await rows.locator('td:last-child button').allInnerTexts();
+    expect(names.length).toBe(await rows.count());
+    for (const name of names) expect(['Deploy Fix', 'Review']).toContain(name);
+
+    // The button names its own finding rather than sharing one name with
+    // fourteen others, which is what the naming pass was about.
+    const deploy = rows.locator('td:last-child button', { hasText: 'Deploy Fix' }).first();
+    await expect(deploy).toHaveAttribute('aria-label', /^Deploy the fix for .+/);
+
+    // The row opens the drawer; the button inside it must not do both.
+    await deploy.click();
+    await expect(page).toHaveURL(/\/patches/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('the other four Vulnerabilities tabs carry their own columns', async ({ page }) => {

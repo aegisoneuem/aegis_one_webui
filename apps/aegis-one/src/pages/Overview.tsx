@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, ErrorState, Select, Skeleton } from '@aegis/ui';
+import { Button, ErrorState, Modal, Select, Skeleton } from '@aegis/ui';
 import { useResource } from '../app/useListController';
 import { ApiError, api } from '../api/client';
 import { dateTime, num, relative } from '../app/format';
@@ -143,6 +143,7 @@ export default function Overview() {
   // Per-widget view and chart-type choices. They are the page's own state
   // rather than the saved layout: /overview/layout is declared in the contract
   // but not yet served, so persisting them would be inventing behaviour.
+  const [healthHelp, setHealthHelp] = useState(false);
   const [healthView, setHealthView] = useState('measures');
   const [healthChart, setHealthChart] = useState('column');
   const [patchView, setPatchView] = useState('devices');
@@ -224,6 +225,19 @@ export default function Overview() {
     .filter((m) => m.score >= HEALTHY)
     .sort((a, b) => b.score - a.score)
     .slice(0, 2);
+
+  /*
+   * The second column of the explainer. Keyed by measure id so the table can
+   * only ever describe a measure the summary actually returned, and worded
+   * from this server's own computation in aggregates.ts.
+   */
+  const measureMethod: Record<string, string> = {
+    patching: 'Devices with no missing patches',
+    'security-posture': 'Average of encryption, antivirus and firewall coverage',
+    'agent-health': 'Half checked in today, half on the current agent version',
+    experience: 'Average DEX score, the same one the DEX page shows',
+    'content-delivery': 'Share of peer cache relays reporting healthy',
+  };
 
   const measurePage: Record<string, string> = {
     patching: '/patches',
@@ -606,6 +620,14 @@ export default function Overview() {
                 <strong>{health.score}</strong>
                 <em>/ 100</em>
               </span>
+              <Button
+                size="sm"
+                variant="link"
+                className={styles.hsExplain}
+                onClick={() => setHealthHelp(true)}
+              >
+                How it&rsquo;s calculated
+              </Button>
               <span className={styles.hsState}>
                 <b>
                   {health.band === 'healthy' ? 'Healthy' : health.band === 'fair' ? 'Fair' : 'Poor'}
@@ -669,6 +691,44 @@ export default function Overview() {
               )}
             </div>
           </div>
+
+          <Modal
+            open={healthHelp}
+            onClose={() => setHealthHelp(false)}
+            title="Overall Health Score — how it is calculated"
+            size="md"
+            footer={<Button onClick={() => setHealthHelp(false)}>Close</Button>}
+          >
+            <p className={styles.methodLead}>
+              A 0&ndash;100 score for the endpoints in the current scope. It is a weighted average
+              of five measures; any measure that cannot be assessed is left out and the remaining
+              weights are rescaled.
+            </p>
+            <table className={styles.methodTable}>
+              <thead>
+                <tr>
+                  <th scope="col">Measure</th>
+                  <th scope="col">How it is measured</th>
+                  <th scope="col">Weight</th>
+                  <th scope="col">Now</th>
+                </tr>
+              </thead>
+              <tbody>
+                {health.measures.map((m) => (
+                  <tr key={m.id}>
+                    <th scope="row">{m.label}</th>
+                    <td>{measureMethod[m.id] ?? '—'}</td>
+                    <td>{Math.round(m.weight * 100)}%</td>
+                    <td>{m.score}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className={styles.methodBands}>
+              85 and above = Healthy (green) &middot; 70&ndash;84 = Fair (amber) &middot; below 70 =
+              At risk (red).
+            </p>
+          </Modal>
 
           <ChartTools
             panel="Overall Health Score"

@@ -326,7 +326,8 @@ export function DataTable<T extends RowData>({
               {headers.map((header, index) => {
                 const col = byId.get(header.column.id);
                 if (!col) return null;
-                const isSorted = sort?.id === col.id;
+                const sortKey = col.sortField ?? col.id;
+                const isSorted = sort?.id === sortKey;
                 const pinned = index === 0 && col.locked;
                 return (
                   <th
@@ -364,11 +365,11 @@ export function DataTable<T extends RowData>({
                       <button
                         type="button"
                         className={styles.sortButton}
-                        onClick={() => onHeaderSort(col.id)}
+                        onClick={() => onHeaderSort(sortKey)}
                       >
                         <span className={styles.headerLabel}>{col.header}</span>
                         <span className={styles.sortIcon} aria-hidden="true">
-                          {isSorted ? (sort.desc ? '▼' : '▲') : '▲'}
+                          {isSorted ? (sort.desc ? '↓' : '↑') : '↕'}
                         </span>
                       </button>
                     ) : (

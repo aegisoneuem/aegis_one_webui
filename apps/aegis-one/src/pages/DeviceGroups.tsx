@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -7,12 +7,14 @@ import {
   Input,
   Pagination,
   Skeleton,
+  useToast,
   type DataTableColumn,
 } from '@aegis/ui';
 import { useListController, useResource } from '../app/useListController';
 import { useCan } from '../app/auth';
 import { dateTime, num } from '../app/format';
 import { segment } from '../app/safeNavigate';
+import { api } from '../api/client';
 import type { Device, DeviceGroup, GroupDetail, GroupsSummary } from '../api/types';
 import styles from './DeviceGroups.module.css';
 
@@ -57,6 +59,9 @@ export default function DeviceGroups() {
   const canWrite = useCan('groups:write');
   const [treeQuery, setTreeQuery] = useState('');
   const [memberTile, setMemberTile] = useState('all');
+  const toast = useToast();
+  const csvInput = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const tree = useResource<{ items: DeviceGroup[]; summary: GroupsSummary }>(
     treeQuery.trim() ? `/groups?q=${encodeURIComponent(treeQuery.trim())}` : '/groups',
@@ -75,6 +80,50 @@ export default function DeviceGroups() {
     setParams(next, { replace: true });
   };
 
+  /*
+   * The reference's importer, against the endpoint the contract has always
+   * declared: two columns, group name then computer name. The input is
+   * cleared before anything else happens so that picking the same file twice
+   * running still fires a change.
+   */
+  const onCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    // The contract caps the body at a megabyte; saying so here beats a 400
+    // after the upload.
+    if (file.size > 1_048_576) {
+      toast.show({
+        title: 'That file is larger than 1 MB.',
+        message: 'Split it, or import the groups that matter first.',
+        tone: 'error',
+      });
+      return;
+    }
+    setImporting(true);
+    try {
+      const result = await api.postText<{ created: number; skipped: number; errors: string[] }>(
+        '/groups/import',
+        await file.text(),
+        'text/csv',
+      );
+      await tree.refetch();
+      toast.show({
+        title: `${num(result.created)} added, ${num(result.skipped)} skipped`,
+        message: result.errors[0] ?? 'Every row named a computer this estate knows.',
+        tone: result.created > 0 ? 'success' : 'error',
+      });
+    } catch (error) {
+      toast.show({
+        title: 'The groups could not be imported.',
+        message: error instanceof Error ? error.message : undefined,
+        tone: 'error',
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (tree.error) {
     return <ErrorState description="Device groups could not be loaded." onRetry={tree.refetch} />;
   }
@@ -89,7 +138,23 @@ export default function DeviceGroups() {
           <h1 className={styles.title}>Device Groups</h1>
         </div>
         <div className={styles.actions}>
-          <Button disabled={!canWrite}>Import CSV</Button>
+          <Button
+            aria-label="Import groups from CSV"
+            title="CSV with two columns: group name, computer name or hostname"
+            disabled={!canWrite || importing}
+            onClick={() => csvInput.current?.click()}
+          >
+            {importing ? 'Importing…' : 'Import CSV'}
+          </Button>
+          <input
+            ref={csvInput}
+            type="file"
+            accept=".csv,text/csv,.txt"
+            className={styles.hiddenFile}
+            tabIndex={-1}
+            aria-hidden="true"
+            onChange={(e) => void onCsv(e)}
+          />
           <Button disabled={!canWrite}>Directory Sync</Button>
           <Button variant="primary" disabled={!canWrite}>
             Create Group
@@ -171,15 +236,29 @@ function GroupTree({
   onSelect: (id: string) => void;
   estateTotal: number;
 }) {
+  /*
+   * Which roots are shut. Collapsing is a view of the tree rather than a
+   * property of a group, so it lives here and is not written to the URL: a
+   * link to a group should open that group, not somebody else's folded tree.
+   */
+  const [shut, setShut] = useState<Record<string, boolean>>({});
+
   // Roots first, each followed by its children, which is the order the
-  // reference draws and the order a flat list of rows can carry.
+  // reference draws and the order a flat list of rows can carry. A search
+  // flattens the tree, exactly as the reference does, because a match inside
+  // a shut branch that stays hidden is a search that lies.
+  const searching = query.trim().length > 0;
   const ordered = useMemo(() => {
     const roots = groups.filter((g) => !g.parentId);
-    return roots.flatMap((root) => [
-      { group: root, depth: 0 },
-      ...groups.filter((g) => g.parentId === root.id).map((g) => ({ group: g, depth: 1 })),
-    ]);
-  }, [groups]);
+    return roots.flatMap((root) => {
+      const children = groups.filter((g) => g.parentId === root.id);
+      const open = searching || !shut[root.id];
+      return [
+        { group: root, depth: 0, children: children.length },
+        ...(open ? children.map((g) => ({ group: g, depth: 1, children: 0 })) : []),
+      ];
+    });
+  }, [groups, shut, searching]);
 
   return (
     <aside className={styles.tree}>
@@ -204,25 +283,42 @@ function GroupTree({
         ) : ordered.length === 0 ? (
           <p className={styles.empty}>No groups</p>
         ) : (
-          ordered.map(({ group, depth }) => (
-            <button
+          ordered.map(({ group, depth, children }) => (
+            <div
               key={group.id}
-              type="button"
-              aria-current={group.id === selectedId}
               className={[
-                group.id === selectedId ? styles.treeItemOn : styles.treeItem,
+                group.id === selectedId ? styles.treeRowOn : styles.treeRow,
                 depth > 0 ? styles.treeChild : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onClick={() => onSelect(group.id)}
             >
-              <span className={styles.treeName}>{group.name}</span>
-              <span className={styles.treeKind} title={group.kind}>
-                {group.kind === 'dynamic' ? 'D' : 'S'}
-              </span>
-              <b className={styles.treeCount}>{num(group.members)}</b>
-            </button>
+              {children > 0 && !searching ? (
+                <button
+                  type="button"
+                  className={styles.twisty}
+                  aria-expanded={!shut[group.id]}
+                  aria-label={`${shut[group.id] ? 'Expand' : 'Collapse'} ${group.name}`}
+                  onClick={() => setShut({ ...shut, [group.id]: !shut[group.id] })}
+                >
+                  {shut[group.id] ? '▸' : '▾'}
+                </button>
+              ) : (
+                <span className={styles.twistySpacer} />
+              )}
+              <button
+                type="button"
+                aria-current={group.id === selectedId}
+                className={group.id === selectedId ? styles.treeItemOn : styles.treeItem}
+                onClick={() => onSelect(group.id)}
+              >
+                <span className={styles.treeName}>{group.name}</span>
+                <span className={styles.treeKind} title={group.kind}>
+                  {group.kind === 'dynamic' ? 'D' : 'S'}
+                </span>
+                <b className={styles.treeCount}>{num(group.members)}</b>
+              </button>
+            </div>
           ))
         )}
       </div>

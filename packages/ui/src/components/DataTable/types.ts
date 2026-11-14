@@ -18,6 +18,12 @@ export interface DataTableColumn<T> {
   numeric?: boolean;
   /** Server-side sort key; omit for columns the API cannot sort by. */
   sortable?: boolean;
+  /**
+   * The field to sort by, when it is not this column's own id — for a column
+   * that displays one field in a second form. Without it such a column would
+   * ask the server to sort by an id the server has never heard of.
+   */
+  sortField?: string;
   /** Heading in the column chooser, e.g. "Hardware". */
   group?: string;
   /** Off until the user turns it on. Keeps the default view readable at 70+ columns. */

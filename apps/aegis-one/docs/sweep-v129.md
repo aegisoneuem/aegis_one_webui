@@ -286,6 +286,23 @@ Live Activity page uses and which the bell now uses too. Either the contract
 should drop `/audit` or the mock should implement it; a declared path that
 404s is the kind of thing a backend team builds against and then has to undo.
 
+### 3.6b-ii Four more paths are declared with no server behind them
+
+Found while looking for somewhere to put the CSV file input, and worth
+listing together because a backend team reads the contract, not this
+console:
+
+| Path                          | State                                         |
+| ----------------------------- | --------------------------------------------- |
+| `POST /groups/import`         | now implemented, as part of this work         |
+| `DELETE /groups/{groupId}`    | declared, 404s                                |
+| `POST /groups/directory-sync` | declared, 404s                                |
+| `GET`/`PUT /overview/layout`  | declared, 404s — this is what Customize needs |
+
+`GET /groups/{groupId}/members` does take `q`, and has all along; the
+console simply had its own search box over it, which is why the member
+search was never missing.
+
 ### 3.6c The naming pass — done, and what it was really about
 
 Re-reading the whole sweep with the fixed reader turned most of 3.6 into one
@@ -324,6 +341,105 @@ What is left after that pass, re-measured across all twenty pages:
 Each is a small piece of work rather than a question. The wording differences
 that remain — "Search software or publisher" against the reference's "Search
 software" — are ones where this console says more, and they are left.
+
+### 3.6d Four of those seven were not missing at all
+
+Working through the list above, four entries turned out to be wrong, and for
+two different reasons. Both are the sweep's fault rather than the console's,
+and both are now fixed in the reader or recorded here.
+
+**`All Failing Checks` was there all along.** So were the per-row overflow
+menus on Peer cache and Integrations, and the member search on Device
+groups. The Configuration capture holds fourteen controls against the
+reference's fifty-nine, because the reader's settle condition — no
+"Loading" text left on the page — fired before the Overview tab's tiles,
+charts and panels had rendered. A page read too early looks like a page with
+nothing on it. Where a page's control count is a fraction of the
+reference's, suspect the capture before the page.
+
+**The other two were naming, not absence.** The overflow menus here are
+named for their row (`More actions for Mumbai HQ`) and the reference names
+them for their contents (`More actions: Disable, Activity`); Device groups'
+member search is `Search name, IP, OS or location` against the reference's
+`Search members`. Both are cases where this console says more, which 3.6c
+already settled as "leave it".
+
+**`Open data summary` on Zones is not a design control.** It is the
+screen-reader button the reference's plotting library adds to one chart,
+which is why it appears once on one page and is translated into Spanish a
+few lines further down the bundle. There is nothing here to restore.
+
+So the real list was three, and what was done about each:
+
+| Page            | What it was                                                         | Done                            |
+| --------------- | ------------------------------------------------------------------- | ------------------------------- |
+| Devices         | sort indicators on two columns                                      | yes — and the glyphs were wrong |
+| Vulnerabilities | `Deploy Fix` / `Review` row actions                                 | yes                             |
+| Device groups   | CSV file input, tree collapse                                       | yes                             |
+| Overview        | `+ Custom Widget`, `Customize`, `How it's calculated`, `Thresholds` | the explainer only — see 3.6e   |
+
+**Devices.** The reference writes the sort state into the glyph — `↑`
+ascending, `↓` descending, `↕` sortable but not sorted — and never uses a
+filled triangle. This grid used `▲` for every sortable column, so an
+unsorted column read as sorted ascending. The two columns the reference
+marks sortable and this grid did not are MAC Address and DNS Name; `mac` is
+now sortable in the server's field spec, and DNS Name sorts by `dnsName`,
+the same field its short form already sorted by. Both columns therefore read
+as sorted together, because they are the same field twice.
+
+**Vulnerabilities.** One action per row, chosen as the reference chooses it:
+a finding with a patch behind it offers `Deploy Fix` and one with only a
+workaround offers `Review`. The Remediations tab's `Open in Patch
+Management` was the same action under a longer name and is now `Deploy Fix`
+too. Two things the running page showed: `?tab=available` is not one of
+Patch Management's tabs, so that button had been landing on Overview rather
+than on a patch list; and a finding cannot name the patch that fixes it,
+because the contract's `Patch` carries a title and a KB and no CVE. So the
+button opens the whole patch list rather than a search that would match
+nothing.
+
+**Device groups.** `POST /groups/import` is the fourth parameter or endpoint
+found declared and unimplemented, after `/audit`, `?group=` and `?filter=`.
+It now parses the reference's own format — two columns, group name then
+computer name, separated by a comma, a semicolon or a tab, with an optional
+header row — creates the groups it does not find, and recounts every group
+it touched, since the tree reads stored counts. An unmatched computer is a
+skip with a named reason rather than a silent one. Measured against the
+running server: two rows added, one skipped, the header ignored, the new
+group's figures agreeing with its own member list, and an empty body a 400.
+The tree's collapse controls carry the reference's names (`Collapse Windows
+Workstations`), hide the branch's children, and are suppressed while a
+search is running, as the reference suppresses them — a match inside a shut
+branch that stayed hidden would be a search that lies.
+
+### 3.6e Open: the Overview's four are one feature, not four controls
+
+This is the entry the list above got most wrong, and it needs a decision
+rather than an afternoon.
+
+`How it's calculated` is done: the dialog the reference opens beside the
+score, with its first paragraph and its Measure / How it is measured /
+Weight / Now table driven by the measures the summary returns. Two rows are
+worded from this server's own arithmetic rather than the reference's,
+because they differ — agent health here is an even split between checked in
+today and on the current agent, not 70/30, and content delivery is the share
+of peer cache relays reporting healthy, not an average efficiency. A dialog
+explaining somebody else's computation would be worse than none.
+
+The other three are one thing. `Customize` opens a dialog holding: four
+layouts to start from (Default, Security Focus, Patch Focus, Executive
+Summary); the nine widgets with visibility and an up/down reorder;
+`+ Create Custom Widget`; a Preview As Role select; and a Colour Thresholds
+section with three presets, a Healthy and an At risk percentage, a
+compliance target, and a live readout of what the current score would then
+show as. `Thresholds` on the health tile opens that same dialog, and
+`+ Custom Widget` in the header opens the widget builder inside it.
+
+Two facts bear on the decision. `GET` and `PUT /overview/layout` are in the
+contract and unimplemented, with a schema that carries the preset and, per
+widget, id, type, visible, chartType, view and title — so the layout half
+is contract-backed and buildable. The thresholds half is not: `OverviewLayout`
+has no field for them, so it needs a spec change proposed first.
 
 ### 3.7 Open: two palette tokens are a shade off, console-wide
 

@@ -575,6 +575,59 @@
   text-align: right;
 }
 
+/* The explainer link, beside the score as the reference places it. */
+.hsExplain {
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.methodLead {
+  margin: 0 0 var(--ui-space-5);
+  color: var(--ao-text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.methodTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.methodTable th,
+.methodTable td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--ao-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.methodTable thead th {
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.methodTable tbody th {
+  color: var(--ao-navy-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.methodTable td:last-child,
+.methodTable th:last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.methodBands {
+  margin: var(--ui-space-5) 0 0;
+  color: var(--ao-muted);
+  font-size: 12px;
+}
+
 .hsGains {
   display: flex;
   flex-wrap: wrap;

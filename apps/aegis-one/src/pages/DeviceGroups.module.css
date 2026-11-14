@@ -53,6 +53,19 @@
   align-items: center;
 }
 
+/*
+ * The file picker behind Import CSV. It is not display:none, because a file
+ * input that is never laid out does not open a dialog in every browser; it
+ * is simply out of the way, and the button above it is what anyone sees.
+ */
+.hiddenFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Estate counters -------------------------------------------------------- */
 
 .kpis {
@@ -166,16 +179,67 @@
   padding: 6px 0;
 }
 
+/*
+ * The row carries the selection and the indent; the name inside it carries
+ * the click. They were one element until the tree gained a collapse control,
+ * and a button cannot hold another button.
+ */
+.treeRow,
+.treeRowOn {
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  border-left: 3px solid transparent;
+}
+
+/* The selected group is inverted, with the gold rule the sidebar uses. */
+.treeRowOn {
+  border-left-color: var(--ao-brand-hi);
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.treeRow:hover {
+  background: var(--ui-surface-hover);
+}
+
+/* A child is indented rather than drawn with a connector, as in v129. */
+.treeChild {
+  padding-left: 32px;
+}
+
+/*
+ * The twisty, and the space it would take on a group that has none, so the
+ * names of siblings line up whether or not they have children.
+ */
+.twisty,
+.twistySpacer {
+  flex: none;
+  width: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1;
+  text-align: left;
+}
+
+.twisty {
+  cursor: pointer;
+}
+
 .treeItem,
 .treeItemOn {
   display: flex;
+  flex: 1;
   gap: var(--ui-space-4);
   align-items: center;
-  width: 100%;
-  padding: 9px 12px 9px 10px;
+  min-width: 0;
+  padding: 9px 12px 9px 0;
   border: 0;
-  border-left: 3px solid transparent;
   background: none;
+  color: inherit;
   cursor: pointer;
   font-family: inherit;
   font-size: 13.5px;
@@ -183,26 +247,11 @@
   text-align: left;
 }
 
-/* The selected group is inverted, with the gold rule the sidebar uses. */
-.treeItemOn {
-  border-left-color: var(--ao-brand-hi);
-  background: var(--ao-sidebar);
-  color: var(--ao-surface);
-}
-
-.treeItem:hover {
-  background: var(--ui-surface-hover);
-}
-
 .treeItem:focus-visible,
-.treeItemOn:focus-visible {
+.treeItemOn:focus-visible,
+.twisty:focus-visible {
   outline: none;
   box-shadow: var(--ui-focus-ring);
-}
-
-/* A child is indented rather than drawn with a connector, as in v129. */
-.treeChild {
-  padding-left: 32px;
 }
 
 .treeName {
@@ -224,7 +273,7 @@
   line-height: 10px;
 }
 
-.treeItemOn .treeKind {
+.treeRowOn .treeKind {
   border-color: var(--ao-sidebar-text);
   color: var(--ao-sidebar-text);
 }
@@ -239,7 +288,7 @@
   text-align: right;
 }
 
-.treeItemOn .treeCount {
+.treeRowOn .treeCount {
   color: var(--ao-brand-hi);
 }
 

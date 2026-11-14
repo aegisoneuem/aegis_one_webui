@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
-import { listRows, notFound, zoneScope, type Db } from '@aegis/mock-core';
+import { badRequest, listRows, notFound, zoneScope, type Db } from '@aegis/mock-core';
 import { devicesSpec } from '../specs';
 import { shapeRow, toListQuery } from './resources';
 
@@ -86,6 +87,108 @@ export function registerGroupRoutes(app: FastifyInstance, db: Db, basePath: stri
       policies: policies ? policies.split('\n').filter(Boolean) : [],
       history,
     };
+  });
+
+  /*
+   * `POST /groups/import` has been in the contract since the beginning and
+   * had no implementation, which is the same failure the group and filter
+   * parameters had: a console could upload a roster, be told nothing went
+   * wrong, and have changed nothing.
+   *
+   * The file is what the reference's own importer accepts — two columns,
+   * group name then computer name — separated by a comma, a semicolon or a
+   * tab, optionally quoted, with an optional header row whose first cell
+   * begins with "group".
+   */
+  app.addContentTypeParser('text/csv', { parseAs: 'string' }, (_request, body, done) => {
+    done(null, body);
+  });
+
+  app.post(`${basePath}/groups/import`, async (request) => {
+    const text = typeof request.body === 'string' ? request.body : '';
+    if (!text.trim()) throw badRequest('The uploaded file is empty.');
+
+    const rows = text
+      .split(/\r?\n/)
+      .map((line) => line.split(/[,;\t]/).map((cell) => cell.trim().replace(/^"|"$/g, '')))
+      .filter((cells) => cells.length >= 2 && cells[0] && cells[1])
+      .filter((cells, index) => !(index === 0 && /^group/i.test(cells[0] ?? '')));
+
+    if (rows.length === 0) throw badRequest('No rows with a group name and a computer name.');
+    // A bound on the work one request can ask for, so a mistyped file cannot
+    // turn into a minute of synchronous SQLite.
+    if (rows.length > 10_000) throw badRequest('More than 10,000 rows in one import.');
+
+    const groupByName = new Map(
+      (
+        db.prepare(`SELECT id, name FROM device_groups`).all() as { id: string; name: string }[]
+      ).map((g) => [g.name.toLowerCase(), g.id]),
+    );
+    const findDevice = db.prepare(
+      `SELECT id FROM devices WHERE lower(hostname) = ? OR lower(dns_name) = ? LIMIT 1`,
+    );
+    const insertGroup = db.prepare(
+      `INSERT INTO device_groups (id, name, kind, parent_id, rule, policies, created_at, created_by)
+       VALUES (?, ?, 'static', NULL, NULL, '', ?, ?)`,
+    );
+    const insertMember = db.prepare(
+      `INSERT OR IGNORE INTO group_members (group_id, device_id) VALUES (?, ?)`,
+    );
+
+    const now = new Date().toISOString();
+    const by = request.auth?.email ?? 'unknown';
+    let created = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+    const touched = new Set<string>();
+
+    const run = db.transaction(() => {
+      for (const [rawGroup, rawDevice] of rows) {
+        const groupName = rawGroup ?? '';
+        const deviceName = (rawDevice ?? '').toLowerCase();
+        let groupId = groupByName.get(groupName.toLowerCase());
+        if (!groupId) {
+          groupId = `grp-${randomUUID()}`;
+          insertGroup.run(groupId, groupName, now, by);
+          groupByName.set(groupName.toLowerCase(), groupId);
+        }
+        const device = findDevice.get(deviceName, deviceName) as { id: string } | undefined;
+        if (!device) {
+          skipped += 1;
+          // Enough to fix the file by, and not one line per row of a file
+          // that named the wrong column.
+          if (errors.length < 20) errors.push(`No computer named "${rawDevice ?? ''}".`);
+          continue;
+        }
+        const result = insertMember.run(groupId, device.id);
+        if (result.changes === 0) skipped += 1;
+        else {
+          created += 1;
+          touched.add(groupId);
+        }
+      }
+
+      /*
+       * The tree reads stored counts rather than counting on every request,
+       * so every group this touched is recounted here. Leaving them stale
+       * would show a group whose figure disagrees with its own member list.
+       */
+      const recount = db.prepare(
+        `UPDATE device_groups SET
+           members = (SELECT COUNT(*) FROM group_members WHERE group_id = device_groups.id),
+           online = (SELECT COUNT(*) FROM group_members gm JOIN devices d ON d.id = gm.device_id
+                      WHERE gm.group_id = device_groups.id AND d.status = 'online'),
+           offline = (SELECT COUNT(*) FROM group_members gm JOIN devices d ON d.id = gm.device_id
+                      WHERE gm.group_id = device_groups.id AND d.status != 'online'),
+           missing_patches = (SELECT COALESCE(SUM(d.pending_patches), 0) FROM group_members gm
+                      JOIN devices d ON d.id = gm.device_id WHERE gm.group_id = device_groups.id)
+         WHERE id = ?`,
+      );
+      for (const id of touched) recount.run(id);
+    });
+    run();
+
+    return { created, skipped, errors };
   });
 
   app.get(`${basePath}/groups/:groupId/members`, async (request) => {

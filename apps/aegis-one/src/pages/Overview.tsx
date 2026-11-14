@@ -1,14 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Button, ErrorState, Modal, Select, Skeleton } from '@aegis/ui';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Button, ErrorState, Modal, Select, Skeleton, useToast } from '@aegis/ui';
 import { useResource } from '../app/useListController';
 import { ApiError, api } from '../api/client';
 import { dateTime, num, relative } from '../app/format';
 import { segment } from '../app/safeNavigate';
 import { Bars, Columns, Donut, Rings, bandTone } from './shared/Figures';
 import type { Datum, RingDatum, Tone } from './shared/Figures';
-import type { AttentionItem, Overview as OverviewData, ZoneList } from '../api/types';
+import type {
+  AttentionItem,
+  Overview as OverviewData,
+  OverviewLayout,
+  ZoneList,
+} from '../api/types';
+import { DEFAULT_THRESHOLDS, OverviewCustomize, applyPreset } from './OverviewCustomize';
 import styles from './Overview.module.css';
 
 /**
@@ -140,9 +146,40 @@ export default function Overview() {
     queryFn: ({ signal }) => api.get<ZoneList>('/zones', undefined, signal),
   });
 
-  // Per-widget view and chart-type choices. They are the page's own state
-  // rather than the saved layout: /overview/layout is declared in the contract
-  // but not yet served, so persisting them would be inventing behaviour.
+  /*
+   * The saved layout: which widgets are shown, in what order, and the bands
+   * the figures are read against. Applied locally the moment Done is pressed
+   * so the page redraws at once, and written through to the contract's
+   * `PUT /overview/layout` behind it.
+   */
+  const layoutQuery = useQuery({
+    queryKey: ['/overview/layout'],
+    queryFn: ({ signal }) => api.get<OverviewLayout>('/overview/layout', undefined, signal),
+  });
+  const [applied, setApplied] = useState<OverviewLayout | null>(null);
+  const [customizing, setCustomizing] = useState(false);
+  const toast = useToast();
+
+  const saveLayout = useMutation({
+    mutationFn: (next: OverviewLayout) => api.put<OverviewLayout>('/overview/layout', next),
+    onError: (err) =>
+      toast.show({
+        title: 'The layout could not be saved.',
+        message: err instanceof Error ? err.message : undefined,
+        tone: 'error',
+      }),
+  });
+
+  const layout: OverviewLayout = applied ??
+    layoutQuery.data ?? {
+      preset: 'Default',
+      widgets: applyPreset('Default'),
+      thresholds: { ...DEFAULT_THRESHOLDS },
+    };
+  const bands = layout.thresholds ?? DEFAULT_THRESHOLDS;
+
+  // Per-widget view and chart-type choices stay the page's own state: the
+  // reference sets them from each panel's own tools, not from Customize.
   const [healthHelp, setHealthHelp] = useState(false);
   const [healthView, setHealthView] = useState('measures');
   const [healthChart, setHealthChart] = useState('column');
@@ -201,13 +238,25 @@ export default function Overview() {
   /* Overall Health Score                                             */
   /* ---------------------------------------------------------------- */
 
-  const HEALTHY = 85;
+  const HEALTHY = bands.healthy;
+  /*
+   * The band the score falls in, read against the thresholds in force rather
+   * than against the ones the server assumed. The server's own `band` is
+   * computed from the product defaults and would contradict the colour the
+   * moment anyone moves them.
+   */
+  const healthBand =
+    health.score >= bands.healthy ? 'healthy' : health.score >= bands.atRisk ? 'fair' : 'poor';
   const healthData: Datum[] = health.measures.map((m) => ({
     key: m.id,
     label: m.label,
     value: healthView === 'gap' ? Math.max(0, HEALTHY - m.score) : m.score,
     tone:
-      healthView === 'gap' ? (m.score >= HEALTHY ? 'good' : bandTone(m.score)) : bandTone(m.score),
+      healthView === 'gap'
+        ? m.score >= HEALTHY
+          ? 'good'
+          : bandTone(m.score, bands)
+        : bandTone(m.score, bands),
     note: `weight ${Math.round(m.weight * 100)}%`,
   }));
 
@@ -320,7 +369,7 @@ export default function Overview() {
             key: row.family,
             label: OS_LABEL[row.family] ?? row.family,
             value: row.compliantPct,
-            tone: bandTone(row.compliantPct),
+            tone: bandTone(row.compliantPct, bands),
           })),
         };
       default:
@@ -362,7 +411,7 @@ export default function Overview() {
       key: c.control,
       label: CONTROL_LABEL[c.control] ?? c.control,
       value: pctProtected,
-      tone: bandTone(pctProtected),
+      tone: bandTone(pctProtected, bands),
       sub: `${num(c.protected)} of ${num(c.total)} protected`,
       pill: gap > 0 ? `${gap} pts to target` : 'At target',
       pillTone: gap > 0 ? ('warn' as Tone) : ('good' as Tone),
@@ -495,6 +544,13 @@ export default function Overview() {
         </div>
 
         <div className={styles.headingActions}>
+          {/*
+           * The reference puts both of these before Export. "+ Custom
+           * Widget" opens the same dialog at its Widgets section, which is
+           * where the reference's own widget builder is reached from.
+           */}
+          <Button onClick={() => setCustomizing(true)}>+ Custom Widget</Button>
+          <Button onClick={() => setCustomizing(true)}>Customize</Button>
           <Button onClick={go('/reports')}>Export</Button>
           <Button variant="primary" onClick={go('/deployments/new')}>
             New Action
@@ -561,468 +617,520 @@ export default function Overview() {
         </span>
       </div>
 
-      <div className={styles.kpis}>
-        <Kpi
-          active
-          label="Managed Endpoints"
-          value={num(counts.managedEndpoints)}
-          sub={`${num(counts.zones)} zones · ${num(counts.managedEndpoints - counts.online)} not online`}
-          onClick={go('/devices')}
-        />
-        <Kpi
-          label="Online Now"
-          value={num(counts.online)}
-          unit={`${onlinePct}%`}
-          tone="good"
-          sub="Checked in and reachable"
-          onClick={go('/devices?status=online')}
-        />
-        <Kpi
-          label="Patch Compliance"
-          value={String(patchCompliance.compliantPct)}
-          unit="%"
-          tone={bandTone(patchCompliance.compliantPct)}
-          sub={`${num(patchCompliance.compliant)} of ${num(counts.managedEndpoints)} fully patched`}
-          onClick={go('/patches')}
-        />
-        <Kpi
-          label="High-Risk Endpoints"
-          value={num(counts.highRiskEndpoints)}
-          tone={counts.highRiskEndpoints > 0 ? 'bad' : 'good'}
-          sub="At least one open critical finding"
-          onClick={go('/vulns?severity=critical')}
-        />
-        <Kpi
-          label="Overall Health Score"
-          value={String(health.score)}
-          unit="/100"
-          tone={bandTone(health.score)}
-          sub={
-            health.band === 'healthy'
-              ? 'Healthy · 85 and above'
-              : health.band === 'fair'
-                ? 'Fair · 70–84 band'
-                : 'Poor · below 70'
-          }
-          onClick={go('/insight')}
-        />
-      </div>
+      <div className={styles.widgets}>
+        <Cell id="key-metrics" layout={layout} span="full">
+          <div className={styles.kpis}>
+            <Kpi
+              active
+              label="Managed Endpoints"
+              value={num(counts.managedEndpoints)}
+              sub={`${num(counts.zones)} zones · ${num(counts.managedEndpoints - counts.online)} not online`}
+              onClick={go('/devices')}
+            />
+            <Kpi
+              label="Online Now"
+              value={num(counts.online)}
+              unit={`${onlinePct}%`}
+              tone="good"
+              sub="Checked in and reachable"
+              onClick={go('/devices?status=online')}
+            />
+            <Kpi
+              label="Patch Compliance"
+              value={String(patchCompliance.compliantPct)}
+              unit="%"
+              tone={bandTone(patchCompliance.compliantPct, bands)}
+              sub={`${num(patchCompliance.compliant)} of ${num(counts.managedEndpoints)} fully patched`}
+              onClick={go('/patches')}
+            />
+            <Kpi
+              label="High-Risk Endpoints"
+              value={num(counts.highRiskEndpoints)}
+              tone={counts.highRiskEndpoints > 0 ? 'bad' : 'good'}
+              sub="At least one open critical finding"
+              onClick={go('/vulns?severity=critical')}
+            />
+            <Kpi
+              label="Overall Health Score"
+              value={String(health.score)}
+              unit="/100"
+              tone={bandTone(health.score, bands)}
+              sub={
+                healthBand === 'healthy'
+                  ? `Healthy · ${bands.healthy} and above`
+                  : healthBand === 'fair'
+                    ? `Fair · ${bands.atRisk}–${bands.healthy - 1} band`
+                    : `Poor · below ${bands.atRisk}`
+              }
+              onClick={go('/insight')}
+            />
+          </div>
+        </Cell>
 
-      <div className={styles.row2}>
-        <Panel
-          title="Overall Health Score"
-          subtitle="Weighted 0–100 · current snapshot"
-          footer="Click a measure to open its page"
-        >
-          <div className={styles.hs}>
-            <div className={styles.hsHead}>
-              <span className={styles.hsNum}>
-                <strong>{health.score}</strong>
-                <em>/ 100</em>
-              </span>
-              <Button
-                size="sm"
-                variant="link"
-                className={styles.hsExplain}
-                onClick={() => setHealthHelp(true)}
-              >
-                How it&rsquo;s calculated
-              </Button>
-              <span className={styles.hsState}>
-                <b>
-                  {health.band === 'healthy' ? 'Healthy' : health.band === 'fair' ? 'Fair' : 'Poor'}
-                </b>
-                <small>
-                  {health.score >= HEALTHY
-                    ? `${health.score - HEALTHY} points above Healthy (${HEALTHY})`
-                    : `${HEALTHY - health.score} points below Healthy (${HEALTHY})`}
-                </small>
-              </span>
-            </div>
+        <Cell id="health" layout={layout} span="half">
+          <Panel
+            title="Overall Health Score"
+            subtitle="Weighted 0–100 · current snapshot"
+            footer="Click a measure to open its page"
+          >
+            <div className={styles.hs}>
+              <div className={styles.hsHead}>
+                <span className={styles.hsNum}>
+                  <strong>{health.score}</strong>
+                  <em>/ 100</em>
+                </span>
+                <Button
+                  size="sm"
+                  variant="link"
+                  className={styles.hsExplain}
+                  onClick={() => setHealthHelp(true)}
+                >
+                  How it&rsquo;s calculated
+                </Button>
+                <span className={styles.hsState}>
+                  <b>
+                    {healthBand === 'healthy' ? 'Healthy' : healthBand === 'fair' ? 'Fair' : 'Poor'}
+                  </b>
+                  <small>
+                    {health.score >= HEALTHY
+                      ? `${health.score - HEALTHY} points above Healthy (${HEALTHY})`
+                      : `${HEALTHY - health.score} points below Healthy (${HEALTHY})`}
+                  </small>
+                </span>
+              </div>
 
-            <div className={styles.hsScale}>
-              {/*
-               * Bands at the thresholds the score is read against, with the
-               * score marked on them. Drawn in SVG because the marker's
-               * position is a data value, and a style attribute would put
-               * that geometry outside the stylesheet.
-               */}
-              <svg
-                className={styles.hsBar}
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
-                role="img"
-                aria-label={`Health score ${health.score} of 100. Fair starts at 70, Healthy at 85.`}
-              >
-                <rect className={styles.hsPoor} x="0" y="2" width="70" height="6" />
-                <rect className={styles.hsFair} x="70" y="2" width="15" height="6" />
-                <rect className={styles.hsGood} x="85" y="2" width="15" height="6" />
-                <rect
-                  className={styles.hsMarker}
-                  x={Math.min(99.6, Math.max(0, health.score - 0.4))}
-                  y="0"
-                  width="0.8"
-                  height="10"
-                />
-              </svg>
-              <div className={styles.hsTicks}>
-                <span className={styles.hsTickStart}>0</span>
-                <span className={styles.hsTickPoor}>70</span>
-                <span className={styles.hsTickFair}>85</span>
-                <span className={styles.hsTickGood}>100</span>
+              <div className={styles.hsScale}>
+                {/*
+                 * Bands at the thresholds the score is read against, with the
+                 * score marked on them. Drawn in SVG because the marker's
+                 * position is a data value, and a style attribute would put
+                 * that geometry outside the stylesheet.
+                 */}
+                <svg
+                  className={styles.hsBar}
+                  viewBox="0 0 100 10"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label={`Health score ${health.score} of 100. Fair starts at 70, Healthy at 85.`}
+                >
+                  <rect className={styles.hsPoor} x="0" y="2" width="70" height="6" />
+                  <rect className={styles.hsFair} x="70" y="2" width="15" height="6" />
+                  <rect className={styles.hsGood} x="85" y="2" width="15" height="6" />
+                  <rect
+                    className={styles.hsMarker}
+                    x={Math.min(99.6, Math.max(0, health.score - 0.4))}
+                    y="0"
+                    width="0.8"
+                    height="10"
+                  />
+                </svg>
+                <div className={styles.hsTicks}>
+                  <span className={styles.hsTickStart}>0</span>
+                  <span className={styles.hsTickPoor}>70</span>
+                  <span className={styles.hsTickFair}>85</span>
+                  <span className={styles.hsTickGood}>100</span>
+                </div>
+              </div>
+
+              <div className={styles.hsGains}>
+                <span className={styles.hsGainsLabel}>Biggest gains</span>
+                {gains.length === 0 ? (
+                  <span className={styles.hsNoGains}>No measure is clear of Healthy yet</span>
+                ) : (
+                  gains.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className={styles.hsGain}
+                      onClick={go(measurePage[m.id] ?? '/insight')}
+                    >
+                      {m.label} <b>+{m.score - HEALTHY}</b>
+                    </button>
+                  ))
+                )}
+                {/*
+                 * The reference ends this row with the way out to the bands
+                 * themselves, which is the question a reader has once they
+                 * have seen which side of them they are on.
+                 */}
+                <Button
+                  size="sm"
+                  variant="link"
+                  className={styles.hsThresholds}
+                  onClick={() => setCustomizing(true)}
+                >
+                  Thresholds
+                </Button>
               </div>
             </div>
 
-            <div className={styles.hsGains}>
-              <span className={styles.hsGainsLabel}>Biggest gains</span>
-              {gains.length === 0 ? (
-                <span className={styles.hsNoGains}>No measure is clear of Healthy yet</span>
+            <Modal
+              open={healthHelp}
+              onClose={() => setHealthHelp(false)}
+              title="Overall Health Score — how it is calculated"
+              size="md"
+              footer={<Button onClick={() => setHealthHelp(false)}>Close</Button>}
+            >
+              <p className={styles.methodLead}>
+                A 0&ndash;100 score for the endpoints in the current scope. It is a weighted average
+                of five measures; any measure that cannot be assessed is left out and the remaining
+                weights are rescaled.
+              </p>
+              <table className={styles.methodTable}>
+                <thead>
+                  <tr>
+                    <th scope="col">Measure</th>
+                    <th scope="col">How it is measured</th>
+                    <th scope="col">Weight</th>
+                    <th scope="col">Now</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {health.measures.map((m) => (
+                    <tr key={m.id}>
+                      <th scope="row">{m.label}</th>
+                      <td>{measureMethod[m.id] ?? '—'}</td>
+                      <td>{Math.round(m.weight * 100)}%</td>
+                      <td>{m.score}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className={styles.methodBands}>
+                85 and above = Healthy (green) &middot; 70&ndash;84 = Fair (amber) &middot; below 70
+                = At risk (red).
+              </p>
+            </Modal>
+
+            <ChartTools
+              panel="Overall Health Score"
+              view={healthView}
+              onView={setHealthView}
+              viewOptions={[
+                { value: 'measures', label: 'Score by Measure' },
+                { value: 'gap', label: 'Points to Healthy' },
+              ]}
+              chart={healthChart}
+              onChart={setHealthChart}
+              chartOptions={CHART_TYPES.columnar}
+            />
+            <p className={styles.unit}>
+              {healthView === 'gap'
+                ? `Points still needed to reach Healthy (${HEALTHY}) · weight below each label`
+                : `% per measure · dashed line = Healthy (${HEALTHY}) · weight below each label`}
+            </p>
+            <div className={styles.body}>
+              {healthChart === 'bar' ? (
+                <Bars
+                  {...healthSeries}
+                  suffix="%"
+                  onPick={(key) => void navigate(measurePage[key] ?? '/insight')}
+                />
               ) : (
-                gains.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    className={styles.hsGain}
-                    onClick={go(measurePage[m.id] ?? '/insight')}
-                  >
-                    {m.label} <b>+{m.score - HEALTHY}</b>
-                  </button>
-                ))
+                <Columns
+                  {...healthSeries}
+                  suffix="%"
+                  {...(healthView === 'gap' ? {} : { target: HEALTHY })}
+                  onPick={(key) => void navigate(measurePage[key] ?? '/insight')}
+                />
               )}
             </div>
-          </div>
+          </Panel>
+        </Cell>
 
-          <Modal
-            open={healthHelp}
-            onClose={() => setHealthHelp(false)}
-            title="Overall Health Score — how it is calculated"
-            size="md"
-            footer={<Button onClick={() => setHealthHelp(false)}>Close</Button>}
+        <Cell id="patch-compliance" layout={layout} span="half">
+          <Panel
+            title="Patch Compliance"
+            subtitle={`${num(patchCompliance.nonCompliant)} of ${num(counts.managedEndpoints)} devices need patches`}
+            link={{ label: 'Patches', to: '/patches' }}
+            footer="Click a slice or bar to see matching details"
           >
-            <p className={styles.methodLead}>
-              A 0&ndash;100 score for the endpoints in the current scope. It is a weighted average
-              of five measures; any measure that cannot be assessed is left out and the remaining
-              weights are rescaled.
-            </p>
-            <table className={styles.methodTable}>
-              <thead>
-                <tr>
-                  <th scope="col">Measure</th>
-                  <th scope="col">How it is measured</th>
-                  <th scope="col">Weight</th>
-                  <th scope="col">Now</th>
-                </tr>
-              </thead>
-              <tbody>
-                {health.measures.map((m) => (
-                  <tr key={m.id}>
-                    <th scope="row">{m.label}</th>
-                    <td>{measureMethod[m.id] ?? '—'}</td>
-                    <td>{Math.round(m.weight * 100)}%</td>
-                    <td>{m.score}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className={styles.methodBands}>
-              85 and above = Healthy (green) &middot; 70&ndash;84 = Fair (amber) &middot; below 70 =
-              At risk (red).
-            </p>
-          </Modal>
-
-          <ChartTools
-            panel="Overall Health Score"
-            view={healthView}
-            onView={setHealthView}
-            viewOptions={[
-              { value: 'measures', label: 'Score by Measure' },
-              { value: 'gap', label: 'Points to Healthy' },
-            ]}
-            chart={healthChart}
-            onChart={setHealthChart}
-            chartOptions={CHART_TYPES.columnar}
-          />
-          <p className={styles.unit}>
-            {healthView === 'gap'
-              ? `Points still needed to reach Healthy (${HEALTHY}) · weight below each label`
-              : `% per measure · dashed line = Healthy (${HEALTHY}) · weight below each label`}
-          </p>
-          <div className={styles.body}>
-            {healthChart === 'bar' ? (
-              <Bars
-                {...healthSeries}
-                suffix="%"
-                onPick={(key) => void navigate(measurePage[key] ?? '/insight')}
-              />
-            ) : (
-              <Columns
-                {...healthSeries}
-                suffix="%"
-                {...(healthView === 'gap' ? {} : { target: HEALTHY })}
-                onPick={(key) => void navigate(measurePage[key] ?? '/insight')}
-              />
-            )}
-          </div>
-        </Panel>
-
-        <Panel
-          title="Patch Compliance"
-          subtitle={`${num(patchCompliance.nonCompliant)} of ${num(counts.managedEndpoints)} devices need patches`}
-          link={{ label: 'Patches', to: '/patches' }}
-          footer="Click a slice or bar to see matching details"
-        >
-          <ChartTools
-            panel="Patch compliance"
-            view={patchView}
-            onView={setPatchView}
-            viewOptions={[
-              { value: 'devices', label: 'Device Compliance' },
-              { value: 'severity', label: 'Missing Patches by Severity' },
-              { value: 'install', label: 'Last Install Result' },
-              { value: 'os', label: 'Compliance by OS Family' },
-            ]}
-            chart={patchChart}
-            onChart={setPatchChart}
-            chartOptions={CHART_TYPES.circular}
-          />
-          <p className={styles.unit}>{patchUnit}</p>
-          <div className={styles.body}>
-            {chart(patchSeries, patchChart, {
-              onPick: () => void navigate('/patches'),
-              suffix: patchView === 'os' ? '%' : '',
-              centre:
-                patchView === 'devices'
-                  ? [`${patchCompliance.compliantPct}%`, 'compliant']
-                  : undefined,
-            })}
-          </div>
-
-          <div className={styles.mini}>
-            <MiniStat
-              label="Missing patches"
-              items={[
-                {
-                  text: 'Critical',
-                  value: num(patchCompliance.missingBySeverity.critical),
-                  tone: 'bad',
-                },
-                { text: 'High', value: num(patchCompliance.missingBySeverity.high), tone: 'bad' },
-                {
-                  text: 'Medium',
-                  value: num(patchCompliance.missingBySeverity.medium),
-                  tone: 'warn',
-                },
-                { text: 'Low', value: num(patchCompliance.missingBySeverity.low), tone: 'neutral' },
+            <ChartTools
+              panel="Patch compliance"
+              view={patchView}
+              onView={setPatchView}
+              viewOptions={[
+                { value: 'devices', label: 'Device Compliance' },
+                { value: 'severity', label: 'Missing Patches by Severity' },
+                { value: 'install', label: 'Last Install Result' },
+                { value: 'os', label: 'Compliance by OS Family' },
               ]}
+              chart={patchChart}
+              onChart={setPatchChart}
+              chartOptions={CHART_TYPES.circular}
             />
-            <MiniStat
-              label="Last install result"
-              items={[
-                {
-                  text: 'Successful',
-                  value: num(patchCompliance.lastInstall.successful),
-                  tone: 'good',
-                },
-                {
-                  text: 'Restart',
-                  value: num(patchCompliance.lastInstall.restartNeeded),
-                  tone: 'warn',
-                },
-                { text: 'Pending', value: num(patchCompliance.lastInstall.pending), tone: 'info' },
-                { text: 'Failed', value: num(patchCompliance.lastInstall.failed), tone: 'bad' },
-              ]}
-            />
-            <MiniStat
-              label="Compliance by OS"
-              items={patchCompliance.byOs.map((row) => ({
-                text: OS_LABEL[row.family] ?? row.family,
-                value: `${row.compliantPct}%`,
-                tone: bandTone(row.compliantPct),
-              }))}
-            />
-          </div>
-        </Panel>
-      </div>
+            <p className={styles.unit}>{patchUnit}</p>
+            <div className={styles.body}>
+              {chart(patchSeries, patchChart, {
+                onPick: () => void navigate('/patches'),
+                suffix: patchView === 'os' ? '%' : '',
+                centre:
+                  patchView === 'devices'
+                    ? [`${patchCompliance.compliantPct}%`, 'compliant']
+                    : undefined,
+              })}
+            </div>
 
-      <div className={styles.row3}>
-        <Panel
-          title="Security Posture"
-          subtitle={`${num(securityPosture[0]?.total ?? 0)} endpoints across three controls`}
-          link={{ label: 'Security', to: '/vulns' }}
-          footer="Click a control to see the endpoints missing it"
-        >
-          <ChartTools
-            panel="Security Posture"
-            view={postureView}
-            onView={setPostureView}
-            viewOptions={[
-              { value: 'all', label: 'All Controls' },
-              { value: 'disk-encryption', label: 'Disk Encryption' },
-              { value: 'antivirus', label: 'Antivirus' },
-              { value: 'firewall', label: 'Firewall' },
-            ]}
-            chart={postureChart}
-            onChart={setPostureChart}
-            chartOptions={CHART_TYPES.rings}
-          />
-          <p className={styles.unit}>% of endpoints protected · target {PROTECTION_TARGET}%</p>
-          <div className={styles.body}>
-            {postureChart === 'rings' ? (
-              <Rings
-                caption={postureSeries.caption}
-                data={postureRings}
-                onPick={() => void navigate('/vulns')}
+            <div className={styles.mini}>
+              <MiniStat
+                label="Missing patches"
+                items={[
+                  {
+                    text: 'Critical',
+                    value: num(patchCompliance.missingBySeverity.critical),
+                    tone: 'bad',
+                  },
+                  { text: 'High', value: num(patchCompliance.missingBySeverity.high), tone: 'bad' },
+                  {
+                    text: 'Medium',
+                    value: num(patchCompliance.missingBySeverity.medium),
+                    tone: 'warn',
+                  },
+                  {
+                    text: 'Low',
+                    value: num(patchCompliance.missingBySeverity.low),
+                    tone: 'neutral',
+                  },
+                ]}
               />
-            ) : (
-              chart(postureSeries, postureChart, {
-                onPick: () => void navigate('/vulns'),
-                suffix: '%',
-              })
-            )}
-          </div>
-        </Panel>
+              <MiniStat
+                label="Last install result"
+                items={[
+                  {
+                    text: 'Successful',
+                    value: num(patchCompliance.lastInstall.successful),
+                    tone: 'good',
+                  },
+                  {
+                    text: 'Restart',
+                    value: num(patchCompliance.lastInstall.restartNeeded),
+                    tone: 'warn',
+                  },
+                  {
+                    text: 'Pending',
+                    value: num(patchCompliance.lastInstall.pending),
+                    tone: 'info',
+                  },
+                  { text: 'Failed', value: num(patchCompliance.lastInstall.failed), tone: 'bad' },
+                ]}
+              />
+              <MiniStat
+                label="Compliance by OS"
+                items={patchCompliance.byOs.map((row) => ({
+                  text: OS_LABEL[row.family] ?? row.family,
+                  value: `${row.compliantPct}%`,
+                  tone: bandTone(row.compliantPct, bands),
+                }))}
+              />
+            </div>
+          </Panel>
+        </Cell>
 
-        <Panel
-          title="Deployment Status"
-          subtitle={`${num(counts.deployments)} deployment actions`}
-          link={{ label: 'Deployments', to: '/deployments' }}
-          footer="Click a slice or bar to see matching details"
-        >
-          <ChartTools
-            panel="Deployment status"
-            view="status"
-            onView={() => undefined}
-            viewOptions={[{ value: 'status', label: 'By Current Status' }]}
-            chart={deployChart}
-            onChart={setDeployChart}
-            chartOptions={CHART_TYPES.circular}
-          />
-          <p className={styles.unit}>Each action counted once, by the status it is in now</p>
-          <div className={styles.body}>
-            {chart(deploySeries, deployChart, {
-              onPick: (key) => void navigate(`/deployments?status=${segment(key)}`),
-              centre: [num(deployTotal), 'actions'],
-            })}
-          </div>
-        </Panel>
-
-        <Panel title="Expiring Soon" subtitle="Licence, enrollment and API tokens">
-          <div className={styles.body}>
-            <Donut
-              {...expiringSeries}
-              centreValue={num(data.expiring.length)}
-              centreLabel="items"
+        <Cell id="security-posture" layout={layout} span="third">
+          <Panel
+            title="Security Posture"
+            subtitle={`${num(securityPosture[0]?.total ?? 0)} endpoints across three controls`}
+            link={{ label: 'Security', to: '/vulns' }}
+            footer="Click a control to see the endpoints missing it"
+          >
+            <ChartTools
+              panel="Security Posture"
+              view={postureView}
+              onView={setPostureView}
+              viewOptions={[
+                { value: 'all', label: 'All Controls' },
+                { value: 'disk-encryption', label: 'Disk Encryption' },
+                { value: 'antivirus', label: 'Antivirus' },
+                { value: 'firewall', label: 'Firewall' },
+              ]}
+              chart={postureChart}
+              onChart={setPostureChart}
+              chartOptions={CHART_TYPES.rings}
             />
-          </div>
-          <div className={styles.expList}>
-            {expiringSoon.length === 0 ? (
-              <p className={styles.empty}>Nothing expires in the next 30 days.</p>
-            ) : (
-              expiringSoon.map((item) => {
-                const expired = new Date(item.expiresAt).getTime() < now;
-                return (
-                  <button
-                    key={`${item.kind}-${item.name}`}
-                    type="button"
-                    className={styles.expRow}
-                    onClick={go(item.kind === 'license' ? '/licensing' : '/admin')}
-                  >
-                    <span className={expired ? styles.expStBad : styles.expStWarn}>
-                      {expired ? 'Expired' : 'Expiring'}
-                    </span>
-                    <span className={styles.expName}>
-                      <b>{item.name}</b>
-                      <small>
-                        {item.kind === 'license'
-                          ? 'Licence'
-                          : item.kind === 'api-token'
-                            ? 'API Token'
-                            : item.kind === 'certificate'
-                              ? 'Certificate'
-                              : 'Enrollment Token'}
-                      </small>
-                    </span>
-                    <time dateTime={item.expiresAt}>{relative(item.expiresAt)}</time>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </Panel>
-      </div>
+            <p className={styles.unit}>% of endpoints protected · target {PROTECTION_TARGET}%</p>
+            <div className={styles.body}>
+              {postureChart === 'rings' ? (
+                <Rings
+                  caption={postureSeries.caption}
+                  data={postureRings}
+                  onPick={() => void navigate('/vulns')}
+                />
+              ) : (
+                chart(postureSeries, postureChart, {
+                  onPick: () => void navigate('/vulns'),
+                  suffix: '%',
+                })
+              )}
+            </div>
+          </Panel>
+        </Cell>
 
-      <div className={styles.row2}>
-        <Panel
-          title="Needs Attention"
-          subtitle={`${data.attention.length} open items · highest priority first`}
-        >
-          <div className={styles.attn}>
-            {data.attention.length === 0 ? (
-              <p className={styles.empty}>Nothing needs attention right now.</p>
-            ) : (
-              attentionShown.map((item) => (
-                <div key={item.id} className={styles.attnRow}>
-                  <span className={styles[`sev-${SEVERITY_TONE[item.severity]}`]}>
-                    {item.severity}
+        <Cell id="deployment-status" layout={layout} span="third">
+          <Panel
+            title="Deployment Status"
+            subtitle={`${num(counts.deployments)} deployment actions`}
+            link={{ label: 'Deployments', to: '/deployments' }}
+            footer="Click a slice or bar to see matching details"
+          >
+            <ChartTools
+              panel="Deployment status"
+              view="status"
+              onView={() => undefined}
+              viewOptions={[{ value: 'status', label: 'By Current Status' }]}
+              chart={deployChart}
+              onChart={setDeployChart}
+              chartOptions={CHART_TYPES.circular}
+            />
+            <p className={styles.unit}>Each action counted once, by the status it is in now</p>
+            <div className={styles.body}>
+              {chart(deploySeries, deployChart, {
+                onPick: (key) => void navigate(`/deployments?status=${segment(key)}`),
+                centre: [num(deployTotal), 'actions'],
+              })}
+            </div>
+          </Panel>
+        </Cell>
+
+        <Cell id="expiring-soon" layout={layout} span="third">
+          <Panel title="Expiring Soon" subtitle="Licence, enrollment and API tokens">
+            <div className={styles.body}>
+              <Donut
+                {...expiringSeries}
+                centreValue={num(data.expiring.length)}
+                centreLabel="items"
+              />
+            </div>
+            <div className={styles.expList}>
+              {expiringSoon.length === 0 ? (
+                <p className={styles.empty}>Nothing expires in the next 30 days.</p>
+              ) : (
+                expiringSoon.map((item) => {
+                  const expired = new Date(item.expiresAt).getTime() < now;
+                  return (
+                    <button
+                      key={`${item.kind}-${item.name}`}
+                      type="button"
+                      className={styles.expRow}
+                      onClick={go(item.kind === 'license' ? '/licensing' : '/admin')}
+                    >
+                      <span className={expired ? styles.expStBad : styles.expStWarn}>
+                        {expired ? 'Expired' : 'Expiring'}
+                      </span>
+                      <span className={styles.expName}>
+                        <b>{item.name}</b>
+                        <small>
+                          {item.kind === 'license'
+                            ? 'Licence'
+                            : item.kind === 'api-token'
+                              ? 'API Token'
+                              : item.kind === 'certificate'
+                                ? 'Certificate'
+                                : 'Enrollment Token'}
+                        </small>
+                      </span>
+                      <time dateTime={item.expiresAt}>{relative(item.expiresAt)}</time>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </Panel>
+        </Cell>
+
+        <Cell id="needs-attention" layout={layout} span="half">
+          <Panel
+            title="Needs Attention"
+            subtitle={`${data.attention.length} open items · highest priority first`}
+          >
+            <div className={styles.attn}>
+              {data.attention.length === 0 ? (
+                <p className={styles.empty}>Nothing needs attention right now.</p>
+              ) : (
+                attentionShown.map((item) => (
+                  <div key={item.id} className={styles.attnRow}>
+                    <span className={styles[`sev-${SEVERITY_TONE[item.severity]}`]}>
+                      {item.severity}
+                    </span>
+                    <span className={styles.attnN}>{num(item.count)}</span>
+                    <button
+                      type="button"
+                      className={styles.attnMain}
+                      onClick={go(ATTENTION_LINK[item.id] ?? '/devices')}
+                    >
+                      <b>{item.title}</b>
+                      <small>{item.detail}</small>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.attnAct}
+                      onClick={go(ATTENTION_LINK[item.id] ?? '/devices')}
+                    >
+                      {item.action} →
+                    </button>
+                  </div>
+                ))
+              )}
+              {attentionHidden > 0 ? (
+                <button
+                  type="button"
+                  className={styles.more}
+                  onClick={() => setShowAllAttention(true)}
+                >
+                  Show {attentionHidden} more
+                </button>
+              ) : null}
+            </div>
+          </Panel>
+        </Cell>
+
+        <Cell id="recent-activity" layout={layout} span="half">
+          <Panel
+            title="Recent Activity"
+            subtitle="Latest deployment and audit events"
+            link={{ label: 'All Deployments', to: '/deployments' }}
+          >
+            <div className={styles.events}>
+              {data.recentActivity.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={styles.event}
+                  onClick={go(`/deployments/${segment(item.id)}`)}
+                >
+                  <span className={styles.eventMain}>
+                    <b>{item.name}</b>
+                    <small>
+                      {item.id} · {num(item.targetCount)} targets · {item.counts.done} done
+                      {item.counts.failed > 0 ? ` · ${item.counts.failed} failed` : ''}
+                    </small>
                   </span>
-                  <span className={styles.attnN}>{num(item.count)}</span>
-                  <button
-                    type="button"
-                    className={styles.attnMain}
-                    onClick={go(ATTENTION_LINK[item.id] ?? '/devices')}
-                  >
-                    <b>{item.title}</b>
-                    <small>{item.detail}</small>
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.attnAct}
-                    onClick={go(ATTENTION_LINK[item.id] ?? '/devices')}
-                  >
-                    {item.action} →
-                  </button>
-                </div>
-              ))
-            )}
-            {attentionHidden > 0 ? (
-              <button
-                type="button"
-                className={styles.more}
-                onClick={() => setShowAllAttention(true)}
-              >
-                Show {attentionHidden} more
-              </button>
-            ) : null}
-          </div>
-        </Panel>
-
-        <Panel
-          title="Recent Activity"
-          subtitle="Latest deployment and audit events"
-          link={{ label: 'All Deployments', to: '/deployments' }}
-        >
-          <div className={styles.events}>
-            {data.recentActivity.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={styles.event}
-                onClick={go(`/deployments/${segment(item.id)}`)}
-              >
-                <span className={styles.eventMain}>
-                  <b>{item.name}</b>
-                  <small>
-                    {item.id} · {num(item.targetCount)} targets · {item.counts.done} done
-                    {item.counts.failed > 0 ? ` · ${item.counts.failed} failed` : ''}
-                  </small>
-                </span>
-                <span className={styles[`badge-${badgeTone(item.status)}`]}>{item.status}</span>
-                <time dateTime={item.triggeredAt}>{dateTime(item.triggeredAt)}</time>
-              </button>
-            ))}
-          </div>
-        </Panel>
+                  <span className={styles[`badge-${badgeTone(item.status)}`]}>{item.status}</span>
+                  <time dateTime={item.triggeredAt}>{dateTime(item.triggeredAt)}</time>
+                </button>
+              ))}
+            </div>
+          </Panel>
+        </Cell>
       </div>
+
+      {/*
+       * Remounted on each open by the key, so a cancelled draft is never
+       * what the dialog shows the next time it is opened.
+       */}
+      {customizing ? (
+        <OverviewCustomize
+          key={layoutQuery.dataUpdatedAt + (applied ? 1 : 0)}
+          open
+          layout={layout}
+          score={health.score}
+          onClose={() => setCustomizing(false)}
+          onApply={(next) => {
+            setApplied(next);
+            setCustomizing(false);
+            saveLayout.mutate(next);
+          }}
+        />
+      ) : null}
 
       <div className={styles.footnote}>
         <span>
@@ -1046,6 +1154,41 @@ const badgeTone = (status: string): Tone =>
 /* ------------------------------------------------------------------ */
 /* Pieces                                                             */
 /* ------------------------------------------------------------------ */
+
+/**
+ * One widget's place on the page.
+ *
+ * A widget the layout hides is not rendered at all rather than hidden with
+ * CSS: a panel that is off should not be fetching, drawing or reachable by
+ * the keyboard. Its position and width are classes rather than a style
+ * attribute, for the same reason the health scale is an SVG — geometry
+ * belongs in the stylesheet.
+ */
+function Cell({
+  id,
+  layout,
+  span,
+  children,
+}: {
+  id: string;
+  layout: OverviewLayout;
+  span: 'full' | 'half' | 'third';
+  children: ReactNode;
+}) {
+  const index = layout.widgets.findIndex((w) => w.id === id);
+  const widget = index >= 0 ? layout.widgets[index] : undefined;
+  if (widget && !widget.visible) return null;
+  const order = index >= 0 ? index : layout.widgets.length;
+  return (
+    <div
+      className={[styles.cell, styles[`span-${span}`], styles[`order-${order}`]]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {children}
+    </div>
+  );
+}
 
 function Kpi({
   label,

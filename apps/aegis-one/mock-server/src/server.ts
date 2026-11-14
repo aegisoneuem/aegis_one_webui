@@ -18,6 +18,7 @@ import { registerResourceRoutes } from './routes/resources';
 import { registerDeviceRoutes } from './routes/devices';
 import { registerActionRoutes } from './routes/actions';
 import { registerAggregateRoutes } from './routes/aggregates';
+import { registerOverviewLayoutRoutes } from './routes/overview-layout';
 import { registerEnrollmentRoutes } from './routes/enrollment';
 import { registerGroupRoutes } from './routes/groups';
 import { registerLiveOpsRoutes } from './routes/liveops';
@@ -156,6 +157,7 @@ export async function start(): Promise<void> {
   });
 
   registerAggregateRoutes(app, db, BASE_PATH);
+  registerOverviewLayoutRoutes(app, db, BASE_PATH);
   registerDeviceRoutes(app, db, BASE_PATH);
   registerActionRoutes(app, db, BASE_PATH);
   registerGroupRoutes(app, db, BASE_PATH);

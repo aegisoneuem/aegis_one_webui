@@ -1409,6 +1409,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/remote-control/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The estate-wide rules every remote session is held to. */
+        get: operations["getRemotePolicy"];
+        /**
+         * Change the remote-session policy.
+         * @description The on-screen indicator is not settable. It is always on, and a request
+         *     that tries to turn it off is rejected rather than quietly ignored.
+         */
+        put: operations["setRemotePolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/remote-control/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Remote sessions, open ones first. */
+        get: operations["listRemoteSessions"];
+        put?: never;
+        /**
+         * Ask an endpoint for a remote session.
+         * @description Does not connect anything. The session is created in `pending-consent`
+         *     where the policy says the user must accept, and the endpoint shows the
+         *     request; it becomes `open` only when the user accepts. Where the policy
+         *     is `notify` the session opens and the endpoint says so on screen.
+         *     Recording follows the policy and the operator cannot turn it off.
+         */
+        post: operations["startRemoteSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/remote-control/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End a remote session. */
+        post: operations["endRemoteSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/{reportId}/summary": {
         parameters: {
             query?: never;
@@ -2134,6 +2200,14 @@ export interface components {
         OverviewLayout: {
             /** @description For example "Endpoint Operations". */
             preset: string;
+            /** @description How the Overview reads its own figures: the two health bands and the compliance target the Customize dialog sets. Absent means the product defaults, 85 and 70 with a 95% target. */
+            thresholds?: {
+                /** @description At or above this, the score reads Healthy. */
+                healthy: number;
+                /** @description Below this, the score reads At risk. Must be below healthy. */
+                atRisk: number;
+                complianceTarget: number;
+            };
             widgets: {
                 id: string;
                 type: string;
@@ -3355,12 +3429,83 @@ export interface components {
             }[];
             favorite: boolean;
         };
+        RemotePolicy: {
+            /**
+             * @description 'ask' is attended: the user accepts before the session starts. 'notify' is unattended: the endpoint says a session has begun. There is no silent option.
+             * @enum {string}
+             */
+            consent: "ask" | "notify";
+            requireReason: boolean;
+            record: boolean;
+            chat: boolean;
+            idleMinutes: number;
+            maxMinutes: number;
+            /**
+             * @description Always true. Reported so the console can show it as locked.
+             * @enum {boolean}
+             */
+            onScreenIndicator: true;
+            /** Format: date-time */
+            updatedAt: string;
+            updatedBy: string;
+        };
+        RemotePolicyInput: {
+            /** @enum {string} */
+            consent: "ask" | "notify";
+            requireReason: boolean;
+            record: boolean;
+            chat: boolean;
+            idleMinutes: number;
+            maxMinutes: number;
+        };
+        /** @enum {string} */
+        RemoteSessionMode: "view" | "control" | "chat";
+        RemoteSession: {
+            id: string;
+            deviceId: string;
+            hostname: string;
+            os?: string;
+            user?: string;
+            operator: string;
+            mode: components["schemas"]["RemoteSessionMode"];
+            reason?: string;
+            /** @enum {string} */
+            state: "pending-consent" | "open" | "ended";
+            /** @enum {string} */
+            consent: "ask" | "notify";
+            recorded: boolean;
+            /** Format: date-time */
+            startedAt: string;
+            endedAt?: string | null;
+            endedBy?: string | null;
+            endReason?: string | null;
+        };
+        RemoteSessionPage: {
+            sessions: components["schemas"]["RemoteSession"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        RemoteSessionInput: {
+            deviceId: string;
+            mode: components["schemas"]["RemoteSessionMode"];
+            /** @description Required when the policy says so; rejected as 400 when missing. */
+            reason?: string;
+        };
         ReportSummary: {
             id: string;
             title: string;
             description?: string;
             unit?: string;
             total: number;
+            /** @description Whether the signed-in user has starred this report. */
+            favorite?: boolean;
+            /** @description The Location picker's options, in the estate's own order. */
+            locations?: string[];
+            /** @description The Group picker's options, as a flat list with parents named. */
+            groups?: {
+                id: string;
+                name: string;
+                parentId?: string;
+            }[];
             /** @description The counters above the panels, the row total first. */
             kpis: {
                 label: string;
@@ -3370,6 +3515,11 @@ export interface components {
             charts: {
                 title: string;
                 field: string;
+                /**
+                 * @description The shape the panel opens in. A property of the chart, not a rule about category count: the reference draws four locations as side-on bars and three computer types as a ring. The reader can switch it; this is only the default.
+                 * @enum {string}
+                 */
+                form: "column" | "bar" | "donut";
                 data: {
                     label: string;
                     value: number;
@@ -3382,7 +3532,12 @@ export interface components {
             rows: {
                 [key: string]: string | number | boolean | null;
             }[];
-            page: components["schemas"]["PageInfo"];
+            /** @description PageInfo with the report footer's second figure: how many computers these rows cover, which under a search or a scope is not the report's own total. */
+            page: {
+                nextCursor: string | null;
+                total: number;
+                devices: number;
+            };
         };
         CustomReportInput: {
             name: string;
@@ -4092,7 +4247,11 @@ export interface operations {
                 zone?: string;
                 platform?: components["schemas"]["PlatformFamily"];
                 status?: "online" | "offline";
-                /** @description Advanced filter rules, JSON array of {field, op, value}, URL-encoded. */
+                /**
+                 * @description Advanced filter rules, a URL-encoded JSON array of {field, op, value}. All of them must match. `field` is a field this resource exposes and `op` is one the field accepts; either being unknown is a 400 rather than a rule that is quietly dropped, since a filter that silently does nothing returns everything.
+                 *     Operators: `eq`, `ne`, `in`, `like` (contains), `nlike` (does not contain), `starts`, `empty`, `notEmpty`, `gte`, `lte`. A field that accepts `like` also accepts `nlike` and `starts`; one that accepts `eq` also accepts `empty` and `notEmpty`. `empty` and `notEmpty` take no value.
+                 *     At most twenty rules.
+                 */
                 filter?: string;
             };
             header?: never;
@@ -6326,9 +6485,149 @@ export interface operations {
             };
         };
     };
-    getReportSummary: {
+    getRemotePolicy: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Policy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemotePolicy"];
+                };
+            };
+        };
+    };
+    setRemotePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemotePolicyInput"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemotePolicy"];
+                };
+            };
+        };
+    };
+    listRemoteSessions: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page. */
+                cursor?: components["parameters"]["Cursor"];
+                limit?: components["parameters"]["Limit"];
+                /** @description Narrows to open sessions or to the ones that have finished. */
+                state?: "open" | "finished";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteSessionPage"];
+                };
+            };
+        };
+    };
+    startRemoteSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteSessionInput"];
+            };
+        };
+        responses: {
+            /** @description Requested */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteSession"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            /** @description That endpoint already has an open session */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    endRemoteSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    endReason: "operator" | "user-declined" | "idle" | "max-duration";
+                };
+            };
+        };
+        responses: {
+            /** @description Ended */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteSession"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getReportSummary: {
+        parameters: {
+            query?: {
+                /** @description Narrows every figure on the page to one location. */
+                location?: string;
+                /** @description Narrows every figure on the page to one device group. */
+                group?: string;
+            };
             header?: never;
             path: {
                 reportId: components["parameters"]["ReportId"];
@@ -6355,6 +6654,15 @@ export interface operations {
                 /** @description Opaque cursor from the previous page. */
                 cursor?: components["parameters"]["Cursor"];
                 limit?: components["parameters"]["Limit"];
+                /** @description Narrows every figure on the page to one location. */
+                location?: string;
+                /** @description Narrows every figure on the page to one device group. */
+                group?: string;
+                /** @description Matches a hostname, IP address or user. */
+                q?: string;
+                /** @description A column the report declares. An unknown field is ignored rather than reaching SQL, and the default order stands. */
+                sort?: string;
+                dir?: "asc" | "desc";
             };
             header?: never;
             path: {

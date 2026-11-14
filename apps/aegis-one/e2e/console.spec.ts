@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { ACCOUNTS, PAGES, signIn } from './helpers';
 
 /**
@@ -105,6 +105,76 @@ test.describe('signed in as Super Admin', () => {
 
     await compliance.getByLabel('View').selectOption('severity');
     await expect(compliance.getByRole('table', { name: /severity/i })).toBeAttached();
+  });
+
+  /*
+   * The saved layout is per user and every other Overview test signs in as
+   * the same one, so each of these puts it back even when it fails. Escape
+   * first, because a test that failed with the dialog open cannot reach the
+   * button behind it.
+   */
+  const resetOverview = async (page: Page) => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Customize', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+    await dialog.getByRole('button', { name: 'Reset to Default', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toBeVisible();
+  };
+
+  test('Customize hides and reorders widgets, and the layout survives a reload', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Customize', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+    await expect(dialog).toBeVisible();
+
+    try {
+      await dialog.getByRole('button', { name: 'Security Focus', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+
+      // The preset hides three panels and puts Security Posture second.
+      await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Expiring Soon' })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Security Posture' })).toBeVisible();
+
+      // Saved, not only applied: a cold load asks the server for it.
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Security Posture' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Patch Compliance' })).toHaveCount(0);
+    } finally {
+      await resetOverview(page);
+    }
+  });
+
+  test('the health bands are read from Customize, not from the server', async ({ page }) => {
+    await page.goto('/');
+
+    // Thresholds opens the same dialog the header does.
+    await page.getByRole('button', { name: 'Thresholds', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customize Overview' });
+    await expect(dialog).toBeVisible();
+
+    try {
+      // A band that starts above the one above it is refused rather than saved.
+      await dialog.getByLabel('At risk (red) below').fill('99');
+      await expect(dialog).toContainText('no Fair band between them');
+      await expect(dialog.getByRole('button', { name: 'Done', exact: true })).toBeDisabled();
+
+      await dialog.getByLabel('Healthy (green) at or above').fill('30');
+      await dialog.getByLabel('At risk (red) below').fill('20');
+      await expect(dialog).toContainText('Healthy = 30 and above');
+
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+      // The estate scores well above 30, so the tile must now say Healthy
+      // even though the server computed its own band against 85.
+      await expect(page.getByText('Healthy \u00b7 30 and above')).toBeVisible();
+    } finally {
+      await resetOverview(page);
+    }
   });
 
   test('Devices lists, filters, sorts and pages', async ({ page }) => {

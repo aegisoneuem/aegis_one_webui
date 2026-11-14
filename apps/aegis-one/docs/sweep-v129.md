@@ -441,6 +441,76 @@ widget, id, type, visible, chartType, view and title — so the layout half
 is contract-backed and buildable. The thresholds half is not: `OverviewLayout`
 has no field for them, so it needs a spec change proposed first.
 
+### 3.6f Customize, built — and what it needed first
+
+3.6e put the Overview's four controls down as one feature. Three of its four
+sections are now there, and what it took is worth recording.
+
+**The page had to be able to obey a layout at all.** Three hard-coded rows
+cannot be reordered or thinned, so they became one six-column grid whose
+cells carry their own span and their own order as classes. Six columns
+because a half and a third both divide it, which is what the reference
+offers as widget sizes. A hidden widget is not rendered rather than hidden
+with CSS: a panel that is off should not be fetching, drawing, or reachable
+by the keyboard.
+
+**`GET`/`PUT /overview/layout` are the fifth declared-and-unimplemented
+path**, after `/audit`, `?group=`, `?filter=` and `/groups/import`. Both are
+now served, one row per user holding the contract's own JSON.
+
+**The contract gained `OverviewLayout.thresholds`** — healthy, atRisk and
+complianceTarget — because the dialog's fourth section had nowhere to save
+what it sets. Absent means the product defaults, so this is additive for any
+client that has not heard of it.
+
+**Three of the four sections are here.** Start From a Layout (the four
+presets, read out of the running reference: each sets both visibility and
+order, and hides fall to the bottom keeping their default relative order),
+Widgets (checkbox, up, down), and Colour Thresholds (three presets, three
+numbers, and the live readout of what the current score would read as).
+
+**"Preview As Role" is not, and this is the one worth a decision.** It asks
+the API to answer as somebody else, and the contract has no impersonation, no
+preview parameter and nothing on `/admin/roles` that would serve. A select
+that changed only a label would claim a preview this console cannot give. It
+could be done honestly as a **client-side what-if**: read the role's
+permission set from `/admin/roles` and override `useCan` for the page, so a
+reader sees which controls that role would and would not have. That touches
+the auth layer rather than this dialog, which is why it is written here
+rather than done.
+
+**Status Checks has nothing to hide.** The reference's ninth widget is its
+first-run setup checklist, off in all four of its own presets; this Overview
+has no such panel and `/setup/checklist` is a sixth path the contract
+declares with nothing behind it.
+
+**One more difference, and ours is the consistent one.** The reference names
+its reorder buttons inconsistently — "Move Key metrics up" but "Move Overall
+Health Score up" — lower-casing some widget names and not others. Every
+button here is named after the widget's own title.
+
+### 3.6g Open: the custom widget wizard needs two things first
+
+"+ Custom Widget" opens a six-step wizard in the reference: **Start** (ten
+templates or blank), **Data** (six subjects), **Measure** (count, % of total,
+average, total, lowest, highest, with an "of field" picker for the four that
+need a number), **Views** (group by, chart, sort, show top N, more than one
+view per widget, and a "hide Not set values" toggle), **Filters** (AND/OR
+over field / operator / value, with a live match count), and **Display**
+(name, size, place after, optional target %). A live preview runs throughout.
+
+Two things are missing before it can be built honestly:
+
+1. **Nowhere to keep the definition.** `OverviewLayout.widgets[]` carries id,
+   type, visible, chartType, view and title. It cannot express a subject, a
+   measure, a group-by, a filter or a size.
+2. **No endpoint can answer it.** `CustomReportInput` is columns, filter and
+   sort — row-oriented. Nothing in the contract returns "count of devices
+   grouped by department where encryption is off", which is the whole of what
+   a custom widget is.
+
+Both are contract additions to propose, not behaviour to invent.
+
 ### 3.7 Open: two palette tokens are a shade off, console-wide
 
 Found while matching the avatar tile, and left alone because it reaches

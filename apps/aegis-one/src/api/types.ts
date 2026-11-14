@@ -1103,6 +1103,28 @@ export type Health = {
   events: { at: string; level: 'info' | 'warning' | 'error'; message: string }[];
 };
 
+/** The contract's OverviewLayout: what the Customize dialog saves. */
+export type OverviewThresholds = {
+  healthy: number;
+  atRisk: number;
+  complianceTarget: number;
+};
+
+export type OverviewLayoutWidget = {
+  id: string;
+  type: string;
+  visible: boolean;
+  chartType?: string;
+  view?: string;
+  title?: string;
+};
+
+export type OverviewLayout = {
+  preset: string;
+  widgets: OverviewLayoutWidget[];
+  thresholds?: OverviewThresholds;
+};
+
 export type HealthMeasure = { id: string; label: string; weight: number; score: number };
 
 export type SecurityControl = {

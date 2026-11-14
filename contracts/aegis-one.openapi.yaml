@@ -4138,6 +4138,32 @@ components:
           type: string
           maxLength: 64
           description: For example "Endpoint Operations".
+        thresholds:
+          type: object
+          additionalProperties: false
+          description: >-
+            How the Overview reads its own figures: the two health bands and
+            the compliance target the Customize dialog sets. Absent means the
+            product defaults, 85 and 70 with a 95% target.
+          required:
+          - healthy
+          - atRisk
+          - complianceTarget
+          properties:
+            healthy:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: At or above this, the score reads Healthy.
+            atRisk:
+              type: integer
+              minimum: 0
+              maximum: 99
+              description: Below this, the score reads At risk. Must be below healthy.
+            complianceTarget:
+              type: integer
+              minimum: 1
+              maximum: 100
         widgets:
           type: array
           maxItems: 50

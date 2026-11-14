@@ -1,0 +1,162 @@
+/*
+ * Customize Overview. Square, like everything else here: the radius tokens
+ * are all 0 and nothing in this dialog is an exception.
+ */
+
+.section {
+  margin-bottom: var(--ui-space-6);
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.heading {
+  margin: 0 0 var(--ui-space-4);
+  color: var(--ao-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+}
+
+.preset,
+.presetOn {
+  padding: 7px 12px;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.presetOn {
+  border-color: var(--ao-sidebar);
+  background: var(--ao-sidebar);
+  color: var(--ao-surface);
+}
+
+.preset:hover {
+  background: var(--ui-surface-hover);
+}
+
+.preset:focus-visible,
+.presetOn:focus-visible,
+.move:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.widgets {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ao-border);
+  list-style: none;
+}
+
+.widget {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--ao-border);
+}
+
+.widgetName {
+  flex: 1;
+  overflow: hidden;
+  color: var(--ao-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.move {
+  flex: none;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.move:hover:not(:disabled) {
+  background: var(--ui-surface-hover);
+}
+
+.move:disabled {
+  color: var(--ao-muted);
+  cursor: default;
+  opacity: 0.45;
+}
+
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-5);
+  margin-top: var(--ui-space-5);
+}
+
+.number {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  color: var(--ao-text);
+  font-size: 12.5px;
+}
+
+.number input {
+  width: 68px;
+  height: var(--ui-control-height);
+  padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ao-border);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.number input:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.unit {
+  color: var(--ao-muted);
+}
+
+.readout,
+.invalid {
+  margin: var(--ui-space-5) 0 0;
+  padding-top: var(--ui-space-4);
+  border-top: 1px solid var(--ao-border);
+  color: var(--ao-muted);
+  font-size: 12.5px;
+}
+
+.readout b {
+  color: var(--ao-navy-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.band {
+  color: var(--ao-navy-ink);
+}
+
+.invalid {
+  color: var(--ao-danger);
+}

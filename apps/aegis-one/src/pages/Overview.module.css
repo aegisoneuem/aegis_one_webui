@@ -326,6 +326,89 @@
 
 /* Rows ------------------------------------------------------------------- */
 
+/*
+ * The widget grid. Six columns so a third and a half both divide it, which
+ * is what the reference offers as widget sizes; each cell carries its own
+ * width and its own place, and both are classes because a widget's position
+ * is geometry and geometry lives here rather than in a style attribute.
+ */
+.widgets {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--ui-space-5);
+  align-items: stretch;
+  margin-bottom: var(--ui-space-5);
+}
+
+.cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.span-full {
+  grid-column: span 6;
+}
+
+.span-half {
+  grid-column: span 3;
+}
+
+.span-third {
+  grid-column: span 2;
+}
+
+/* The order the saved layout puts them in; eight widgets, eight places. */
+.order-0 {
+  order: 0;
+}
+.order-1 {
+  order: 1;
+}
+.order-2 {
+  order: 2;
+}
+.order-3 {
+  order: 3;
+}
+.order-4 {
+  order: 4;
+}
+.order-5 {
+  order: 5;
+}
+.order-6 {
+  order: 6;
+}
+.order-7 {
+  order: 7;
+}
+.order-8 {
+  order: 8;
+}
+
+/* A cell holds one panel, which should fill it however tall its neighbour is. */
+.cell > * {
+  flex: 1;
+}
+
+/* The key-metrics cell holds the five tiles, which keep their own row. */
+.cell > .kpis {
+  margin-bottom: 0;
+}
+
+@media (width <= 1200px) {
+  .widgets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .span-full,
+  .span-half,
+  .span-third {
+    grid-column: span 1;
+  }
+}
+
 .row2,
 .row3 {
   display: grid;
@@ -626,6 +709,11 @@
   margin: var(--ui-space-5) 0 0;
   color: var(--ao-muted);
   font-size: 12px;
+}
+
+/* The way out to the bands, at the end of the gains row. */
+.hsThresholds {
+  margin-left: auto;
 }
 
 .hsGains {

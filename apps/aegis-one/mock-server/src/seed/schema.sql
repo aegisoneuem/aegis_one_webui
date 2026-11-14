@@ -814,6 +814,15 @@ CREATE TABLE users (
   created_at TEXT NOT NULL
 );
 
+-- The Overview's saved layout: which widgets are shown, in what order, which
+-- preset was started from, and the thresholds the figures are read against.
+-- One row per user; absent means the product default.
+CREATE TABLE overview_layout (
+  user_id TEXT PRIMARY KEY REFERENCES users(id),
+  layout TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE roles (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

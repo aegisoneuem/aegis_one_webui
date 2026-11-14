@@ -81,9 +81,18 @@ const TONE_CLASS: Record<Tone, string> = {
   teal: styles.teal as string,
 };
 
-/** High is good: the band the approved design colours a percentage by. */
-export const bandTone = (pctValue: number): Tone =>
-  pctValue >= 85 ? 'good' : pctValue >= 70 ? 'warn' : 'bad';
+/**
+ * High is good: the band the approved design colours a percentage by.
+ *
+ * The two cut-offs default to the approved 85 and 70, and the Overview passes
+ * its own when they have been changed in Customize. Every other page keeps
+ * the default, because only the Overview offers a way to move them.
+ */
+export const bandTone = (pctValue: number, bands?: { healthy: number; atRisk: number }): Tone => {
+  const healthy = bands?.healthy ?? 85;
+  const atRisk = bands?.atRisk ?? 70;
+  return pctValue >= healthy ? 'good' : pctValue >= atRisk ? 'warn' : 'bad';
+};
 
 function DataTable({ caption, data, unit }: Series & { unit: string }) {
   return (
